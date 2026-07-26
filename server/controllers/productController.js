@@ -3,20 +3,9 @@ const Category = require('../models/Category');
 const Review = require('../models/Review');
 const fs = require('fs');
 const path = require('path');
+const cloudinary = require('../config/cloudinary');
 
 // Helper to remove image files from server disk
-const deleteDiskImage = (imagePath) => {
-  if (imagePath && imagePath.startsWith('/uploads/')) {
-    const fullPath = path.join(__dirname, '..', imagePath);
-    if (fs.existsSync(fullPath)) {
-      try {
-        fs.unlinkSync(fullPath);
-      } catch (err) {
-        console.error(`Failed to delete disk image: ${fullPath}`, err.message);
-      }
-    }
-  }
-};
 
 // @desc    Get all products (with pagination, filtering, search, sorting)
 // @route   GET /api/v1/products
@@ -146,10 +135,10 @@ const createProduct = async (req, res, next) => {
       throw new Error('Category not found');
     }
 
-    // Handle uploaded images from multer
+    // Handle uploaded images from multer (now via Cloudinary)
     let images = [];
     if (req.files && req.files.length > 0) {
-      images = req.files.map(file => `/uploads/${file.filename}`);
+      images = req.files.map(file => file.path); // file.path = Cloudinary secure URL
     }
 
     const product = await Product.create({
@@ -166,12 +155,11 @@ const createProduct = async (req, res, next) => {
       product
     });
   } catch (error) {
-    // Cleanup files if DB write failed
+    // Cleanup Cloudinary uploads if DB write failed
     if (req.files && req.files.length > 0) {
-      req.files.forEach(file => {
-        const fullPath = path.join(__dirname, '../uploads', file.filename);
-        if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
-      });
+      for (const file of req.files) {
+        await cloudinary.uploader.destroy(file.filename).catch(() => {});
+      }
     }
     next(error);
   }
@@ -199,20 +187,21 @@ const updateProduct = async (req, res, next) => {
       product.category = category;
     }
 
-    // Handle stringified or array list of image paths to remove
+    // Handle stringified or array list of image URLs to remove
     if (removeImages) {
       const imagesToRemove = Array.isArray(removeImages)
         ? removeImages
         : [removeImages];
-      imagesToRemove.forEach(img => {
-        deleteDiskImage(img);
+
+      for (const img of imagesToRemove) {
+        await deleteCloudinaryImage(img);
         product.images = product.images.filter(existingImg => existingImg !== img);
-      });
+      }
     }
 
     // Append new uploaded images if any
     if (req.files && req.files.length > 0) {
-      const newImages = req.files.map(file => `/uploads/${file.filename}`);
+      const newImages = req.files.map(file => file.path); // Cloudinary secure URL
       product.images = [...product.images, ...newImages];
     }
 
@@ -228,12 +217,30 @@ const updateProduct = async (req, res, next) => {
     });
   } catch (error) {
     if (req.files && req.files.length > 0) {
-      req.files.forEach(file => {
-        const fullPath = path.join(__dirname, '../uploads', file.filename);
-        if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
-      });
+      for (const file of req.files) {
+        await cloudinary.uploader.destroy(file.filename).catch(() => {});
+      }
     }
     next(error);
+  }
+};
+
+// Helper: deletes an image from Cloudinary given its stored secure URL
+const deleteCloudinaryImage = async (imageUrl) => {
+  try {
+    // Only attempt deletion for actual Cloudinary URLs (skip external ones like Unsplash)
+    if (!imageUrl.includes('res.cloudinary.com')) return;
+
+    // Extract public_id from a URL like:
+    // https://res.cloudinary.com/<cloud>/image/upload/v123456/cartex-products/filename.jpg
+    const parts = imageUrl.split('/');
+    const uploadIndex = parts.findIndex(p => p === 'upload');
+    const publicIdWithExt = parts.slice(uploadIndex + 2).join('/'); // skips the version segment
+    const publicId = publicIdWithExt.substring(0, publicIdWithExt.lastIndexOf('.'));
+
+    await cloudinary.uploader.destroy(publicId);
+  } catch (err) {
+    console.error('Failed to delete Cloudinary image:', err.message);
   }
 };
 

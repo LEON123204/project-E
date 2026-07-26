@@ -136,7 +136,7 @@ const seedData = async () => {
         description: '20,000mAh external battery packs with high-speed USB-C Power Delivery charging. Charges up to 3 devices simultaneously.',
         price: 1499.00,
         category: electronics._id,
-        images: ['/uploads/nomad_power_bank.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785080244/nomad_power_bank_kzz5d5.jpg'],
         stock: 50
       },
       {
@@ -160,7 +160,7 @@ const seedData = async () => {
         description: '1080p 60fps streaming webcam with autofocus, dual stereo microphones, privacy cover, and flexible mounting clip.',
         price: 1899.00,
         category: electronics._id,
-        images: ['https://images.unsplash.com/photo-1603566114405-2591605f6eb6?w=800&auto=format&fit=crop&q=60'],
+        images: ['https://images.unsplash.com/photo-1623949556303-b0d17d198863?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8d2ViY2FtfGVufDB8fDB8fHww'],
         stock: 25
       },
       {
@@ -353,7 +353,7 @@ const seedData = async () => {
         description: 'Slim, bi-fold pocket wallet crafted from genuine full-grain leather. Features RFID-blocking technology and 6 card slots.',
         price: 999.00,
         category: accessories._id,
-        images: ['/uploads/leather_wallet.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785080005/leather_wallet_itvez3.jpg'],
         stock: 25
       },
       {
@@ -361,7 +361,7 @@ const seedData = async () => {
         description: 'Classic horn-rimmed frame style with UV400 polarized lenses that reduce glare and protect your eyes in style.',
         price: 699.00,
         category: accessories._id,
-        images: ['/uploads/polarized_sunglasses.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785079843/polarized_sunglasses_qmwa3m.jpg'],
         stock: 15
       },
       {
@@ -369,7 +369,7 @@ const seedData = async () => {
         description: 'Handcrafted braided genuine leather bracelet with a magnetic stainless steel clasp. Sleek everyday accessory.',
         price: 399.00,
         category: accessories._id,
-        images: ['/uploads/leather_wristband.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785080236/leather_wristband_js05e0.jpg'],
         stock: 30
       },
       {
@@ -377,7 +377,7 @@ const seedData = async () => {
         description: 'Water-repellent travel case for cables, chargers, memory cards, and external hard drives. Compact and durable.',
         price: 799.00,
         category: accessories._id,
-        images: ['/uploads/tech_organizer.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785079967/tech_organizer_t5jpfi.jpg'],
         stock: 20
       },
       {
@@ -385,7 +385,7 @@ const seedData = async () => {
         description: 'Woven from 100% pure premium silk. Modern width and subtle micro-pattern design perfect for formal or business settings.',
         price: 699.00,
         category: accessories._id,
-        images: ['/uploads/silk_tie.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785079846/silk_tie_sol0rx.jpg'],
         stock: 12
       },
       // Skincare
@@ -394,7 +394,7 @@ const seedData = async () => {
         description: 'Intense moisture booster formulated with pure hyaluronic acid and Vitamin B5. Plumps skin and smooths fine lines.',
         price: 699.00,
         category: skincare._id,
-        images: ['/uploads/hyaluronic_serum.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785080010/hyaluronic_serum_tzncnp.jpg'],
         stock: 30
       },
       {
@@ -402,7 +402,7 @@ const seedData = async () => {
         description: '100% pure distilled rose petals. Alcohol-free mist that hydrates, balances, and refreshes all skin types.',
         price: 399.00,
         category: skincare._id,
-        images: ['/uploads/rosewater_toner.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785079848/rosewater_toner_cberhe.jpg'],
         stock: 40
       },
       {
@@ -410,7 +410,7 @@ const seedData = async () => {
         description: 'Deeply moisturizing body butter infused with organic cocoa butter, sweet almond oil, and cold-pressed coconut oil.',
         price: 499.00,
         category: skincare._id,
-        images: ['/uploads/shea_body_cream.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785079953/shea_body_cream_ssytwg.jpg'],
         stock: 25
       },
       {
@@ -418,7 +418,7 @@ const seedData = async () => {
         description: 'pH-balanced daily face wash with calming chamomile and green tea extract. Cleanses without stripping moisture.',
         price: 399.00,
         category: skincare._id,
-        images: ['/uploads/foaming_cleanser.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785080018/foaming_cleanser_zudtmd.jpg'],
         stock: 35
       },
       {
@@ -426,7 +426,7 @@ const seedData = async () => {
         description: 'Broad-spectrum zinc oxide protection. Lightweight, non-greasy formula that leaves a clean, natural matte finish.',
         price: 599.00,
         category: skincare._id,
-        images: ['/uploads/mineral_sunscreen.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785080236/mineral_sunscreen_e994bk.jpg'],
         stock: 20
       },
       // Car & Bike Accessories
@@ -435,7 +435,7 @@ const seedData = async () => {
         description: 'Premium non-slip carbon fiber texture steering wheel cover. Fits most standard 15-inch steering wheels, providing sporty looks and excellent grip.',
         price: 799.00,
         category: carBike._id,
-        images: ['/uploads/steering_wheel_cover.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785079878/steering_wheel_cover_eyqzm7.jpg'],
         stock: 25
       },
       {
@@ -443,7 +443,7 @@ const seedData = async () => {
         description: 'High-intensity rechargeable LED headlight and taillight set. Waterproof design with multiple light modes for safer night riding.',
         price: 699.00,
         category: carBike._id,
-        images: ['/uploads/led_bike_light.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785080231/led_bike_light_fpcxun.jpg'],
         stock: 40
       },
       {
@@ -451,7 +451,7 @@ const seedData = async () => {
         description: 'Hardened steel shackles resist cutting and leverage attacks. Features a dust cover and dual keys for ultimate bicycle security.',
         price: 1299.00,
         category: carBike._id,
-        images: ['/uploads/u_lock_bike_lock.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785079870/u_lock_bike_lock_llvu4g.jpg'],
         stock: 15
       },
       {
@@ -459,7 +459,7 @@ const seedData = async () => {
         description: 'Multi-pocket storage organizer featuring a touchscreen tablet holder, water bottle mesh pockets, and durable oxford cloth backing.',
         price: 899.00,
         category: carBike._id,
-        images: ['/uploads/car_seat_organizer.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785080020/car_seat_organizer_pyokrw.jpg'],
         stock: 30
       },
       {
@@ -467,7 +467,7 @@ const seedData = async () => {
         description: 'Ultra-strong N52 neodymium magnets securely hold your iPhone/Android phone on bumpy roads. Fits most standard horizontal/vertical car vents.',
         price: 599.00,
         category: carBike._id,
-        images: ['/uploads/car_phone_mount.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785079962/car_phone_mount_aangqi.jpg'],
         stock: 50
       },
       {
@@ -475,7 +475,7 @@ const seedData = async () => {
         description: 'Smart cordless air compressor with digital pressure gauge, auto-stop function, and LED flashlight. Fills car, bike, and sports ball tires in minutes.',
         price: 1499.00,
         category: carBike._id,
-        images: ['/uploads/tire_inflator.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785079868/tire_inflator_jqfyjt.jpg'],
         stock: 20
       },
       {
@@ -483,7 +483,7 @@ const seedData = async () => {
         description: 'High-pressure adjustable foam lance with 1-liter bottle. Attaches to pressure washer for thick snow foam cleaning of vehicles.',
         price: 999.00,
         category: carBike._id,
-        images: ['/uploads/foam_cannon.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785079975/foam_cannon_aihuzu.jpg'],
         stock: 15
       },
       {
@@ -491,7 +491,7 @@ const seedData = async () => {
         description: 'Touchscreen-friendly top tube bag with sun visor, headphone hole, and large capacity storage for keys, wallet, and cycling accessories.',
         price: 699.00,
         category: carBike._id,
-        images: ['/uploads/bike_frame_bag.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785079984/bike_frame_bag_eouqug.jpg'],
         stock: 25
       },
       {
@@ -499,7 +499,7 @@ const seedData = async () => {
         description: 'Real-time mini magnetic GPS tracking device for cars, motorcycles, and bikes. Supports mobile app geofencing alerts and historical route recording.',
         price: 1899.00,
         category: carBike._id,
-        images: ['/uploads/gps_tracker.png'],
+        images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785080008/gps_tracker_fsrapt.jpg'],
         stock: 10
       }
     ];
