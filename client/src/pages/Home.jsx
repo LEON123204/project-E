@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
-import { Heart, ShoppingCart, Star, ArrowRight } from 'lucide-react';
+import { Heart, ShoppingCart, Star, ArrowRight, Truck } from 'lucide-react';
 import { ProductCardSkeleton } from '../components/SkeletonLoader';
 import useScrollReveal from '../hooks/useScrollReveal';
+import { motion } from 'framer-motion';
 
 // Custom Count-Up Counter component using IntersectionObserver
 const AnimatedCounter = ({ target, duration = 2000, suffix = "" }) => {
@@ -69,6 +70,26 @@ const Home = () => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   
   const [products, setProducts] = useState([]);
+  const [heroProducts, setHeroProducts] = useState([
+    {
+      _id: 'default-1',
+      name: 'Nomad Portable Power Bank',
+      price: 1499.00,
+      images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785080244/nomad_power_bank_kzz5d5.jpg']
+    },
+    {
+      _id: 'default-2',
+      name: 'Minimalist Leather Wallet',
+      price: 1499.00,
+      images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785080005/leather_wallet_itvez3.jpg']
+    },
+    {
+      _id: 'default-3',
+      name: 'Urban Tech Organizer Pouch',
+      price: 1899.00,
+      images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785079967/tech_organizer_t5jpfi.jpg']
+    }
+  ]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [addingToCartId, setAddingToCartId] = useState(null);
@@ -83,12 +104,24 @@ const Home = () => {
   useEffect(() => {
     const fetchTrendingProducts = async () => {
       try {
-        const response = await api.get('/products?limit=4&sort=newest');
-        setProducts(response.data.products);
+        const response = await api.get('/products?limit=12&sort=newest');
+        const allProducts = response.data.products;
+        setProducts(allProducts.slice(0, 4));
         if (response.data && typeof response.data.totalProducts === 'number') {
           setTotalProductsCount(response.data.totalProducts);
         }
+
+        // Find products that have Cloudinary images
+        const cloudinaryProducts = allProducts.filter(p => 
+          p.images && p.images[0] && p.images[0].includes('cloudinary.com')
+        );
+        if (cloudinaryProducts.length >= 3) {
+          setHeroProducts(cloudinaryProducts.slice(0, 3));
+        } else if (allProducts.length >= 3) {
+          setHeroProducts(allProducts.slice(0, 3));
+        }
       } catch (err) {
+        console.error('Error loading trending products:', err);
         setError('Could not load trending products');
       } finally {
         setLoading(false);
@@ -129,35 +162,191 @@ const Home = () => {
   ];
 
   return (
-    <div className="bg-slate-950 text-slate-100 min-h-screen pb-16 overflow-x-hidden">
+    <div className="bg-slate-950 text-slate-100 min-h-screen pb-16 overflow-x-hidden w-full">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/30 via-slate-950 to-slate-950 py-20 lg:py-32 px-4 sm:px-6 lg:px-8">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.15),transparent_60%)] -z-10 blur-3xl"></div>
-        <div className="max-w-5xl mx-auto text-center space-y-8 animate-fadeIn">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-xs font-semibold text-indigo-400 font-sans">
-            🚀 Free Shipping on Orders Over ₹1,000
-          </span>
-          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-none bg-gradient-to-r from-slate-100 via-indigo-100 to-indigo-300 bg-clip-text text-transparent">
-            Elevate Your Daily Workspace & Lifestyle
-          </h1>
-          <p className="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Discover a curated collection of premium accessories, apparel, and gadgets designed to optimize your workflow and comfort. Fully responsive, local storage cart, secure JWT auth.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/shop"
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-8 rounded-full shadow-lg shadow-indigo-600/30 transition-smooth flex items-center justify-center gap-2 group"
+      <section className="relative overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-slate-950 to-slate-950 py-6 sm:py-14 lg:py-28 px-4 sm:px-6 lg:px-8">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.1),transparent_60%)] -z-10 blur-3xl"></div>
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10 lg:gap-12 items-center">
+          
+          {/* Left Text Column */}
+          <div className="lg:col-span-7 flex flex-col items-start text-left antialiased">
+            <motion.span 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-indigo-400 font-sans mb-3 sm:mb-6"
             >
-              Browse Shop
-              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <a
-              href="#categories"
-              className="bg-slate-900 hover:bg-slate-850 text-slate-300 border border-slate-800 hover:border-slate-700 font-semibold py-3 px-8 rounded-full transition-smooth flex items-center justify-center"
+              <Truck size={12} className="text-indigo-400" />
+              Free Shipping on Orders Over ₹1,000
+            </motion.span>
+            
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-[1.6rem] leading-[1.2] xs:text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-100 mb-3 sm:mb-8"
             >
-              View Categories
-            </a>
+              Elevate Your Daily{' '}
+              <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent inline-block pb-1">
+                Workspace & Lifestyle
+              </span>
+            </motion.h1>
+            
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-sm sm:text-lg leading-[1.65] text-slate-400 max-w-lg mb-4 sm:mb-10 font-normal"
+            >
+              Discover a curated collection of premium accessories, apparel, and gadgets designed to optimize your workflow and comfort.
+            </motion.p>
+            
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="flex flex-row gap-3 w-full sm:w-auto justify-start"
+            >
+              <Link
+                to="/shop"
+                className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-5 sm:py-3 sm:px-8 rounded-full shadow-lg shadow-indigo-600/30 transition-smooth flex items-center justify-center gap-2 group text-sm sm:text-base"
+              >
+                Browse Shop
+                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <a
+                href="#categories"
+                className="bg-slate-900 hover:bg-slate-850 text-slate-300 border border-slate-800 hover:border-slate-700 font-semibold py-2.5 px-5 sm:py-3 sm:px-8 rounded-full transition-smooth flex items-center justify-center text-sm sm:text-base"
+              >
+                Categories
+              </a>
+            </motion.div>
           </div>
+
+          {/* Right Collage Column — Mobile: single centered card; sm+: full stacked collage */}
+          <div className="lg:col-span-5 relative flex justify-center items-center">
+
+            {/* ── MOBILE LAYOUT: single card, full width, aspect ratio ── */}
+            <div className="flex sm:hidden w-full gap-3 px-2">
+              {heroProducts[0] && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                  className="flex-1 rounded-2xl overflow-hidden border border-slate-800/80 shadow-2xl bg-slate-900 group aspect-[3/4] max-h-[220px]"
+                >
+                  <Link to={heroProducts[0]._id.startsWith('default-') ? "/shop" : `/product/${heroProducts[0]._id}`} className="block w-full h-full relative">
+                    <img
+                      src={heroProducts[0].images[0]}
+                      alt={heroProducts[0].name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"></div>
+                    <div className="absolute bottom-2 left-2 right-2">
+                      <p className="text-[10px] font-bold text-slate-100 truncate">{heroProducts[0].name}</p>
+                      <p className="text-[10px] font-semibold text-indigo-400">₹{heroProducts[0].price.toFixed(2)}</p>
+                    </div>
+                  </Link>
+                </motion.div>
+              )}
+              {heroProducts[1] && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.45 }}
+                  className="flex-1 rounded-2xl overflow-hidden border border-slate-800/80 shadow-2xl bg-slate-900 group aspect-[3/4] max-h-[220px]"
+                >
+                  <Link to={heroProducts[1]._id.startsWith('default-') ? "/shop" : `/product/${heroProducts[1]._id}`} className="block w-full h-full relative">
+                    <img
+                      src={heroProducts[1].images[0]}
+                      alt={heroProducts[1].name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"></div>
+                    <div className="absolute bottom-2 left-2 right-2">
+                      <p className="text-[10px] font-bold text-slate-100 truncate">{heroProducts[1].name}</p>
+                      <p className="text-[10px] font-semibold text-indigo-400">₹{heroProducts[1].price.toFixed(2)}</p>
+                    </div>
+                  </Link>
+                </motion.div>
+              )}
+            </div>
+
+            {/* ── SM+ LAYOUT: overlapping collage ── */}
+            <div className="hidden sm:block relative w-full max-w-[280px] md:max-w-[360px] h-[300px] md:h-[400px]">
+
+              {/* Back Card (Top Right) */}
+              {heroProducts[1] && (
+                <motion.div
+                  initial={{ opacity: 0, x: 60, y: -30, rotate: 0 }}
+                  animate={{ opacity: 1, x: 0, y: 0, rotate: 8 }}
+                  transition={{ duration: 0.7, delay: 0.45, ease: "easeOut" }}
+                  className="absolute top-[5%] right-[-5%] lg:right-[-10%] w-[150px] h-[200px] md:w-[190px] md:h-[250px] rounded-2xl overflow-hidden border border-slate-800/80 shadow-2xl bg-slate-900 z-10 group"
+                >
+                  <Link to={heroProducts[1]._id.startsWith('default-') ? "/shop" : `/product/${heroProducts[1]._id}`} className="block w-full h-full relative">
+                    <img
+                      src={heroProducts[1].images[0]}
+                      alt={heroProducts[1].name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                    />
+                    <div className="absolute inset-0 bg-slate-950/20 group-hover:bg-slate-950/0 transition-smooth"></div>
+                    <div className="absolute bottom-2 left-2 right-2 bg-slate-950/80 backdrop-blur-md border border-slate-800/80 rounded-xl p-2 z-20">
+                      <p className="text-[9px] font-bold text-slate-100 truncate">{heroProducts[1].name}</p>
+                      <p className="text-[9px] font-semibold text-indigo-400">₹{heroProducts[1].price.toFixed(2)}</p>
+                    </div>
+                  </Link>
+                </motion.div>
+              )}
+
+              {/* Main Center Card */}
+              {heroProducts[0] && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.85, y: 40 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.7, delay: 0.3, ease: "easeOut" }}
+                  className="absolute top-[15%] left-[10%] w-[180px] h-[240px] md:w-[220px] md:h-[300px] rounded-2xl overflow-hidden border border-slate-750/90 shadow-2xl bg-slate-900 z-20 group"
+                >
+                  <Link to={heroProducts[0]._id.startsWith('default-') ? "/shop" : `/product/${heroProducts[0]._id}`} className="block w-full h-full relative">
+                    <img
+                      src={heroProducts[0].images[0]}
+                      alt={heroProducts[0].name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                    />
+                    <div className="absolute inset-0 bg-slate-950/15 group-hover:bg-slate-950/0 transition-smooth"></div>
+                    <div className="absolute bottom-3 left-3 right-3 bg-slate-950/85 backdrop-blur-md border border-slate-800/80 rounded-xl p-2.5 z-20">
+                      <p className="text-[10px] font-bold text-slate-100 truncate">{heroProducts[0].name}</p>
+                      <p className="text-[10px] font-semibold text-indigo-400">₹{heroProducts[0].price.toFixed(2)}</p>
+                    </div>
+                  </Link>
+                </motion.div>
+              )}
+
+              {/* Front Card (Bottom Left) */}
+              {heroProducts[2] && (
+                <motion.div
+                  initial={{ opacity: 0, x: -60, y: 30, rotate: 0 }}
+                  animate={{ opacity: 1, x: 0, y: 0, rotate: -8 }}
+                  transition={{ duration: 0.7, delay: 0.6, ease: "easeOut" }}
+                  className="absolute bottom-[5%] left-[-10%] lg:left-[-15%] w-[140px] h-[190px] md:w-[170px] md:h-[230px] rounded-2xl overflow-hidden border border-slate-800/80 shadow-2xl bg-slate-900 z-30 group"
+                >
+                  <Link to={heroProducts[2]._id.startsWith('default-') ? "/shop" : `/product/${heroProducts[2]._id}`} className="block w-full h-full relative">
+                    <img
+                      src={heroProducts[2].images[0]}
+                      alt={heroProducts[2].name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                    />
+                    <div className="absolute inset-0 bg-slate-950/20 group-hover:bg-slate-950/0 transition-smooth"></div>
+                    <div className="absolute bottom-2 left-2 right-2 bg-slate-950/80 backdrop-blur-md border border-slate-800/80 rounded-xl p-2 z-20">
+                      <p className="text-[9px] font-bold text-slate-100 truncate">{heroProducts[2].name}</p>
+                      <p className="text-[9px] font-semibold text-indigo-400">₹{heroProducts[2].price.toFixed(2)}</p>
+                    </div>
+                  </Link>
+                </motion.div>
+              )}
+
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -248,23 +437,23 @@ const Home = () => {
           {error && <p className="text-rose-400 text-center">{error}</p>}
 
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               {[1, 2, 3, 4].map(idx => <ProductCardSkeleton key={idx} />)}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               {products.map((product, index) => (
                 <div
                   key={product._id}
                   style={{
                     transitionDelay: productsVisible ? `${index * 100}ms` : '0ms'
                   }}
-                  className={`group bg-slate-900/40 hover:bg-slate-900/80 border border-slate-900 hover:border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col justify-between h-[25rem] transition-all duration-700 transform ${
+                  className={`group bg-slate-900/40 hover:bg-slate-900/80 border border-slate-900 hover:border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col justify-between h-[20rem] sm:h-[25rem] transition-all duration-700 transform ${
                     productsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
                   } hover:-translate-y-2 hover:shadow-indigo-950/50`}
                 >
                   {/* Image and Wishlist button */}
-                  <div className="relative h-48 bg-slate-950 overflow-hidden">
+                  <div className="relative h-36 sm:h-48 bg-slate-950 overflow-hidden">
                     <Link to={`/product/${product._id}`}>
                       <img
                         src={product.images[0] || 'https://via.placeholder.com/300x200?text=No+Image'}
@@ -333,8 +522,8 @@ const Home = () => {
       {/* Recently Viewed Section */}
       {recentlyViewed.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-slate-900/60 mt-8">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-tight mb-8">Recently Viewed</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <h2 className="text-xl sm:text-3xl font-extrabold text-slate-100 tracking-tight mb-6 sm:mb-8">Recently Viewed</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
             {recentlyViewed.map((item) => (
               <Link
                 key={item._id}

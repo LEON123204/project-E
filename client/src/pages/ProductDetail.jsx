@@ -156,8 +156,8 @@ const ProductDetail = () => {
   const isOutOfStock = !product || product.stock <= 0;
 
   return (
-    <div className="bg-slate-950 text-slate-100 min-h-screen pt-12 pb-24 md:pb-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-16">
+    <div className="bg-slate-950 text-slate-100 min-h-screen pt-8 sm:pt-12 pb-28 sm:pb-12 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
+      <div className="max-w-7xl mx-auto space-y-10 sm:space-y-16">
         
         {/* Core Product Layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
@@ -205,7 +205,7 @@ const ProductDetail = () => {
               <span className="text-xs font-semibold text-indigo-400 uppercase tracking-widest">
                 {product.category?.name || 'Category'}
               </span>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-100 tracking-tight leading-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-100 tracking-tight leading-tight">
                 {product.name}
               </h1>
               
@@ -251,38 +251,38 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* Cart add section */}
-            <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
-              {/* Quantity Toggle */}
-              <div className={`flex items-center justify-between border border-slate-800 bg-slate-900/60 rounded-xl p-1.5 w-full sm:w-32 ${isOutOfStock ? 'opacity-50 select-none' : ''}`}>
+            {/* Cart add section — always row: qty control | add button */}
+            <div className="flex flex-row items-stretch gap-3 pt-4">
+              {/* Quantity Toggle — min 44px tall for touch */}
+              <div className={`flex items-center border border-slate-800 bg-slate-900/60 rounded-xl px-1 min-h-[44px] w-[120px] shrink-0 ${isOutOfStock ? 'opacity-50 select-none' : ''}`}>
                 <button
                   type="button"
                   disabled={isOutOfStock || quantity <= 1}
                   onClick={() => handleQuantityChange('dec')}
-                  className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-100 transition-smooth disabled:text-slate-700"
+                  className="flex-1 flex items-center justify-center min-h-[44px] hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-100 transition-smooth disabled:text-slate-700"
                 >
                   <Minus size={16} />
                 </button>
-                <span className="font-semibold text-slate-100 text-sm">{isOutOfStock ? 0 : quantity}</span>
+                <span className="font-semibold text-slate-100 text-sm select-none px-1 text-center w-6">{isOutOfStock ? 0 : quantity}</span>
                 <button
                   type="button"
                   disabled={isOutOfStock || quantity >= product.stock}
                   onClick={() => handleQuantityChange('inc')}
-                  className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-100 transition-smooth disabled:text-slate-700"
+                  className="flex-1 flex items-center justify-center min-h-[44px] hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-100 transition-smooth disabled:text-slate-700"
                 >
                   <Plus size={16} />
                 </button>
               </div>
 
-              {/* Add to Cart button */}
+              {/* Add to Cart button — flex-1 fills remaining width */}
               <button
                 type="button"
                 disabled={isOutOfStock || isAdding}
                 onClick={handleAddToCart}
-                className={`w-full sm:flex-1 py-3 px-8 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-smooth shadow-lg ${
+                className={`flex-1 min-h-[44px] px-4 sm:px-8 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-smooth shadow-lg text-sm sm:text-base ${
                   isOutOfStock
-                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-750/50 shadow-none'
-                    : justAdded 
+                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800/50 shadow-none'
+                    : justAdded
                       ? 'bg-emerald-600 text-white shadow-emerald-600/10'
                       : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
                 }`}
@@ -290,17 +290,17 @@ const ProductDetail = () => {
                 {isOutOfStock ? (
                   <>
                     <AlertCircle size={18} />
-                    Out of Stock
+                    <span>Out of Stock</span>
                   </>
                 ) : justAdded ? (
                   <>
                     <Check size={18} />
-                    Added to Cart!
+                    <span>Added!</span>
                   </>
                 ) : (
                   <>
                     <ShoppingCart size={18} />
-                    {isAdding ? 'Adding...' : 'Add to Cart'}
+                    <span>{isAdding ? 'Adding...' : 'Add to Cart'}</span>
                   </>
                 )}
               </button>
@@ -309,7 +309,7 @@ const ProductDetail = () => {
         </div>
 
         {/* Reviews Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 border-t border-slate-900 pt-16">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-12 border-t border-slate-900 pt-10 sm:pt-16">
           
           {/* Review form / statistics */}
           <div className="space-y-6">

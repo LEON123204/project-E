@@ -182,73 +182,98 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-slate-950 border-b border-slate-900 py-4 px-4 space-y-3 animate-slideDown">
-          <Link
-            to="/"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block text-slate-300 hover:text-indigo-400 text-base font-medium py-1.5 border-b border-slate-900"
+        <div className="md:hidden bg-slate-950 border-b border-slate-900 py-4 px-4 space-y-1 animate-slideDown">
+
+          {/* Mobile Search Bar */}
+          <form
+            onSubmit={(e) => {
+              handleSearchSubmit(e);
+              setMobileMenuOpen(false);
+            }}
+            className="relative mb-3"
           >
-            Home
-          </Link>
-          <Link
-            to="/shop"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block text-slate-300 hover:text-indigo-400 text-base font-medium py-1.5 border-b border-slate-900"
-          >
-            Shop
-          </Link>
-          <Link
-            to="/order-tracking"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block text-slate-300 hover:text-indigo-400 text-base font-medium py-1.5 border-b border-slate-900"
-          >
-            Track Order
-          </Link>
-          <Link
-            to="/wishlist"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block text-slate-300 hover:text-indigo-400 text-base font-medium py-1.5 border-b border-slate-900"
-          >
-            Wishlist ({wishlist.length})
-          </Link>
-          
-          {isAuthenticated ? (
-            <>
-              {isAdmin && (
-                <Link
-                  to="/admin/dashboard"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block text-indigo-400 hover:text-indigo-300 text-base font-medium py-1.5 border-b border-slate-900"
-                >
-                  Admin Panel
-                </Link>
-              )}
-              <Link
-                to="/profile"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-slate-300 hover:text-indigo-400 text-base font-medium py-1.5 border-b border-slate-900"
-              >
-                My Profile / Orders
-              </Link>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  logout();
-                }}
-                className="w-full text-left text-rose-400 hover:text-rose-350 text-base font-medium py-1.5"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 rounded-full py-2.5 pl-4 pr-10 text-sm text-slate-100 placeholder-slate-500 outline-none transition-smooth"
+            />
+            <button type="submit" className="absolute right-3 top-2.5 text-slate-500 hover:text-indigo-400">
+              <Search size={18} />
+            </button>
+          </form>
+
+          <div className="border-t border-slate-900/70 pt-2 space-y-0.5">
             <Link
-              to="/login"
+              to="/"
               onClick={() => setMobileMenuOpen(false)}
-              className="block w-full text-center bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-xl text-sm font-medium transition-smooth"
+              className="block text-slate-300 hover:text-indigo-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
             >
-              Sign In
+              Home
             </Link>
-          )}
+            <Link
+              to="/shop"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-slate-300 hover:text-indigo-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+            >
+              Shop
+            </Link>
+            <Link
+              to="/order-tracking"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-slate-300 hover:text-indigo-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+            >
+              Track Order
+            </Link>
+            <Link
+              to="/wishlist"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-slate-300 hover:text-indigo-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+            >
+              Wishlist {wishlist.length > 0 && <span className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">{wishlist.length}</span>}
+            </Link>
+          </div>
+
+          <div className="border-t border-slate-900/70 pt-2 space-y-0.5">
+            {isAuthenticated ? (
+              <>
+                {isAdmin && (
+                  <Link
+                    to="/admin/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block text-indigo-400 hover:text-indigo-300 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+                  >
+                    Admin Panel
+                  </Link>
+                )}
+                <Link
+                  to="/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block text-slate-300 hover:text-indigo-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+                >
+                  My Profile / Orders
+                </Link>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    logout();
+                  }}
+                  className="w-full text-left text-rose-400 hover:text-rose-300 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block w-full text-center bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl text-sm font-medium transition-smooth mt-2"
+              >
+                Sign In
+              </Link>
+            )}
+          </div>
         </div>
       )}
     </nav>

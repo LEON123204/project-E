@@ -39,9 +39,9 @@ const CartPage = () => {
   }
 
   return (
-    <div className="bg-slate-950 text-slate-100 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <div className="bg-slate-950 text-slate-100 min-h-screen py-8 sm:py-12 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-extrabold text-slate-100 mb-8">Shopping Cart</h1>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 mb-6 sm:mb-8">Shopping Cart</h1>
 
         {cartItems.length === 0 ? (
           <div className="bg-slate-900 border border-slate-850 rounded-2xl p-12 text-center max-w-lg mx-auto space-y-6">
@@ -66,7 +66,7 @@ const CartPage = () => {
               {cartItems.map((item) => (
                 <div
                   key={item.product?._id}
-                  className="bg-slate-900/50 hover:bg-slate-900 border border-slate-900 hover:border-slate-850 p-4 sm:p-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 transition-smooth"
+                  className="bg-slate-900/50 hover:bg-slate-900 border border-slate-900 hover:border-slate-850 p-4 sm:p-6 rounded-2xl flex flex-col gap-4 transition-smooth"
                 >
                   {/* Thumbnail & Info */}
                   <div className="flex items-center gap-4 w-full sm:w-auto">
@@ -99,37 +99,37 @@ const CartPage = () => {
                     </div>
                   </div>
 
-                  {/* Actions & Pricing */}
-                  <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto mt-2 sm:mt-0 border-t border-slate-900 sm:border-none pt-3 sm:pt-0">
+                  {/* Actions & Pricing — always in a row, wraps if needed */}
+                  <div className="flex items-center justify-between gap-3 w-full border-t border-slate-900/70 pt-3 sm:pt-0 sm:border-none sm:w-auto sm:justify-end">
                     
-                    {/* Quantity controls */}
-                    <div className="flex items-center justify-between border border-slate-800 bg-slate-950 rounded-lg p-1 w-24">
+                    {/* Quantity controls — 44px tall touch targets */}
+                    <div className="flex items-center border border-slate-800 bg-slate-950 rounded-lg min-h-[44px] px-1">
                       <button
                         onClick={() => handleQtyChange(item.product?._id, item.quantity, item.product?.stock, 'dec')}
                         disabled={item.quantity <= 1}
-                        className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-100 disabled:text-slate-700 transition-smooth"
+                        className="flex items-center justify-center min-w-[36px] min-h-[44px] hover:bg-slate-800 rounded text-slate-400 hover:text-slate-100 disabled:text-slate-700 transition-smooth"
                       >
-                        <Minus size={12} />
+                        <Minus size={14} />
                       </button>
-                      <span className="text-xs font-semibold text-slate-200">{item.quantity}</span>
+                      <span className="text-xs font-semibold text-slate-200 w-6 text-center select-none">{item.quantity}</span>
                       <button
                         onClick={() => handleQtyChange(item.product?._id, item.quantity, item.product?.stock, 'inc')}
                         disabled={item.quantity >= item.product?.stock}
-                        className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-100 disabled:text-slate-700 transition-smooth"
+                        className="flex items-center justify-center min-w-[36px] min-h-[44px] hover:bg-slate-800 rounded text-slate-400 hover:text-slate-100 disabled:text-slate-700 transition-smooth"
                       >
-                        <Plus size={12} />
+                        <Plus size={14} />
                       </button>
                     </div>
 
                     {/* Subtotal price for item */}
-                    <div className="text-sm font-extrabold text-slate-100 min-w-16 text-right">
+                    <div className="text-sm font-extrabold text-slate-100 text-right flex-1">
                       ₹{((item.product?.price || 0) * item.quantity).toFixed(2)}
                     </div>
 
                     {/* Trash remove item */}
                     <button
                       onClick={() => removeFromCart(item.product?._id)}
-                      className="p-2 bg-slate-950 hover:bg-rose-500/10 border border-slate-850 hover:border-rose-500/20 text-slate-400 hover:text-rose-400 rounded-xl transition-smooth cursor-pointer"
+                      className="p-2.5 bg-slate-950 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-500/20 text-slate-400 hover:text-rose-400 rounded-xl transition-smooth cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
                     >
                       <Trash2 size={16} />
                     </button>

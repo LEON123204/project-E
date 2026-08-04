@@ -3,8 +3,8 @@ import React from 'react';
 // Shimmering card grid item
 export const ProductCardSkeleton = () => {
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden p-4 flex flex-col justify-between h-96 shimmer-wrapper">
-      <div className="w-full h-48 bg-slate-800 rounded-xl mb-4"></div>
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden p-4 flex flex-col justify-between h-[20rem] sm:h-96 shimmer-wrapper">
+      <div className="w-full h-36 sm:h-48 bg-slate-800 rounded-xl mb-4"></div>
       <div className="flex flex-col gap-2">
         <div className="w-1/3 h-4 bg-slate-800 rounded"></div>
         <div className="w-3/4 h-5 bg-slate-800 rounded"></div>

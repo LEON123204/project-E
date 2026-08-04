@@ -299,9 +299,9 @@ const CheckoutPage = () => {
   const selectedAddress = user?.addresses[selectedAddressIndex];
 
   return (
-    <div className="bg-slate-950 text-slate-100 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <div className="bg-slate-950 text-slate-100 min-h-screen py-8 sm:py-12 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-extrabold text-slate-100 mb-8">Checkout</h1>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 mb-6 sm:mb-8">Checkout</h1>
 
         {!isAuthenticated && (
           <div className="bg-slate-900 border border-indigo-500/10 p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 animate-fadeIn">
@@ -383,7 +383,7 @@ const CheckoutPage = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] text-slate-400 uppercase font-semibold">City</label>
                       <input
@@ -410,7 +410,7 @@ const CheckoutPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] text-slate-400 uppercase font-semibold">Zip / Postal Code</label>
                       <input
@@ -437,12 +437,12 @@ const CheckoutPage = () => {
                     </div>
                   </div>
 
-                  <div className="flex justify-end pt-2">
+                  <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
                     {readyForPayment ? (
                       <button
                         type="button"
                         onClick={() => setReadyForPayment(false)}
-                        className="bg-slate-950 border border-slate-850 hover:bg-slate-850 text-indigo-400 hover:text-indigo-300 font-semibold py-2 px-6 rounded-xl text-xs transition-smooth cursor-pointer"
+                        className="w-full sm:w-auto bg-slate-950 border border-slate-800 hover:bg-slate-900 text-indigo-400 hover:text-indigo-300 font-semibold min-h-[44px] px-6 rounded-xl text-sm transition-smooth cursor-pointer"
                       >
                         Edit Information
                       </button>
@@ -464,7 +464,7 @@ const CheckoutPage = () => {
                             alert('Please fill out all required details before proceeding.');
                           }
                         }}
-                        className="bg-indigo-650 hover:bg-indigo-550 text-white font-semibold py-2 px-6 rounded-xl text-xs transition-smooth cursor-pointer"
+                        className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold min-h-[44px] px-6 rounded-xl text-sm transition-smooth cursor-pointer"
                       >
                         Save & Continue to Payment
                       </button>
@@ -495,7 +495,7 @@ const CheckoutPage = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] text-slate-400 uppercase font-semibold">City</label>
                       <input
@@ -520,7 +520,7 @@ const CheckoutPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] text-slate-400 uppercase font-semibold">Zip / Postal Code</label>
                       <input
@@ -640,7 +640,7 @@ const CheckoutPage = () => {
                       <img src={item.product?.images[0]} alt="" className="w-full h-full object-cover" />
                     </div>
                     <div className="space-y-0.5">
-                      <div className="font-semibold text-slate-300 line-clamp-1 max-w-36">{item.product?.name}</div>
+                      <div className="font-semibold text-slate-300 line-clamp-1 max-w-full sm:max-w-36">{item.product?.name}</div>
                       <div className="text-slate-500">Qty: {item.quantity}</div>
                     </div>
                   </div>
