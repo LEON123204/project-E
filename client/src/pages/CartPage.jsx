@@ -1,10 +1,14 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { useLoginPrompt } from '../context/LoginPromptContext';
 import { Trash2, Plus, Minus, ArrowRight, ShoppingBag, AlertCircle } from 'lucide-react';
 
 const CartPage = () => {
   const { cartItems, loading, updateQuantity, removeFromCart, cartTotal } = useCart();
+  const { isAuthenticated } = useAuth();
+  const { showPrompt } = useLoginPrompt();
   const navigate = useNavigate();
 
   const shippingCost = cartTotal > 1000 || cartTotal === 0 ? 0 : 99.00;
@@ -179,7 +183,19 @@ const CartPage = () => {
               )}
 
               <button
-                onClick={() => !hasInsufficientStock && navigate('/checkout')}
+                onClick={() => {
+                  if (hasInsufficientStock) return;
+                  if (!isAuthenticated) {
+                    showPrompt({
+                      title: 'Sign in to checkout',
+                      showGuestOption: true,
+                      redirectUrl: '/checkout',
+                      onGuest: () => navigate('/checkout')
+                    });
+                  } else {
+                    navigate('/checkout');
+                  }
+                }}
                 disabled={hasInsufficientStock}
                 className="w-full bg-indigo-650 hover:bg-indigo-550 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold py-3 rounded-xl transition-smooth shadow-lg shadow-indigo-600/20 disabled:shadow-none flex items-center justify-center gap-2 group cursor-pointer"
               >

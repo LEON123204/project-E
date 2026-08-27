@@ -1,11 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { useLoginPrompt } from './LoginPromptContext';
+import { useLocation } from 'react-router-dom';
 import api from '../services/api';
 
 const WishlistContext = createContext(null);
 
 export const WishlistProvider = ({ children }) => {
   const { isAuthenticated } = useAuth();
+  const { showPrompt } = useLoginPrompt();
+  const location = useLocation();
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -31,6 +35,11 @@ export const WishlistProvider = ({ children }) => {
 
   const toggleWishlist = async (productId) => {
     if (!isAuthenticated) {
+      showPrompt({
+        title: 'Sign in to save items to your wishlist',
+        showGuestOption: false,
+        redirectUrl: location.pathname
+      });
       return { success: false, message: 'Please log in to save items to your wishlist' };
     }
 

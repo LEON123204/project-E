@@ -134,8 +134,9 @@ const refreshAccessToken = async (req, res, next) => {
       accessToken: newAccessToken
     });
   } catch (error) {
-    res.status(401);
-    next(new Error('Authentication expired or invalid refresh token'));
+    // Return a clean 401 — client (AuthContext) silently handles this for guest users.
+    // Using res.json instead of next(Error) avoids a noisy stack trace on every guest load.
+    return res.status(401).json({ success: false, message: 'Authentication expired or invalid refresh token' });
   }
 };
 

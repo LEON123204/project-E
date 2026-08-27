@@ -22,12 +22,20 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Enable CORS with support for cookies (credentials)
-  app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://cartex-pix2kogkc-project-e3.vercel.app',
-    'https://cartex-lac.vercel.app'
-  ],
+const allowedOrigins = [
+  'https://cartex-pix2kogkc-project-e3.vercel.app',
+  'https://cartex-lac.vercel.app'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+    if (isLocalhost || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 
@@ -45,6 +53,7 @@ const cartRoutes = require('./routes/cartRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 // Mount Routes
 app.use('/api/v1/auth', authRoutes);
@@ -54,6 +63,7 @@ app.use('/api/v1/cart', cartRoutes);
 app.use('/api/v1/wishlist', wishlistRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/chat', chatRoutes);
 
 // Root Endpoint for checking API health
 app.get('/api/v1', (req, res) => {

@@ -13,7 +13,7 @@ const {
   setDefaultAddress
 } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
-const authLimiter = require('../middleware/rateLimiter');
+const { authLimiter } = require('../middleware/rateLimiter');
 const {
   registerValidation,
   loginValidation,

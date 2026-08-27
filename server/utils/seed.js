@@ -113,7 +113,8 @@ const seedData = async () => {
         price: 3499.00,
         category: electronics._id,
         images: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=60'],
-        stock: 12
+        stock: 12,
+        discountPercent: 15
       },
       {
         name: 'Apex Mechanical Keyboard',
@@ -129,7 +130,8 @@ const seedData = async () => {
         price: 3999.00,
         category: electronics._id,
         images: ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=60'],
-        stock: 3 // Low stock item
+        stock: 3, // Low stock item
+        discountPercent: 20
       },
       {
         name: 'Nomad Portable Power Bank',
@@ -169,7 +171,8 @@ const seedData = async () => {
         price: 799.00,
         category: electronics._id,
         images: ['https://images.unsplash.com/photo-1616440347437-b1c73416efc2?w=800&auto=format&fit=crop&q=60'],
-        stock: 30
+        stock: 30,
+        discountPercent: 25
       },
       {
         name: 'Orbit Wireless Ergonomic Mouse',
@@ -452,7 +455,8 @@ const seedData = async () => {
         price: 1299.00,
         category: carBike._id,
         images: ['https://res.cloudinary.com/c9trtuqh/image/upload/v1785079870/u_lock_bike_lock_llvu4g.jpg'],
-        stock: 15
+        stock: 15,
+        discountPercent: 10
       },
       {
         name: 'Premium Car Seat Back Organizer',
@@ -591,25 +595,22 @@ const seedData = async () => {
       return 'general';
     };
 
+    const reviewDocs = [];
     for (const prod of seededProducts) {
-      const reviewCount = Math.floor(Math.random() * 3) + 2; 
+      const reviewCount = Math.floor(Math.random() * 3) + 2;
       const shuffledReviewers = [...reviewers].sort(() => 0.5 - Math.random());
       const poolKey = getPoolKey(prod.category);
       const comments = commentPool[poolKey] || commentPool.general;
 
       for (let i = 0; i < reviewCount; i++) {
         const reviewer = shuffledReviewers[i];
-        const rating = Math.floor(Math.random() * 3) + 3; 
+        const rating = Math.floor(Math.random() * 3) + 3;
         const comment = comments[Math.floor(Math.random() * comments.length)];
-        
-        await Review.create({
-          user: reviewer._id,
-          product: prod._id,
-          rating,
-          comment
-        });
+        reviewDocs.push({ user: reviewer._id, product: prod._id, rating, comment });
       }
     }
+    await Review.insertMany(reviewDocs);
+
 
     console.log('Database seeded successfully!');
     process.exit();

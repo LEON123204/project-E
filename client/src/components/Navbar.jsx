@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { useLoginPrompt } from '../context/LoginPromptContext';
 import { 
   ShoppingBag, 
   Heart, 
@@ -25,6 +26,19 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const { showPrompt } = useLoginPrompt();
+
+  const handleTrackOrderClick = (e) => {
+    if (!isAuthenticated) {
+      e.preventDefault();
+      setMobileMenuOpen(false);
+      showPrompt({
+        title: 'Sign in to track your orders',
+        showGuestOption: false,
+        redirectUrl: '/order-tracking'
+      });
+    }
+  };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -56,7 +70,7 @@ const Navbar = () => {
             <div className="hidden md:flex ml-10 space-x-8">
               <Link to="/" className={activeLink('/')}>Home</Link>
               <Link to="/shop" className={activeLink('/shop')}>Shop</Link>
-              <Link to="/order-tracking" className={activeLink('/order-tracking')}>Track Order</Link>
+              <Link to="/order-tracking" onClick={handleTrackOrderClick} className={activeLink('/order-tracking')}>Track Order</Link>
             </div>
           </div>
 
@@ -221,7 +235,7 @@ const Navbar = () => {
             </Link>
             <Link
               to="/order-tracking"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={handleTrackOrderClick}
               className="block text-slate-300 hover:text-indigo-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
             >
               Track Order

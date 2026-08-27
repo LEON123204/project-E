@@ -38,6 +38,12 @@ const productSchema = new mongoose.Schema({
   reviewsCount: {
     type: Number,
     default: 0
+  },
+  discountPercent: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100
   }
 }, {
   timestamps: true

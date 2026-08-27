@@ -10,6 +10,10 @@ import { WishlistProvider } from './context/WishlistContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
+import ChatWidget from './components/ChatWidget';
+import ScrollToTop from './components/ScrollToTop';
+import { LoginPromptProvider } from './context/LoginPromptContext';
+import LoginPromptModal from './components/LoginPromptModal';
 
 // Customer Pages
 import Home from './pages/Home';
@@ -33,12 +37,17 @@ import AdminCustomers from './pages/admin/AdminCustomers';
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <AuthProvider>
-        <CartProvider>
-          <WishlistProvider>
-            <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
-              {/* Top Navigation */}
-              <Navbar />
+        <LoginPromptProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
+                {/* Top Navigation */}
+                <Navbar />
+
+                {/* Global Login Prompt Modal */}
+                <LoginPromptModal />
 
               {/* Main Content Area */}
               <main className="flex-grow">
@@ -111,9 +120,13 @@ function App() {
 
               {/* Bottom Navigation */}
               <Footer />
-            </div>
-          </WishlistProvider>
-        </CartProvider>
+
+              {/* Floating AI Chat Assistant */}
+              <ChatWidget />
+              </div>
+            </WishlistProvider>
+          </CartProvider>
+        </LoginPromptProvider>
       </AuthProvider>
     </Router>
   );

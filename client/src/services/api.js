@@ -61,6 +61,8 @@ export const setLocalAccessToken = (token) => {
   activeToken = token;
 };
 
+export const getLocalAccessToken = () => activeToken;
+
 // Request Interceptor: Attach token if exists
 api.interceptors.request.use(
   (config) => {
