@@ -26,6 +26,7 @@ import ProfilePage from './pages/ProfilePage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import OrderTracking from './pages/OrderTracking';
+import OrderConfirmation from './pages/OrderConfirmation';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -63,6 +64,7 @@ function App() {
 
                   {/* Public checkout and tracking */}
                   <Route path="/checkout" element={<CheckoutPage />} />
+                  <Route path="/order-confirmation/:id" element={<OrderConfirmation />} />
                   <Route path="/order-tracking" element={<OrderTracking />} />
                   <Route path="/order-tracking/:id" element={<OrderTracking />} />
                   <Route

@@ -84,10 +84,10 @@ const AdminOrders = () => {
         {/* Header Title */}
         <div className="flex items-center justify-between border-b border-slate-900 pb-5">
           <div>
-            <h1 className="text-3xl font-extrabold text-slate-100">Orders Management</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100">Orders Management</h1>
             <p className="text-slate-500 text-sm mt-1">Review orders backlog, confirm shipments, and track billing.</p>
           </div>
-          <button onClick={fetchOrders} className="text-slate-500 hover:text-slate-350">
+          <button onClick={fetchOrders} className="text-slate-505 hover:text-slate-350 p-2">
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
@@ -118,7 +118,8 @@ const AdminOrders = () => {
           </div>
         ) : (
           <div className="bg-slate-900 border border-slate-850 rounded-2xl overflow-hidden shadow-2xl">
-            <div className="overflow-x-auto">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-xs text-left divide-y divide-slate-850">
                 <thead>
                   <tr className="text-slate-400 font-semibold bg-slate-950/20">
@@ -184,6 +185,64 @@ const AdminOrders = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden divide-y divide-slate-850">
+              {orders.map((o) => (
+                <div key={o._id} className="p-4 space-y-3 bg-slate-900">
+                  <div className="flex justify-between items-center">
+                    <span className="font-mono font-bold text-slate-200 text-[11px]">
+                      #{o._id.substring(12).toUpperCase()}
+                    </span>
+                    <span className="text-slate-500 text-[10px]">
+                      {new Date(o.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="font-semibold text-slate-200 text-xs">{o.user?.name || o.guestName || 'Guest User'}</div>
+                    <div className="text-[10px] text-slate-500 truncate flex items-center gap-1.5">
+                      {o.isGuest && <span className="bg-indigo-500/20 border border-indigo-500/30 text-indigo-455 text-[8px] px-1 py-0.25 rounded font-bold uppercase shrink-0">Guest</span>}
+                      <span className="break-all">{o.user?.email || o.guestEmail || 'N/A'}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center pt-2 border-t border-slate-850/40">
+                    <span className="font-semibold text-slate-300 text-xs">Total: ₹{o.totalAmount.toFixed(2)}</span>
+                    <span className={`text-[9px] font-bold py-0.5 px-2 rounded-full ${
+                      o.paymentStatus === 'paid' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-455'
+                    }`}>
+                      {o.paymentStatus}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center gap-3 pt-2 border-t border-slate-850/40">
+                    <div className="flex-grow">
+                      {updatingStatusId === o._id ? (
+                        <span className="text-[10px] text-slate-500">Updating...</span>
+                      ) : (
+                        <select
+                          value={o.orderStatus}
+                          onChange={(e) => handleStatusChange(o._id, e.target.value)}
+                          className={`w-full bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-lg py-1.5 px-2.5 text-[10px] font-semibold uppercase outline-none cursor-pointer transition-smooth ${getStatusBadgeClass(o.orderStatus)}`}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="shipped">Shipped</option>
+                          <option value="delivered">Delivered</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setSelectedOrder(o)}
+                      className="p-2.5 bg-slate-950 hover:bg-indigo-500/10 border border-slate-850 hover:border-indigo-500/20 text-slate-450 hover:text-indigo-400 rounded-lg transition-smooth cursor-pointer shrink-0"
+                    >
+                      <Eye size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -192,24 +251,24 @@ const AdminOrders = () => {
       {/* DETAIL MODAL */}
       {selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl animate-scaleUp">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-scaleUp">
             
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-800">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-800 shrink-0">
               <div>
-                <h3 className="font-bold text-slate-200 text-base">Review Customer Order</h3>
-                <span className="text-[10px] font-mono text-slate-500">ID: #{selectedOrder._id}</span>
+                <h3 className="font-bold text-slate-200 text-sm sm:text-base">Review Customer Order</h3>
+                <span className="text-[9px] sm:text-[10px] font-mono text-slate-500">ID: #{selectedOrder._id}</span>
               </div>
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="p-1 bg-slate-950 border border-slate-850 hover:bg-slate-850 rounded-lg text-slate-450 hover:text-slate-200 cursor-pointer"
+                className="p-2 bg-slate-950 border border-slate-850 hover:bg-slate-850 rounded-lg text-slate-450 hover:text-slate-200 cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Body */}
-            <div className="p-6 space-y-6 max-h-[30rem] overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-6 overflow-y-auto flex-grow">
               
               {/* Order Status Select in Modal */}
               <div className="flex items-center gap-4 bg-slate-950/20 border border-slate-850 p-4 rounded-xl">
@@ -231,14 +290,14 @@ const AdminOrders = () => {
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Purchased Items</h4>
                 <div className="border border-slate-850 rounded-xl overflow-hidden divide-y divide-slate-850">
                   {selectedOrder.items.map((item) => (
-                    <div key={item._id} className="flex justify-between items-center p-3.5 text-xs bg-slate-950/20">
-                      <div>
-                        <div className="font-semibold text-slate-200">{item.name}</div>
-                        <div className="text-slate-500">
+                    <div key={item._id} className="flex justify-between items-center p-3 sm:p-3.5 text-xs bg-slate-950/20">
+                      <div className="max-w-[70%]">
+                        <div className="font-semibold text-slate-200 truncate">{item.name}</div>
+                        <div className="text-slate-550 text-[11px]">
                           Price: ₹{item.price.toFixed(2)} × {item.quantity}
                         </div>
                       </div>
-                      <div className="font-bold text-slate-100 text-right">
+                      <div className="font-bold text-slate-100 text-right shrink-0">
                         ₹{(item.price * item.quantity).toFixed(2)}
                       </div>
                     </div>
@@ -263,7 +322,15 @@ const AdminOrders = () => {
                     <CreditCard size={14} className="text-indigo-400" />
                     Payment Details
                   </h4>
-                  <p className="flex items-center gap-1">Email: {selectedOrder.user?.email || selectedOrder.guestEmail} {selectedOrder.isGuest && <span className="bg-indigo-500/20 border border-indigo-500/35 text-indigo-400 text-[8px] px-1 rounded font-bold uppercase shrink-0">Guest</span>}</p>
+                  <p className="flex items-center gap-1.5 flex-wrap">
+                    <span>Email:</span>
+                    <span className="break-all">{selectedOrder.user?.email || selectedOrder.guestEmail}</span>
+                    {selectedOrder.isGuest && (
+                      <span className="bg-indigo-500/20 border border-indigo-500/35 text-indigo-400 text-[8px] px-1 rounded font-bold uppercase shrink-0">
+                        Guest
+                      </span>
+                    )}
+                  </p>
                   <p>
                     Billing Status:{' '}
                     <span className={`font-bold capitalize ${selectedOrder.paymentStatus === 'paid' ? 'text-emerald-400' : 'text-amber-400'}`}>
@@ -271,7 +338,7 @@ const AdminOrders = () => {
                     </span>
                   </p>
                   {selectedOrder.paymentIntentId && (
-                    <p className="font-mono text-[9px] text-slate-550 mt-2 select-all">Ref: {selectedOrder.paymentIntentId}</p>
+                    <p className="font-mono text-[9px] text-slate-550 mt-2 select-all break-all">Ref: {selectedOrder.paymentIntentId}</p>
                   )}
                 </div>
               </div>
@@ -279,7 +346,7 @@ const AdminOrders = () => {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between p-6 border-t border-slate-800 bg-slate-950/20 text-xs">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-t border-slate-800 bg-slate-950/20 text-xs shrink-0">
               <span className="text-slate-400 font-medium">Grand Total</span>
               <span className="text-base font-extrabold text-slate-100">₹{selectedOrder.totalAmount.toFixed(2)}</span>
             </div>

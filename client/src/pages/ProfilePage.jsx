@@ -10,7 +10,6 @@ import {
   Lock, 
   AlertCircle, 
   Check, 
-  ChevronRight, 
   Truck, 
   X,
   CreditCard
@@ -168,9 +167,9 @@ const ProfilePage = () => {
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
         
         {/* Sidebar Tabs Selector */}
-        <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl h-fit space-y-6">
+        <div className="bg-slate-900 border border-slate-850 p-4 sm:p-6 rounded-2xl h-fit flex flex-col gap-4 md:gap-0 md:space-y-6">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-indigo-650 flex items-center justify-center font-bold text-lg text-white">
+            <div className="h-10 w-10 rounded-full bg-indigo-650 flex items-center justify-center font-bold text-lg text-white shrink-0">
               {user?.name?.[0]}
             </div>
             <div>
@@ -179,12 +178,12 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          <hr className="border-slate-850" />
+          <hr className="hidden md:block border-slate-850" />
 
-          <nav className="flex flex-col gap-1.5 text-sm">
+          <nav className="flex flex-row md:flex-col gap-1.5 text-sm overflow-x-auto pb-2 md:pb-0 scrollbar-none shrink-0 -mx-4 px-4 md:mx-0 md:px-0">
             <button
               onClick={() => handleTabChange('orders')}
-              className={`flex items-center gap-2.5 py-2 px-3.5 rounded-xl text-left cursor-pointer transition-smooth ${
+              className={`flex items-center gap-2.5 py-2.5 px-3.5 rounded-xl text-left cursor-pointer transition-smooth shrink-0 whitespace-nowrap ${
                 activeTab === 'orders' ? 'bg-indigo-650 text-white font-semibold' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
               }`}
             >
@@ -193,7 +192,7 @@ const ProfilePage = () => {
             </button>
             <button
               onClick={() => handleTabChange('addresses')}
-              className={`flex items-center gap-2.5 py-2 px-3.5 rounded-xl text-left cursor-pointer transition-smooth ${
+              className={`flex items-center gap-2.5 py-2.5 px-3.5 rounded-xl text-left cursor-pointer transition-smooth shrink-0 whitespace-nowrap ${
                 activeTab === 'addresses' ? 'bg-indigo-650 text-white font-semibold' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
               }`}
             >
@@ -202,7 +201,7 @@ const ProfilePage = () => {
             </button>
             <button
               onClick={() => handleTabChange('settings')}
-              className={`flex items-center gap-2.5 py-2 px-3.5 rounded-xl text-left cursor-pointer transition-smooth ${
+              className={`flex items-center gap-2.5 py-2.5 px-3.5 rounded-xl text-left cursor-pointer transition-smooth shrink-0 whitespace-nowrap ${
                 activeTab === 'settings' ? 'bg-indigo-650 text-white font-semibold' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
               }`}
             >
@@ -314,7 +313,7 @@ const ProfilePage = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] text-slate-400 uppercase font-semibold">City</label>
                       <input
@@ -322,7 +321,7 @@ const ProfilePage = () => {
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
                         required
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
                       />
                     </div>
                     <div className="space-y-1">
@@ -332,12 +331,12 @@ const ProfilePage = () => {
                         value={state}
                         onChange={(e) => setState(e.target.value)}
                         required
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] text-slate-400 uppercase font-semibold">Zip / Postal Code</label>
                       <input
@@ -345,7 +344,7 @@ const ProfilePage = () => {
                         value={zipCode}
                         onChange={(e) => setZipCode(e.target.value)}
                         required
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
                       />
                     </div>
                     <div className="space-y-1">
@@ -355,7 +354,7 @@ const ProfilePage = () => {
                         value={country}
                         onChange={(e) => setCountry(e.target.value)}
                         required
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
                       />
                     </div>
                   </div>
@@ -547,34 +546,32 @@ const ProfilePage = () => {
           )}
 
         </div>
-      </div>
-
-      {/* ORDER DETAILS MODAL */}
+      </div>      {/* ORDER DETAILS MODAL */}
       {selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl animate-scaleUp">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-scaleUp">
             
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-800">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-800 shrink-0">
               <div>
-                <h3 className="font-bold text-slate-200 text-base">Order Details</h3>
-                <span className="text-[10px] font-mono text-slate-500">ID: #{selectedOrder._id}</span>
+                <h3 className="font-bold text-slate-200 text-sm sm:text-base">Order Details</h3>
+                <span className="text-[9px] sm:text-[10px] font-mono text-slate-500">ID: #{selectedOrder._id}</span>
               </div>
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="p-1 bg-slate-950 border border-slate-800 hover:bg-slate-850 rounded-lg text-slate-450 hover:text-slate-200 transition-smooth cursor-pointer"
+                className="p-2 bg-slate-950 border border-slate-800 hover:bg-slate-850 rounded-lg text-slate-450 hover:text-slate-200 transition-smooth cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-6 max-h-[30rem] overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-6 overflow-y-auto flex-grow">
               
               {/* Order Tracker steps */}
               {selectedOrder.orderStatus !== 'cancelled' ? (
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2">
+                  <div className="flex items-center justify-between text-[8px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider px-1">
                     <span>Order Placed</span>
                     <span>Shipped Out</span>
                     <span>Delivered</span>
@@ -594,7 +591,7 @@ const ProfilePage = () => {
                         className={`h-5 w-5 rounded-full flex items-center justify-center border-2 transition-smooth ${
                           getStepIndex(selectedOrder.orderStatus) >= i
                             ? 'bg-indigo-600 border-indigo-500 text-white'
-                            : 'bg-slate-900 border-slate-800 text-slate-600'
+                            : 'bg-slate-900 border-slate-880 text-slate-600'
                         }`}
                       >
                         <Check size={10} className="stroke-[3]" />
@@ -603,7 +600,7 @@ const ProfilePage = () => {
                   </div>
                 </div>
               ) : (
-                <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-4 rounded-xl text-center text-xs flex items-center justify-center gap-2">
+                <div className="bg-rose-500/10 border border-rose-500/20 text-rose-455 p-4 rounded-xl text-center text-xs flex items-center justify-center gap-2">
                   <AlertCircle size={16} />
                   <span>This order has been cancelled and items returned to store stock.</span>
                 </div>
@@ -614,10 +611,10 @@ const ProfilePage = () => {
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Items Summary</h4>
                 <div className="border border-slate-850 rounded-xl overflow-hidden divide-y divide-slate-850">
                   {selectedOrder.items.map((item) => (
-                    <div key={item._id} className="flex justify-between items-center p-3.5 text-xs bg-slate-950/20">
-                      <div className="space-y-0.5">
-                        <div className="font-semibold text-slate-200">{item.name}</div>
-                        <div className="text-slate-500">
+                    <div key={item._id} className="flex justify-between items-center p-3 sm:p-3.5 text-xs bg-slate-950/20">
+                      <div className="space-y-0.5 max-w-[70%]">
+                        <div className="font-semibold text-slate-200 truncate">{item.name}</div>
+                        <div className="text-slate-550 text-[11px]">
                           Price: ₹{item.price.toFixed(2)} × {item.quantity}
                         </div>
                       </div>
@@ -660,11 +657,10 @@ const ProfilePage = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-between p-6 border-t border-slate-800 bg-slate-950/20 text-xs">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-t border-slate-800 bg-slate-950/20 text-xs shrink-0">
               <span className="text-slate-400 font-medium">Grand Total</span>
               <span className="text-base font-extrabold text-slate-100">₹{selectedOrder.totalAmount.toFixed(2)}</span>
             </div>
-
           </div>
         </div>
       )}

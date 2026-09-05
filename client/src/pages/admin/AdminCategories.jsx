@@ -70,8 +70,8 @@ const AdminCategories = () => {
         
         {/* Header Title */}
         <div className="border-b border-slate-900 pb-5">
-          <h1 className="text-3xl font-extrabold text-slate-100">Category Hierarchy</h1>
-          <p className="text-slate-500 text-sm mt-1">Manage standard store departments and navigation slugs.</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100">Category Hierarchy</h1>
+          <p className="text-slate-550 text-sm mt-1">Manage standard store departments and navigation slugs.</p>
         </div>
 
         {/* Global Notifications */}
@@ -102,13 +102,13 @@ const AdminCategories = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
                 />
               </div>
               <button
                 type="submit"
                 disabled={submitLoading || !name.trim()}
-                className="w-full bg-indigo-655 hover:bg-indigo-550 disabled:bg-slate-800 disabled:text-slate-650 text-white font-bold py-2 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-smooth cursor-pointer"
+                className="w-full bg-indigo-655 hover:bg-indigo-550 disabled:bg-slate-800 disabled:text-slate-650 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-smooth cursor-pointer"
               >
                 <Plus size={16} />
                 {submitLoading ? 'Creating...' : 'Create Category'}
@@ -120,7 +120,7 @@ const AdminCategories = () => {
           <div className="md:col-span-2 bg-slate-900 border border-slate-850 rounded-2xl p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-850 pb-3">
               <h3 className="font-bold text-slate-200 text-sm">Active Categories</h3>
-              <button onClick={fetchCategories} className="text-slate-500 hover:text-slate-350">
+              <button onClick={fetchCategories} className="text-slate-500 hover:text-slate-350 p-2">
                 <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
               </button>
             </div>
@@ -128,7 +128,7 @@ const AdminCategories = () => {
             {loading && categories.length === 0 ? (
               <p className="text-slate-500 text-xs italic py-4">Fetching categories...</p>
             ) : categories.length === 0 ? (
-              <p className="text-slate-500 text-xs italic py-4">No categories created yet.</p>
+              <p className="text-slate-505 text-xs italic py-4">No categories created yet.</p>
             ) : (
               <div className="divide-y divide-slate-850">
                 {categories.map((cat) => (
@@ -139,7 +139,7 @@ const AdminCategories = () => {
                     </div>
                     <button
                       onClick={() => handleDeleteCategory(cat._id)}
-                      className="p-1.5 bg-slate-950 hover:bg-rose-500/10 border border-slate-850 hover:border-rose-500/20 text-slate-450 hover:text-rose-450 rounded-lg transition-smooth cursor-pointer"
+                      className="p-2 bg-slate-950 hover:bg-rose-500/10 border border-slate-850 hover:border-rose-500/20 text-slate-450 hover:text-rose-450 rounded-lg transition-smooth cursor-pointer"
                     >
                       <Trash2 size={14} />
                     </button>

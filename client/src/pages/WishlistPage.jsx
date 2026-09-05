@@ -35,7 +35,7 @@ const WishlistPage = () => {
         <h1 className="text-3xl font-extrabold text-slate-100 mb-8">My Wishlist</h1>
 
         {wishlist.length === 0 ? (
-          <div className="bg-slate-900 border border-slate-850 rounded-2xl p-12 text-center max-w-lg mx-auto space-y-6">
+          <div className="bg-slate-900 border border-slate-850 rounded-2xl p-6 sm:p-12 text-center max-w-lg mx-auto space-y-6">
             <Heart size={48} className="mx-auto text-slate-650" />
             <h2 className="text-xl font-bold text-slate-200">Your wishlist is empty</h2>
             <p className="text-slate-450 text-sm leading-relaxed">
@@ -54,7 +54,7 @@ const WishlistPage = () => {
             {wishlist.map((product) => (
               <div
                 key={product._id}
-                className="group bg-slate-900/50 hover:bg-slate-900 border border-slate-900 hover:border-slate-850 rounded-2xl overflow-hidden shadow-2xl flex flex-col justify-between h-[25rem] transition-smooth hover:translate-y-[-4px]"
+                className="group bg-slate-900/50 hover:bg-slate-900 border border-slate-900 hover:border-slate-850 rounded-2xl overflow-hidden shadow-2xl flex flex-col justify-between min-h-[24rem] h-full transition-smooth hover:translate-y-[-4px]"
               >
                 {/* Image panel */}
                 <div className="relative h-48 bg-slate-950 overflow-hidden">

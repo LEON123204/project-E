@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import api from '../services/api';
@@ -7,7 +7,7 @@ import api from '../services/api';
 // Stripe imports
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { AlertCircle, Check, CreditCard, MapPin, Plus, Loader } from 'lucide-react';
+import { AlertCircle, Check, CreditCard, MapPin, Plus, Loader, Zap } from 'lucide-react';
 
 // Initialize Stripe outside components to avoid recreating
 const isStripeActive = () => {
@@ -21,11 +21,9 @@ if (isStripeActive()) {
 }
 
 // Internal Stripe Checkout Form Component
-// Internal Stripe Checkout Form Component
-const StripeCheckoutForm = ({ shippingAddress, guestInfo, onPaymentSuccess, totalAmount }) => {
+const StripeCheckoutForm = ({ shippingAddress, guestInfo, onPaymentSuccess, totalAmount, items, isBuyNow }) => {
   const stripe = useStripe();
   const elements = useElements();
-  const { cartItems } = useCart();
   
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -40,13 +38,14 @@ const StripeCheckoutForm = ({ shippingAddress, guestInfo, onPaymentSuccess, tota
     try {
       // 1. Create order on backend to get order ID and clientSecret
       const orderRes = await api.post('/orders', {
-        items: cartItems.map(item => ({
+        items: items.map(item => ({
           product: item.product._id,
           quantity: item.quantity
         })),
         shippingAddress,
         guestEmail: guestInfo?.email,
-        guestName: guestInfo?.name
+        guestName: guestInfo?.name,
+        isBuyNow
       });
 
       const { order, clientSecret } = orderRes.data;
@@ -133,8 +132,7 @@ const StripeCheckoutForm = ({ shippingAddress, guestInfo, onPaymentSuccess, tota
 };
 
 // Internal Mock Checkout Component
-const MockCheckoutForm = ({ shippingAddress, guestInfo, onPaymentSuccess, totalAmount }) => {
-  const { cartItems } = useCart();
+const MockCheckoutForm = ({ shippingAddress, guestInfo, onPaymentSuccess, totalAmount, items, isBuyNow }) => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -146,13 +144,14 @@ const MockCheckoutForm = ({ shippingAddress, guestInfo, onPaymentSuccess, totalA
     try {
       // 1. Create order on backend
       const orderRes = await api.post('/orders', {
-        items: cartItems.map(item => ({
+        items: items.map(item => ({
           product: item.product._id,
           quantity: item.quantity
         })),
         shippingAddress,
         guestEmail: guestInfo?.email,
-        guestName: guestInfo?.name
+        guestName: guestInfo?.name,
+        isBuyNow
       });
 
       const { order } = orderRes.data;
@@ -206,6 +205,27 @@ const CheckoutPage = () => {
   const { user, addAddress, isAuthenticated } = useAuth();
   const { cartItems, cartTotal, clearCart } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isBuyNow = new URLSearchParams(location.search).get('mode') === 'buynow';
+
+  const [buyNowData] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem('buyNowItem');
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  // Effective items & totals depending on mode
+  const checkoutItems = (isBuyNow && buyNowData)
+    ? [{ product: buyNowData.product, quantity: buyNowData.quantity }]
+    : cartItems;
+
+  const checkoutSubtotal = (isBuyNow && buyNowData)
+    ? ((buyNowData.product?.price || 0) * buyNowData.quantity)
+    : cartTotal;
 
   // Guest State
   const [guestEmail, setGuestEmail] = useState('');
@@ -225,16 +245,21 @@ const CheckoutPage = () => {
   const [country, setCountry] = useState('');
 
   // Cart pricing totals
-  const shippingCost = cartTotal > 1000 ? 0 : 99.00;
-  const estimatedTax = cartTotal * 0.08;
-  const finalTotal = cartTotal + shippingCost + estimatedTax;
+  const shippingCost = checkoutSubtotal > 1000 ? 0 : 99.00;
+  const estimatedTax = checkoutSubtotal * 0.08;
+  const finalTotal = checkoutSubtotal + shippingCost + estimatedTax;
 
   useEffect(() => {
-    // Redirect if cart is empty
-    if (cartItems.length === 0) {
-      navigate('/cart');
+    if (isBuyNow) {
+      if (!buyNowData) {
+        navigate('/shop');
+      }
+    } else {
+      if (cartItems.length === 0) {
+        navigate('/cart');
+      }
     }
-  }, [cartItems, navigate]);
+  }, [isBuyNow, buyNowData, cartItems, navigate]);
 
   // Set default address pre-selected if available
   useEffect(() => {
@@ -272,14 +297,14 @@ const CheckoutPage = () => {
         paymentIntentId
       });
       if (response.data.success) {
-        clearCart();
-        if (isAuthenticated) {
-          // Redirect to profile page (Orders history tab)
-          navigate('/profile?tab=orders');
+        if (isBuyNow) {
+          sessionStorage.removeItem('buyNowItem');
         } else {
-          // Redirect to guest tracking page
-      navigate(`/order-tracking/${orderId}?email=${encodeURIComponent(guestEmail)}`);
+          clearCart();
         }
+        navigate(`/order-confirmation/${orderId}`, {
+          state: { order: response.data.order, guestEmail }
+        });
       }
     } catch (err) {
       alert('Order placed, but payment verification failed. Please contact support.');
@@ -301,7 +326,15 @@ const CheckoutPage = () => {
   return (
     <div className="bg-slate-950 text-slate-100 min-h-screen py-8 sm:py-12 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 mb-6 sm:mb-8">Checkout</h1>
+        <div className="flex items-center justify-between gap-4 mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100">Checkout</h1>
+          {isBuyNow && (
+            <div className="flex items-center gap-1.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm">
+              <Zap size={14} className="fill-indigo-400" />
+              <span>Express Buy Now</span>
+            </div>
+          )}
+        </div>
 
         {!isAuthenticated && (
           <div className="bg-slate-900 border border-indigo-500/10 p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 animate-fadeIn">
@@ -614,6 +647,8 @@ const CheckoutPage = () => {
                       guestInfo={isAuthenticated ? null : { email: guestEmail, name: guestName }}
                       onPaymentSuccess={handlePaymentSuccess}
                       totalAmount={finalTotal}
+                      items={checkoutItems}
+                      isBuyNow={isBuyNow}
                     />
                   </Elements>
                 ) : (
@@ -622,6 +657,8 @@ const CheckoutPage = () => {
                     guestInfo={isAuthenticated ? null : { email: guestEmail, name: guestName }}
                     onPaymentSuccess={handlePaymentSuccess}
                     totalAmount={finalTotal}
+                    items={checkoutItems}
+                    isBuyNow={isBuyNow}
                   />
                 )}
               </div>
@@ -633,7 +670,7 @@ const CheckoutPage = () => {
             <h2 className="text-lg font-bold text-slate-200 border-b border-slate-850 pb-4">Items Summary</h2>
 
             <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-              {cartItems.map((item) => (
+              {checkoutItems.map((item) => (
                 <div key={item.product?._id} className="flex justify-between items-center gap-4 text-xs">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-slate-950 border border-slate-850 rounded-lg overflow-hidden shrink-0">
@@ -656,7 +693,7 @@ const CheckoutPage = () => {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between text-slate-400">
                 <span>Subtotal</span>
-                <span className="text-slate-200 font-semibold">₹{cartTotal.toFixed(2)}</span>
+                <span className="text-slate-200 font-semibold">₹{checkoutSubtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-slate-400">
                 <span>Shipping</span>

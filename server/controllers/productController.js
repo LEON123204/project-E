@@ -1,11 +1,8 @@
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 const Review = require('../models/Review');
-const fs = require('fs');
-const path = require('path');
 const cloudinary = require('../config/cloudinary');
 
-// Helper to remove image files from server disk
 
 // @desc    Get all products (with pagination, filtering, search, sorting)
 // @route   GET /api/v1/products
@@ -259,10 +256,10 @@ const deleteProduct = async (req, res, next) => {
     // Delete review records associated with this product
     await Review.deleteMany({ product: product._id });
 
-    // Delete images from disk storage
-    product.images.forEach(img => {
-      deleteDiskImage(img);
-    });
+    // Delete images from Cloudinary
+    for (const img of product.images) {
+      await deleteCloudinaryImage(img);
+    }
 
     await product.deleteOne();
 

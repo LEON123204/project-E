@@ -195,7 +195,7 @@ const OrderTracking = () => {
               ) : (
                 <div className="grid grid-cols-3 relative pt-4">
                   {/* Progress Line */}
-                  <div className="absolute top-1/2 left-0 right-0 h-1 bg-slate-800 -translate-y-1/2 z-0">
+                  <div className="absolute top-[32px] left-0 right-0 h-1 bg-slate-800 z-0">
                     <div 
                       className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500" 
                       style={{ 

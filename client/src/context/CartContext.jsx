@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import api from '../services/api';
 
@@ -8,9 +8,6 @@ export const CartProvider = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  // Track previous auth status to detect transitions (login/logout)
-  const prevAuthRef = useRef(isAuthenticated);
 
   // Fetch or initialize cart
   useEffect(() => {
@@ -43,7 +40,6 @@ export const CartProvider = ({ children }) => {
 
     // Trigger sync whenever authentication status changes or on mount
     syncCart();
-    prevAuthRef.current = isAuthenticated;
   }, [isAuthenticated]);
 
   // Save guest cart changes to localStorage

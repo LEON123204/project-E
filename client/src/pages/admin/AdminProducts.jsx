@@ -173,12 +173,12 @@ const AdminProducts = () => {
         {/* Header Toolbar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-900 pb-5">
           <div>
-            <h1 className="text-3xl font-extrabold text-slate-100">Products Catalog</h1>
-            <p className="text-slate-500 text-sm mt-1">Add, update, or remove items in the store inventory.</p>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100">Products Catalog</h1>
+            <p className="text-slate-550 text-sm mt-1">Add, update, or remove items in the store inventory.</p>
           </div>
           <button
             onClick={handleOpenAddModal}
-            className="bg-indigo-650 hover:bg-indigo-550 text-white font-bold py-2 px-5 rounded-xl text-xs flex items-center gap-1.5 transition-smooth cursor-pointer"
+            className="w-full sm:w-auto bg-indigo-655 hover:bg-indigo-550 text-white font-bold py-2.5 px-5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-smooth cursor-pointer"
           >
             <Plus size={16} />
             Add New Product
@@ -223,7 +223,8 @@ const AdminProducts = () => {
           </div>
         ) : (
           <div className="bg-slate-900 border border-slate-850 rounded-2xl overflow-hidden shadow-2xl">
-            <div className="overflow-x-auto">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-xs text-left divide-y divide-slate-850">
                 <thead>
                   <tr className="text-slate-400 font-semibold bg-slate-950/20">
@@ -261,7 +262,7 @@ const AdminProducts = () => {
                           </button>
                           <button
                             onClick={() => handleDeleteProduct(p._id)}
-                            className="p-1.5 bg-slate-950 hover:bg-rose-500/10 border border-slate-850 hover:border-rose-500/20 text-slate-450 hover:text-rose-400 rounded-lg transition-smooth cursor-pointer"
+                            className="p-1.5 bg-slate-950 hover:bg-rose-500/10 border border-slate-850 hover:border-rose-500/20 text-slate-450 hover:text-rose-450 rounded-lg transition-smooth cursor-pointer"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -273,6 +274,43 @@ const AdminProducts = () => {
               </table>
             </div>
 
+            {/* Mobile Card View */}
+            <div className="md:hidden divide-y divide-slate-850">
+              {products.map((p) => (
+                <div key={p._id} className="p-4 flex gap-3.5 bg-slate-900 items-start">
+                  <div className="w-16 h-16 bg-slate-950 rounded-lg overflow-hidden border border-slate-850 shrink-0">
+                    <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-grow min-w-0 space-y-1">
+                    <div className="font-bold text-slate-200 text-xs sm:text-sm truncate">{p.name}</div>
+                    <div className="text-[10px] text-slate-500">Category: {p.category?.name}</div>
+                    
+                    <div className="flex justify-between items-center pt-1.5">
+                      <span className="font-semibold text-slate-100 text-xs">₹{p.price.toFixed(2)}</span>
+                      <span className={`text-[10px] font-semibold ${p.stock <= 5 ? 'text-amber-400 font-bold' : 'text-slate-450'}`}>
+                        Stock: {p.stock}
+                      </span>
+                    </div>
+
+                    <div className="flex gap-2 pt-2 justify-end border-t border-slate-850/40 mt-2">
+                      <button
+                        onClick={() => handleOpenEditModal(p)}
+                        className="p-2.5 bg-slate-950 hover:bg-indigo-500/10 border border-slate-850 hover:border-indigo-500/20 text-slate-450 hover:text-indigo-400 rounded-lg transition-smooth cursor-pointer"
+                      >
+                        <Edit size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteProduct(p._id)}
+                        className="p-2.5 bg-slate-950 hover:bg-rose-500/10 border border-slate-850 hover:border-rose-500/20 text-slate-455 hover:text-rose-400 rounded-lg transition-smooth cursor-pointer"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {/* Pagination block */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between p-4 border-t border-slate-850 text-slate-400 text-xs">
@@ -281,14 +319,14 @@ const AdminProducts = () => {
                   <button
                     disabled={page === 1}
                     onClick={() => setPage(prev => prev - 1)}
-                    className="p-1 border border-slate-800 rounded bg-slate-950 hover:bg-slate-850 disabled:opacity-30 disabled:hover:bg-slate-950 cursor-pointer"
+                    className="p-1.5 border border-slate-800 rounded bg-slate-950 hover:bg-slate-850 disabled:opacity-30 disabled:hover:bg-slate-950 cursor-pointer"
                   >
                     <ChevronLeft size={16} />
                   </button>
                   <button
                     disabled={page === totalPages}
                     onClick={() => setPage(prev => prev + 1)}
-                    className="p-1 border border-slate-800 rounded bg-slate-950 hover:bg-slate-850 disabled:opacity-30 disabled:hover:bg-slate-950 cursor-pointer"
+                    className="p-1.5 border border-slate-800 rounded bg-slate-950 hover:bg-slate-850 disabled:opacity-30 disabled:hover:bg-slate-950 cursor-pointer"
                   >
                     <ChevronRight size={16} />
                   </button>
@@ -303,23 +341,23 @@ const AdminProducts = () => {
       {/* FORM MODAL (ADD / EDIT) */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl animate-scaleUp">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-scaleUp">
             
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-800">
-              <h3 className="font-bold text-slate-200 text-base">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-800 shrink-0">
+              <h3 className="font-bold text-slate-200 text-sm sm:text-base">
                 {editingProduct ? 'Edit Product Catalog Item' : 'Add New Catalog Product'}
               </h3>
               <button
                 onClick={() => setModalOpen(false)}
-                className="p-1 bg-slate-950 border border-slate-850 hover:bg-slate-850 rounded-lg text-slate-400 hover:text-slate-200 cursor-pointer"
+                className="p-2 bg-slate-950 border border-slate-850 hover:bg-slate-850 rounded-lg text-slate-400 hover:text-slate-200 cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleFormSubmit} className="p-6 space-y-4 max-h-[30rem] overflow-y-auto">
+            <form onSubmit={handleFormSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-grow">
               
               {/* Product name */}
               <div className="space-y-1">
@@ -349,7 +387,7 @@ const AdminProducts = () => {
               </div>
 
               {/* Price & Stock */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] text-slate-400 uppercase font-semibold">Unit Price (₹)</label>
                   <input

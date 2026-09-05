@@ -7,15 +7,15 @@ export default defineConfig({
   envDir: '../', // Read environment variables from the project root directory
   server: {
     port: 5173,
-    host: '127.0.0.1',
+    host: true,
     proxy: {
       '/api/v1': {
-        target: 'http://localhost:5000',
+        target: 'http://127.0.0.1:5000',
         changeOrigin: true,
         secure: false
       },
       '/uploads': {
-        target: 'http://localhost:5000',
+        target: 'http://127.0.0.1:5000',
         changeOrigin: true,
         secure: false
       }

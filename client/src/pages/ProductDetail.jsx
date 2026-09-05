@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { useLoginPrompt } from '../context/LoginPromptContext';
 import { ProductDetailSkeleton } from '../components/SkeletonLoader';
-import { Heart, ShoppingCart, Star, Plus, Minus, Check, AlertCircle } from 'lucide-react';
+import { Heart, ShoppingCart, Star, Plus, Minus, Check, AlertCircle, Zap } from 'lucide-react';
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { showPrompt } = useLoginPrompt();
 
   const [product, setProduct] = useState(null);
   const [reviews, setReviews] = useState([]);
@@ -106,6 +109,38 @@ const ProductDetail = () => {
       setTimeout(() => setJustAdded(false), 2000);
     } else {
       alert(res.message);
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (!product || product.stock <= 0) return;
+    if (quantity > product.stock) {
+      alert(`Only ${product.stock} items are in stock.`);
+      return;
+    }
+
+    const buyNowItem = {
+      product: {
+        _id: product._id,
+        name: product.name,
+        price: product.price,
+        images: product.images,
+        stock: product.stock,
+        category: product.category
+      },
+      quantity
+    };
+    sessionStorage.setItem('buyNowItem', JSON.stringify(buyNowItem));
+
+    if (!isAuthenticated) {
+      showPrompt({
+        title: 'Sign in to complete Buy Now',
+        showGuestOption: true,
+        redirectUrl: '/checkout?mode=buynow',
+        onGuest: () => navigate('/checkout?mode=buynow')
+      });
+    } else {
+      navigate('/checkout?mode=buynow');
     }
   };
 
@@ -251,10 +286,10 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* Cart add section — always row: qty control | add button */}
-            <div className="flex flex-row items-stretch gap-3 pt-4">
+            {/* Cart & Buy Now section */}
+            <div className="flex flex-col sm:flex-row items-stretch gap-3 pt-4">
               {/* Quantity Toggle — min 44px tall for touch */}
-              <div className={`flex items-center border border-slate-800 bg-slate-900/60 rounded-xl px-1 min-h-[44px] w-[120px] shrink-0 ${isOutOfStock ? 'opacity-50 select-none' : ''}`}>
+              <div className={`flex items-center border border-slate-800 bg-slate-900/60 rounded-xl px-1 min-h-[44px] w-full sm:w-[120px] shrink-0 ${isOutOfStock ? 'opacity-50 select-none' : ''}`}>
                 <button
                   type="button"
                   disabled={isOutOfStock || quantity <= 1}
@@ -274,36 +309,61 @@ const ProductDetail = () => {
                 </button>
               </div>
 
-              {/* Add to Cart button — flex-1 fills remaining width */}
-              <button
-                type="button"
-                disabled={isOutOfStock || isAdding}
-                onClick={handleAddToCart}
-                className={`flex-1 min-h-[44px] px-4 sm:px-8 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-smooth shadow-lg text-sm sm:text-base ${
-                  isOutOfStock
-                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800/50 shadow-none'
-                    : justAdded
-                      ? 'bg-emerald-600 text-white shadow-emerald-600/10'
+              {/* Action Buttons: Add to Cart (Secondary Outline) & Buy Now (Primary Solid) */}
+              <div className="flex flex-1 flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  disabled={isOutOfStock || isAdding}
+                  onClick={handleAddToCart}
+                  className={`flex-1 min-h-[44px] px-4 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-smooth text-sm sm:text-base ${
+                    isOutOfStock
+                      ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800/50'
+                      : justAdded
+                        ? 'bg-emerald-600/20 border border-emerald-500 text-emerald-400'
+                        : 'border border-indigo-500/50 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300'
+                  }`}
+                >
+                  {isOutOfStock ? (
+                    <>
+                      <AlertCircle size={18} />
+                      <span>Out of Stock</span>
+                    </>
+                  ) : justAdded ? (
+                    <>
+                      <Check size={18} />
+                      <span>Added!</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart size={18} />
+                      <span>{isAdding ? 'Adding...' : 'Add to Cart'}</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isOutOfStock}
+                  onClick={handleBuyNow}
+                  className={`flex-1 min-h-[44px] px-4 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-smooth shadow-lg text-sm sm:text-base ${
+                    isOutOfStock
+                      ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800/50 shadow-none'
                       : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
-                }`}
-              >
-                {isOutOfStock ? (
-                  <>
-                    <AlertCircle size={18} />
-                    <span>Out of Stock</span>
-                  </>
-                ) : justAdded ? (
-                  <>
-                    <Check size={18} />
-                    <span>Added!</span>
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart size={18} />
-                    <span>{isAdding ? 'Adding...' : 'Add to Cart'}</span>
-                  </>
-                )}
-              </button>
+                  }`}
+                >
+                  {isOutOfStock ? (
+                    <>
+                      <AlertCircle size={18} />
+                      <span>Out of Stock</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap size={18} className="fill-current" />
+                      <span>Buy Now</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

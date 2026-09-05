@@ -107,8 +107,8 @@ const createOrder = async (req, res, next) => {
 
     const order = await Order.create(orderData);
 
-    // Clear user's DB cart on order creation if logged in
-    if (req.user) {
+    // Clear user's DB cart on order creation if logged in and not a Buy Now order
+    if (req.user && !req.body.isBuyNow) {
       await Cart.findOneAndUpdate({ user: req.user._id }, { $set: { items: [] } });
     }
 

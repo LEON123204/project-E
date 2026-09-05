@@ -35,6 +35,16 @@ const CART_KEYWORDS = [
   'cart', 'basket', 'checkout', 'my cart', 'shopping cart', 'what\'s in my cart', 'view cart', 'show cart'
 ];
 
+// Keywords that signal the user wants catalog-level facts (product count, categories, what's available)
+const CATALOG_KEYWORDS = [
+  'how many products', 'how many items', 'total products', 'product count',
+  'catalog', 'catalogue', 'what categories', 'which categories', 'list categories',
+  'what do you sell', 'what do you have', 'what\'s available', 'what is available',
+  'what can i buy', 'what do you carry', 'types of products', 'range of products',
+  'what\'s in your store', 'what is in your store', 'your store', 'your shop',
+  'overview', 'store overview', 'full catalog', 'entire catalog'
+];
+
 const lowerIncludes = (text, keywords) =>
   keywords.some(kw => text.toLowerCase().includes(kw));
 
@@ -544,8 +554,6 @@ async function searchProducts(message, conversationHistory) {
 
   // --- Price constraint (numeric MongoDB filter) ---
   const priceFilter = parsePriceConstraints(message);
-  console.log('[DEBUG] Message:', message);
-  console.log('[DEBUG] Price filter parsed:', JSON.stringify(priceFilter));
 
   // --- Keyword terms (text regex filter) ---
   const terms = message
@@ -585,8 +593,6 @@ async function searchProducts(message, conversationHistory) {
       .lean();
   }
 
-  console.log('[DEBUG] Final MongoDB query:', JSON.stringify(query));
-
   const products = await Product.find(query)
     .populate('category', 'name')
     .select('name description price stock ratingsAvg category discountPercent')
@@ -610,6 +616,21 @@ async function fetchUserCart(userId) {
     .populate('items.product')
     .lean();
   return cart;
+}
+
+/**
+ * Fetches live catalog statistics: total product count and all category names.
+ * Called unconditionally on every chat request so Rex always knows the real numbers.
+ */
+async function fetchCatalogStats() {
+  const [totalProducts, categories] = await Promise.all([
+    Product.countDocuments(),
+    Category.find().select('name').sort('name').lean()
+  ]);
+  return {
+    totalProducts,
+    categoryNames: categories.map(c => c.name)
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -684,13 +705,22 @@ function formatCartContext(cart) {
 // System prompt builder
 // ---------------------------------------------------------------------------
 
-function buildSystemInstruction(productContext, orderContext, cartContext, isAuthenticated) {
+function buildSystemInstruction(productContext, orderContext, cartContext, isAuthenticated, catalogStats) {
+  // Build a live catalog summary line from DB-queried stats (never hardcoded)
+  const catalogLine = catalogStats
+    ? `The Cartex store currently stocks **${catalogStats.totalProducts} products** across **${catalogStats.categoryNames.length} categories**: ${catalogStats.categoryNames.join(', ')}.`
+    : 'The Cartex store carries a wide range of products across multiple categories.';
+
   return `You are Rex, a friendly and knowledgeable AI shopping assistant for Cartex — a premium online store.
 Your role is to help customers discover products, check prices and availability, track orders, view their shopping cart, and answer general shopping questions.
+
+CATALOG OVERVIEW (live data — always use these exact numbers when answering catalog questions):
+${catalogLine}
 
 GUIDELINES:
 - Be concise, warm, and helpful. Keep replies brief unless detail is genuinely useful.
 - ONLY reference products, orders, and cart items from the CONTEXT DATA provided below. Never fabricate prices, stock levels, product names, order statuses, or cart contents.
+- CATALOG FACTS: When asked "how many products do you have", "what categories do you sell", or similar catalog-overview questions, answer using the CATALOG OVERVIEW numbers above — they are queried live from the database and are always current.
 - If the user asks about something not in the context, say you don't have that information and suggest they browse /shop or contact support.
 - For product discovery, you can suggest the user browse /shop for full listings.
 - For order tracking, direct users to /order-tracking for detailed tracking.
@@ -714,7 +744,7 @@ ${isAuthenticated ? `USER'S SHOPPING CART:\n${cartContext}` : '(User is not logg
 
 --- CONTEXT DATA END ---
 
-Answer the user's question using only the above context. If no relevant context exists, say so honestly.`;
+Answer the user's question using only the above context and the CATALOG OVERVIEW. If no relevant context exists, say so honestly.`;
 }
 
 // ---------------------------------------------------------------------------
@@ -745,7 +775,7 @@ const handleChat = async (req, res) => {
   const trimmedMessage = message.trim().slice(0, 1000); // hard cap
   const isAuthenticated = !!req.user;
 
-  // --- RAG: parallel retrieval ---
+  // --- RAG: parallel retrieval (catalog stats always fetched for accurate count/category answers) ---
   let productContext = 'Not searched (message not product-related).';
   let orderContext = isAuthenticated
     ? 'Not searched (message not order-related).'
@@ -754,7 +784,7 @@ const handleChat = async (req, res) => {
     ? 'Not searched (message not cart-related).'
     : '(User not logged in)';
 
-  const [productHits, orderHits, cartHits] = await Promise.all([
+  const [productHits, orderHits, cartHits, catalogStats] = await Promise.all([
     lowerIncludes(trimmedMessage, PRODUCT_KEYWORDS)
       ? searchProducts(trimmedMessage, conversationHistory)
       : Promise.resolve(null),
@@ -763,16 +793,15 @@ const handleChat = async (req, res) => {
       : Promise.resolve(null),
     lowerIncludes(trimmedMessage, CART_KEYWORDS) && isAuthenticated
       ? fetchUserCart(req.user._id)
-      : Promise.resolve(null)
+      : Promise.resolve(null),
+    // Always fetch live catalog stats so Rex knows the real product count and categories
+    fetchCatalogStats()
   ]);
 
   if (productHits !== null) {
     productContext = formatProductContext(productHits);
-    console.log('[DIAG] productHits count:', productHits.length);
-    console.log('[DIAG] discountPercents:', productHits.map(p => p.discountPercent));
 
-    const isSaleMsg = /(?:on\s+sale|deals?|offers?|discounts?|discounted|what[''\u2019]s\s+on\s+sale|what\s+is\s+on\s+sale|any\s+sales)/i.test(trimmedMessage);
-    console.log('[DIAG] isSaleMsg:', isSaleMsg, '| trimmedMessage:', trimmedMessage.slice(0, 50));
+    const isSaleMsg = /(?:on\s+sale|deals?|offers?|discounts?|discounted|what['\u2019]s\s+on\s+sale|what\s+is\s+on\s+sale|any\s+sales)/i.test(trimmedMessage);
     if (isSaleMsg && productHits.some(p => p.discountPercent > 0)) {
       productContext = `⚠️ THE FOLLOWING PRODUCTS ARE CURRENTLY ON SALE WITH ACTIVE DISCOUNTS:\n\n${productContext}`;
     }
@@ -784,8 +813,8 @@ const handleChat = async (req, res) => {
     cartContext = formatCartContext(cartHits);
   }
 
-  // --- Build system instruction ---
-  const systemInstruction = buildSystemInstruction(productContext, orderContext, cartContext, isAuthenticated);
+  // --- Build system instruction (passes live catalog stats) ---
+  const systemInstruction = buildSystemInstruction(productContext, orderContext, cartContext, isAuthenticated, catalogStats);
 
   // --- SSE headers: set before any await that could fail ---
   res.setHeader('Content-Type', 'text/event-stream');
@@ -809,6 +838,31 @@ const handleChat = async (req, res) => {
     // retrieved DB data inline in the user message. Lite LLMs ground far more reliably
     // in the message being responded to than in system instructions or history.
     let stuffedMessage = trimmedMessage;
+
+    // --- Catalog-count / category-overview message stuffing ---
+    // Inject live DB stats directly into the user turn for maximum grounding reliability.
+    const msgLowerCatalog = trimmedMessage.toLowerCase();
+    const isCatalogCountQuery = /how\s+many\s+(?:products?|items?)/.test(msgLowerCatalog) ||
+      /(?:total|number\s+of)\s+(?:products?|items?)/.test(msgLowerCatalog) ||
+      /(?:product|item)\s+count/.test(msgLowerCatalog) ||
+      /(?:catalog|catalogue)/.test(msgLowerCatalog);
+    const isCategoryListQuery = /(?:what|which|list|show|tell)\s+.*categor/.test(msgLowerCatalog) ||
+      /categor(?:ies|y)\s+(?:do\s+you|you\s+have|available|sell|carry)/.test(msgLowerCatalog) ||
+      /what\s+(?:do\s+you\s+(?:sell|have|carry|offer)|(?:types?|kinds?)\s+of)/.test(msgLowerCatalog) ||
+      /(?:store|shop)\s+overview/.test(msgLowerCatalog) ||
+      lowerIncludes(trimmedMessage, CATALOG_KEYWORDS);
+
+    if (catalogStats && (isCatalogCountQuery || isCategoryListQuery)) {
+      const catList = catalogStats.categoryNames.join(', ');
+      stuffedMessage =
+        trimmedMessage +
+        `\n\n[LIVE CATALOG DATA — queried from database right now]\n` +
+        `Total products in store: ${catalogStats.totalProducts}\n` +
+        `Number of categories: ${catalogStats.categoryNames.length}\n` +
+        `Categories: ${catList}\n` +
+        `[Answer using ONLY these exact numbers. Do not guess or use any other figures.]`;
+    }
+
     if (productHits !== null && productHits.length > 0) {
       const msgLower = trimmedMessage.toLowerCase();
       const isSaleMsg = /(?:on\s+sale|deals?|offers?|discounts?|discounted)/.test(msgLower);
@@ -864,7 +918,7 @@ const handleChat = async (req, res) => {
           ).join('\n');
       }
 
-      if (annotation) stuffedMessage = trimmedMessage + annotation;
+      if (annotation) stuffedMessage = stuffedMessage + annotation;
     }
 
     const contents = [
@@ -872,8 +926,6 @@ const handleChat = async (req, res) => {
       { role: 'user', parts: [{ text: stuffedMessage }] }
     ];
 
-    console.log('[DIAG] stuffedMessage (first 300 chars):', stuffedMessage.slice(0, 300));
-    console.log('[DEBUG] Key prefix:', process.env.LLM_API_KEY?.slice(0, 15), '| Length:', process.env.LLM_API_KEY?.length);
     const geminiResponse = await fetch(
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:streamGenerateContent?alt=sse',
       {

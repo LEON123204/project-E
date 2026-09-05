@@ -106,13 +106,13 @@ const AdminDashboard = () => {
           {kpis.map((kpi) => (
             <div
               key={kpi.name}
-              className={`border p-6 rounded-2xl flex items-center justify-between shadow-xl transition-smooth ${kpi.color}`}
+              className={`border p-6 rounded-2xl flex items-center justify-between shadow-xl transition-smooth overflow-hidden ${kpi.color}`}
             >
-              <div className="space-y-1">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{kpi.name}</span>
-                <div className="text-2xl font-extrabold text-slate-100">{kpi.value}</div>
+              <div className="space-y-1 min-w-0 flex-1 pr-2">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block truncate">{kpi.name}</span>
+                <div className="text-xl sm:text-2xl font-extrabold text-slate-100 truncate" title={kpi.value}>{kpi.value}</div>
               </div>
-              <div className="p-3 bg-slate-950 rounded-xl border border-slate-900">
+              <div className="p-3 bg-slate-950 rounded-xl border border-slate-900 shrink-0">
                 <kpi.icon size={22} />
               </div>
             </div>
@@ -198,28 +198,49 @@ const AdminDashboard = () => {
             {stats.lowStockProducts.length === 0 ? (
               <p className="text-slate-500 text-xs italic py-4">All products are healthy. No restocks required.</p>
             ) : (
-              <div className="overflow-x-auto pr-1">
-                <table className="w-full text-xs text-left divide-y divide-slate-850">
-                  <thead>
-                    <tr className="text-slate-400 font-semibold">
-                      <th className="pb-3 font-semibold">Product Name</th>
-                      <th className="pb-3 font-semibold">Category</th>
-                      <th className="pb-3 text-center font-semibold">Stock Left</th>
-                      <th className="pb-3 text-right font-semibold">Unit Price</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-850">
-                    {stats.lowStockProducts.map((p) => (
-                      <tr key={p._id} className="text-slate-300 hover:bg-slate-950/20">
-                        <td className="py-2.5 max-w-xs truncate pr-4">{p.name}</td>
-                        <td className="py-2.5 text-slate-500">{p.category?.name}</td>
-                        <td className="py-2.5 text-center font-bold text-amber-400">{p.stock}</td>
-                        <td className="py-2.5 text-right font-semibold">₹{p.price.toFixed(2)}</td>
+              <>
+                {/* Desktop View */}
+                <div className="hidden sm:block overflow-x-auto pr-1">
+                  <table className="w-full text-xs text-left divide-y divide-slate-850">
+                    <thead>
+                      <tr className="text-slate-400 font-semibold">
+                        <th className="pb-3 font-semibold">Product Name</th>
+                        <th className="pb-3 font-semibold">Category</th>
+                        <th className="pb-3 text-center font-semibold">Stock Left</th>
+                        <th className="pb-3 text-right font-semibold">Unit Price</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-850">
+                      {stats.lowStockProducts.map((p) => (
+                        <tr key={p._id} className="text-slate-300 hover:bg-slate-950/20">
+                          <td className="py-2.5 max-w-xs truncate pr-4">{p.name}</td>
+                          <td className="py-2.5 text-slate-500">{p.category?.name}</td>
+                          <td className="py-2.5 text-center font-bold text-amber-400">{p.stock}</td>
+                          <td className="py-2.5 text-right font-semibold">₹{p.price.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile View */}
+                <div className="sm:hidden space-y-3">
+                  {stats.lowStockProducts.map((p) => (
+                    <div key={p._id} className="bg-slate-950/40 border border-slate-850 p-4 rounded-xl space-y-2 text-xs">
+                      <div className="flex justify-between items-start gap-2">
+                        <span className="font-bold text-slate-200 line-clamp-2">{p.name}</span>
+                        <span className="text-[10px] bg-amber-500/15 border border-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-bold uppercase shrink-0">
+                          Stock: {p.stock}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-slate-500 text-[11px] pt-2 border-t border-slate-850/40">
+                        <span>Category: {p.category?.name}</span>
+                        <span className="font-semibold text-slate-300">₹{p.price.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
 
