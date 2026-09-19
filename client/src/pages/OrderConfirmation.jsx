@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 import { 
   CheckCircle, 
   Truck, 
@@ -22,6 +23,7 @@ const OrderConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { showToast } = useToast();
 
   const [order, setOrder] = useState(location.state?.order || null);
   const [loading, setLoading] = useState(!location.state?.order);
@@ -125,12 +127,13 @@ const OrderConfirmation = () => {
   const handleAddToCart = async (product) => {
     const res = await addToCart(product, 1);
     if (res.success) {
+      showToast(`Added ${product.name} to cart!`, 'success');
       setAddedItems(prev => ({ ...prev, [product._id]: true }));
       setTimeout(() => {
         setAddedItems(prev => ({ ...prev, [product._id]: false }));
       }, 2000);
     } else {
-      alert(res.message);
+      showToast(res.message || 'Failed to add product to cart', 'error');
     }
   };
 
@@ -151,7 +154,7 @@ const OrderConfirmation = () => {
   if (loading) {
     return (
       <div className="bg-slate-950 min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
         <p className="text-slate-400 text-xs mt-3 font-medium">Loading your confirmation details...</p>
       </div>
     );
@@ -167,7 +170,7 @@ const OrderConfirmation = () => {
           <div className="pt-2 flex flex-col gap-2">
             <Link
               to="/shop"
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition-smooth"
+              className="w-full bg-amber-500 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl text-xs transition-smooth"
             >
               Continue Shopping
             </Link>
@@ -184,7 +187,7 @@ const OrderConfirmation = () => {
         {/* Celebration & Confirmation Card */}
         <div className="bg-slate-900 border border-slate-850 p-6 sm:p-10 rounded-3xl shadow-2xl text-center space-y-6 relative overflow-hidden">
           {/* Subtle background glow */}
-          <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
           {/* Animated Success Badge */}
           <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full animate-bounce shadow-lg shadow-emerald-500/10">
@@ -192,14 +195,23 @@ const OrderConfirmation = () => {
           </div>
 
           <div className="space-y-2">
-            <span className="text-xs font-bold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
-              Payment Successful
-            </span>
+            {order.paymentMethod === 'cod' ? (
+              <span className="text-xs font-bold uppercase tracking-widest text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
+                Cash on Delivery — Pay ₹{order.totalAmount.toFixed(2)} at delivery
+              </span>
+            ) : (
+              <span className="text-xs font-bold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
+                Payment Successful
+              </span>
+            )}
             <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-100 pt-2">
-              Order Confirmed! 🎉
+              {order.paymentMethod === 'cod' ? 'Order Placed! 📦' : 'Order Confirmed! 🎉'}
             </h1>
             <p className="text-slate-400 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
-              Thank you for shopping with Cartex! We've received your order and are getting it ready for shipment.
+              {order.paymentMethod === 'cod'
+                ? `Thank you for shopping with Cartex! We've received your COD order. Please prepare ₹${order.totalAmount.toFixed(2)} cash at delivery.`
+                : "Thank you for shopping with Cartex! We've received your order and are getting it ready for shipment."
+              }
             </p>
           </div>
 
@@ -207,13 +219,13 @@ const OrderConfirmation = () => {
           <div className="bg-slate-950/80 border border-slate-800 p-5 rounded-2xl max-w-lg mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-left space-y-1 w-full sm:w-auto">
               <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Order Reference</span>
-              <p className="text-sm font-mono font-bold text-indigo-400">#{order._id}</p>
+              <p className="text-sm font-mono font-bold text-amber-400">#{order._id}</p>
             </div>
 
             {/* Prominent Track Your Order Button */}
             <button
               onClick={handleTrackOrder}
-              className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-xl transition-smooth shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2.5 text-xs sm:text-sm cursor-pointer group"
+              className="w-full sm:w-auto bg-amber-500 hover:bg-amber-400 text-white font-bold py-3 px-6 rounded-xl transition-smooth shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2.5 text-xs sm:text-sm cursor-pointer group"
             >
               <Truck size={18} className="group-hover:translate-x-0.5 transition-transform" />
               <span>Track Your Order</span>
@@ -227,7 +239,7 @@ const OrderConfirmation = () => {
           {/* Order Meta Info */}
           <div className="bg-slate-900 border border-slate-850 p-6 rounded-3xl space-y-4 text-xs">
             <h2 className="font-bold text-slate-200 text-sm border-b border-slate-850 pb-3 flex items-center gap-2">
-              <Calendar size={16} className="text-indigo-400" />
+              <Calendar size={16} className="text-amber-400" />
               Order Info
             </h2>
             <div className="space-y-3 text-slate-400">
@@ -236,9 +248,17 @@ const OrderConfirmation = () => {
                 <span className="text-slate-200 font-medium">{new Date(order.createdAt).toLocaleString()}</span>
               </div>
               <div>
-                <span className="text-slate-500 block text-[10px] uppercase font-semibold">Status</span>
-                <span className="inline-block mt-0.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[10px]">
-                  {order.orderStatus || 'Processing'}
+                <span className="text-slate-500 block text-[10px] uppercase font-semibold">Payment Method</span>
+                <span className="inline-block mt-0.5 bg-slate-950 border border-slate-800 text-slate-200 px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[10px]">
+                  {order.paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Paid Online (Stripe)'}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-[10px] uppercase font-semibold">Payment Status</span>
+                <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[10px] ${
+                  order.paymentStatus === 'paid' ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-amber-500/10 border border-amber-500/20 text-amber-400'
+                }`}>
+                  {order.paymentStatus === 'paid' ? 'Paid' : 'Pending (Pay at delivery)'}
                 </span>
               </div>
               <div>
@@ -253,7 +273,7 @@ const OrderConfirmation = () => {
           {/* Purchased Items List */}
           <div className="md:col-span-2 bg-slate-900 border border-slate-850 p-6 rounded-3xl space-y-4">
             <h2 className="font-bold text-slate-200 text-sm border-b border-slate-850 pb-3 flex items-center gap-2">
-              <Package size={16} className="text-indigo-400" />
+              <Package size={16} className="text-amber-400" />
               Items Ordered ({order.items.length})
             </h2>
 
@@ -271,9 +291,23 @@ const OrderConfirmation = () => {
               ))}
             </div>
 
-            <div className="border-t border-slate-850 pt-4 flex justify-between items-center text-sm font-extrabold text-slate-100">
-              <span>Total Paid</span>
-              <span className="text-indigo-400 text-base">₹{order.totalAmount.toFixed(2)}</span>
+            <div className="border-t border-slate-850 pt-3 space-y-1.5 text-xs text-slate-400">
+              {order.subtotal > 0 && (
+                <div className="flex justify-between">
+                  <span>Subtotal</span>
+                  <span className="text-slate-200">₹{order.subtotal.toFixed(2)}</span>
+                </div>
+              )}
+              {order.prepayDiscount > 0 && (
+                <div className="flex justify-between text-emerald-400 font-medium">
+                  <span>Online Prepay Discount (5%)</span>
+                  <span>-₹{order.prepayDiscount.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between border-t border-slate-850/50 pt-2 text-sm font-extrabold text-slate-100">
+                <span>{order.paymentMethod === 'cod' ? 'Total Due at Delivery' : 'Total Amount Paid'}</span>
+                <span className="text-amber-400 text-base">₹{order.totalAmount.toFixed(2)}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -294,7 +328,7 @@ const OrderConfirmation = () => {
             </div>
             <Link
               to="/shop"
-              className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-smooth"
+              className="text-xs font-semibold text-amber-400 hover:text-amber-300 flex items-center gap-1 transition-smooth"
             >
               Explore Shop <ArrowRight size={14} />
             </Link>
@@ -324,7 +358,7 @@ const OrderConfirmation = () => {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                         {product.category?.name && (
-                          <span className="absolute top-2.5 left-2.5 bg-slate-950/80 backdrop-blur border border-slate-800 text-indigo-400 text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                          <span className="absolute top-2.5 left-2.5 bg-slate-950/80 backdrop-blur border border-slate-800 text-amber-400 text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider">
                             {product.category.name}
                           </span>
                         )}
@@ -333,7 +367,7 @@ const OrderConfirmation = () => {
                       {/* Product Details */}
                       <div className="p-4 space-y-2">
                         <Link to={`/product/${product._id}`} className="block">
-                          <h3 className="text-xs font-bold text-slate-200 line-clamp-1 group-hover:text-indigo-400 transition-smooth">
+                          <h3 className="text-xs font-bold text-slate-200 line-clamp-1 group-hover:text-amber-400 transition-smooth">
                             {product.name}
                           </h3>
                         </Link>
@@ -367,7 +401,7 @@ const OrderConfirmation = () => {
                         className={`w-full py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-smooth cursor-pointer ${
                           isAdded
                             ? 'bg-emerald-600 text-white'
-                            : 'bg-indigo-600/15 border border-indigo-500/30 hover:bg-indigo-600 text-indigo-300 hover:text-white'
+                            : 'bg-amber-500/15 border border-amber-500/30 hover:bg-amber-500 text-amber-300 hover:text-white'
                         }`}
                       >
                         {isAdded ? (
@@ -398,3 +432,4 @@ const OrderConfirmation = () => {
 };
 
 export default OrderConfirmation;
+

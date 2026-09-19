@@ -3,13 +3,16 @@ import { useSearchParams, Link } from 'react-router-dom';
 import api from '../services/api';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { useToast } from '../context/ToastContext';
 import useDebounce from '../hooks/useDebounce';
 import { ProductCardSkeleton } from '../components/SkeletonLoader';
 import { Heart, ShoppingCart, Star, Filter, RotateCcw, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const Shop = () => {
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { showToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Mobile Filters sheet state (overlay/drawer on mobile, sidebar on lg+)
@@ -108,8 +111,20 @@ const Shop = () => {
     setAddingToCartId(product._id);
     const res = await addToCart(product, 1);
     setAddingToCartId(null);
-    if (!res.success) {
-      alert(res.message);
+    if (res.success) {
+      showToast(`Added ${product.name} to cart!`, 'success');
+    } else {
+      showToast(res.message || 'Failed to add item to cart', 'error');
+    }
+  };
+
+  const handleToggleWishlist = (product) => {
+    const isWishlisted = isInWishlist(product._id);
+    toggleWishlist(product._id);
+    if (isWishlisted) {
+      showToast(`Removed ${product.name} from wishlist`, 'info');
+    } else {
+      showToast(`Added ${product.name} to wishlist!`, 'success');
     }
   };
 
@@ -120,14 +135,14 @@ const Shop = () => {
   const FilterPanelContent = ({ onClose }) => (
     <div className="space-y-6">
       <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-        <div className="flex items-center gap-2 font-bold text-slate-200">
-          <Filter size={18} className="text-indigo-400" />
+        <div className="flex items-center gap-2 font-bold text-slate-200 font-display">
+          <Filter size={18} className="text-amber-400" />
           Filters
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={handleResetFilters}
-            className="text-xs text-slate-400 hover:text-indigo-400 flex items-center gap-1 transition-smooth cursor-pointer"
+            className="text-xs text-slate-400 hover:text-amber-400 flex items-center gap-1 transition-smooth cursor-pointer font-medium"
           >
             <RotateCcw size={12} />
             Reset
@@ -147,26 +162,26 @@ const Shop = () => {
 
       {/* Search Input */}
       <div className="space-y-2">
-        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Search</label>
+        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-display">Search</label>
         <input
           type="text"
           placeholder="Type to search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-4 text-sm text-slate-100 outline-none transition-smooth"
+          className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-4 text-sm text-slate-100 outline-none transition-smooth"
         />
       </div>
 
-      {/* Categories Filter */}
+      {/* Categories Filter — Clean full list without cutoff scrollbar */}
       <div className="space-y-2">
-        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Category</label>
-        <div className="flex flex-col gap-1 max-h-48 overflow-y-auto pr-1">
+        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-display">Category</label>
+        <div className="flex flex-col gap-1">
           <button
             onClick={() => setCategory('')}
-            className={`text-left text-sm py-2 px-3 rounded-lg transition-smooth cursor-pointer ${
+            className={`text-left text-sm py-2 px-3 rounded-xl transition-smooth cursor-pointer ${
               category === ''
-                ? 'bg-indigo-600 text-white font-semibold'
-                : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                ? 'bg-amber-500 text-slate-950 font-extrabold shadow-md shadow-amber-500/20 font-display'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 font-medium'
             }`}
           >
             All Categories
@@ -175,10 +190,10 @@ const Shop = () => {
             <button
               key={cat.slug}
               onClick={() => setCategory(cat.slug)}
-              className={`text-left text-sm py-2 px-3 rounded-lg transition-smooth cursor-pointer ${
+              className={`text-left text-sm py-2 px-3 rounded-xl transition-smooth cursor-pointer ${
                 category === cat.slug
-                  ? 'bg-indigo-600 text-white font-semibold'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                  ? 'bg-amber-500 text-slate-950 font-extrabold shadow-md shadow-amber-500/20 font-display'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 font-medium'
               }`}
             >
               {cat.name}
@@ -189,37 +204,37 @@ const Shop = () => {
 
       {/* Price Filter */}
       <div className="space-y-2">
-        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Price Range (₹)</label>
+        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-display">Price Range (₹)</label>
         <div className="flex gap-2">
           <input
             type="number"
             placeholder="Min"
             value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
-            className="w-1/2 bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
+            className="w-1/2 bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
           />
           <input
             type="number"
             placeholder="Max"
             value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
-            className="w-1/2 bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
+            className="w-1/2 bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
           />
         </div>
       </div>
 
       {/* Rating Filter */}
       <div className="space-y-2">
-        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Minimum Rating</label>
+        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-display">Minimum Rating</label>
         <div className="flex flex-col gap-1">
           {['', '4', '3', '2'].map((star) => (
             <button
               key={star}
               onClick={() => setRating(star)}
-              className={`text-left text-sm py-2 px-3 rounded-lg flex items-center gap-1.5 transition-smooth cursor-pointer ${
+              className={`text-left text-sm py-2 px-3 rounded-xl flex items-center gap-1.5 transition-smooth cursor-pointer ${
                 rating === star
-                  ? 'bg-indigo-600 text-white font-semibold'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                  ? 'bg-amber-500 text-slate-950 font-extrabold shadow-md shadow-amber-500/20 font-display'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 font-medium'
               }`}
             >
               {star === '' ? (
@@ -228,10 +243,10 @@ const Shop = () => {
                 <>
                   <div className="flex text-amber-400">
                     {Array.from({ length: Number(star) }).map((_, i) => (
-                      <Star key={i} size={12} className="fill-amber-400" />
+                      <Star key={i} size={12} className={`fill-amber-400 ${rating === star ? 'text-slate-950' : 'text-amber-400'}`} />
                     ))}
                   </div>
-                  <span className="text-xs font-medium">& Up</span>
+                  <span className="text-xs font-semibold">& Up</span>
                 </>
               )}
             </button>
@@ -243,7 +258,7 @@ const Shop = () => {
       {onClose && (
         <button
           onClick={onClose}
-          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-sm transition-smooth mt-2"
+          className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl text-sm transition-smooth mt-2 font-display"
         >
           Apply Filters
         </button>
@@ -270,7 +285,7 @@ const Shop = () => {
       )}
 
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 mb-5 sm:mb-6">Browse Products</h1>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 mb-5 sm:mb-6 font-display">Browse Products</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
 
@@ -289,12 +304,12 @@ const Shop = () => {
                 {/* Mobile filter button */}
                 <button
                   onClick={() => setShowMobileFilters(true)}
-                  className="lg:hidden flex items-center gap-1.5 bg-indigo-600/15 border border-indigo-500/30 text-indigo-400 h-10 px-3 rounded-xl text-xs font-semibold cursor-pointer shrink-0 relative"
+                  className="lg:hidden flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/30 text-amber-400 h-10 px-3 rounded-xl text-xs font-semibold cursor-pointer shrink-0 relative font-display"
                 >
                   <Filter size={14} />
                   <span className="hidden xs:inline">Filters</span>
                   {activeFilterCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-500 text-[9px] font-bold text-white">
+                    <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-slate-950">
                       {activeFilterCount}
                     </span>
                   )}
@@ -311,7 +326,7 @@ const Shop = () => {
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value)}
-                  className="bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl h-10 px-2 sm:px-3 text-xs sm:text-sm text-slate-200 outline-none transition-smooth cursor-pointer max-w-[140px] sm:max-w-none"
+                  className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl h-10 px-2 sm:px-3 text-xs sm:text-sm text-slate-200 outline-none transition-smooth cursor-pointer max-w-[140px] sm:max-w-none"
                 >
                   <option value="newest">Newest</option>
                   <option value="price-asc">Price ↑</option>
@@ -331,7 +346,7 @@ const Shop = () => {
                 <p className="text-slate-400">No products found matching your filters.</p>
                 <button
                   onClick={handleResetFilters}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-6 rounded-full transition-smooth text-sm"
+                  className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-2.5 px-6 rounded-full transition-smooth text-sm font-display"
                 >
                   Clear Filters
                 </button>
@@ -352,15 +367,17 @@ const Shop = () => {
                           className="w-full h-full object-cover group-hover:scale-105 transition-smooth duration-500"
                         />
                       </Link>
-                      <button
-                        onClick={() => toggleWishlist(product._id)}
-                        className="absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 rounded-full bg-slate-950/80 border border-slate-800 hover:bg-slate-900 text-slate-300 hover:text-red-400 transition-smooth"
+                      <motion.button
+                        whileTap={{ scale: 0.8 }}
+                        whileHover={{ scale: 1.1 }}
+                        onClick={() => handleToggleWishlist(product)}
+                        className="absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 rounded-full bg-slate-950/80 border border-slate-800 hover:bg-slate-900 text-slate-300 hover:text-red-400 transition-colors cursor-pointer shadow-md"
                       >
                         <Heart
                           size={14}
-                          className={isInWishlist(product._id) ? 'fill-red-500 text-red-500' : ''}
+                          className={isInWishlist(product._id) ? 'fill-red-500 text-red-500 transition-colors' : 'transition-colors'}
                         />
-                      </button>
+                      </motion.button>
                       {product.stock <= 5 && product.stock > 0 && (
                         <span className="absolute bottom-2 left-2 text-[9px] sm:text-[10px] bg-amber-500/20 border border-amber-500/40 text-amber-400 py-0.5 px-1.5 sm:px-2 rounded-full font-semibold">
                           Only {product.stock} left!
@@ -380,7 +397,7 @@ const Shop = () => {
                           {product.category?.name || 'Category'}
                         </span>
                         <Link to={`/product/${product._id}`} className="block">
-                          <h3 className="font-bold text-slate-200 line-clamp-2 group-hover:text-indigo-400 transition-smooth text-xs sm:text-sm leading-snug">
+                          <h3 className="font-bold text-slate-200 line-clamp-2 group-hover:text-amber-400 transition-smooth text-xs sm:text-sm leading-snug font-display">
                             {product.name}
                           </h3>
                         </Link>
@@ -393,15 +410,16 @@ const Shop = () => {
                       </div>
 
                       <div className="flex items-center justify-between mt-2 sm:mt-4">
-                        <span className="text-sm sm:text-base font-extrabold text-slate-100">₹{product.price.toFixed(2)}</span>
-                        <button
+                        <span className="text-sm sm:text-base font-extrabold text-amber-400 font-display">₹{product.price.toFixed(2)}</span>
+                        <motion.button
+                          whileTap={{ scale: 0.9 }}
                           disabled={product.stock === 0 || addingToCartId === product._id}
                           onClick={() => handleAddToCart(product)}
-                          className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white p-2 sm:p-2.5 rounded-full transition-smooth shadow-lg shadow-indigo-600/10 disabled:shadow-none cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                          className="bg-amber-500 hover:bg-amber-400 active:scale-95 disabled:bg-slate-800 disabled:text-slate-600 text-slate-950 font-bold p-2 sm:p-2.5 rounded-full transition-all duration-150 shadow-lg shadow-amber-500/10 disabled:shadow-none cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
                         >
                           <ShoppingCart size={14} className="sm:hidden" />
                           <ShoppingCart size={16} className="hidden sm:block" />
-                        </button>
+                        </motion.button>
                       </div>
                     </div>
                   </div>
@@ -415,17 +433,17 @@ const Shop = () => {
                 <button
                   disabled={page === 1}
                   onClick={() => setPage(prev => prev - 1)}
-                  className="p-2.5 border border-slate-800 hover:border-slate-700 bg-slate-900 hover:bg-slate-850 rounded-xl disabled:bg-slate-950 disabled:border-slate-900 disabled:text-slate-700 text-slate-300 transition-smooth cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  className="p-2.5 border border-slate-800 hover:border-amber-500/40 bg-slate-900 hover:bg-slate-850 rounded-xl disabled:bg-slate-950 disabled:border-slate-900 disabled:text-slate-700 text-slate-300 transition-smooth cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
                 >
                   <ChevronLeft size={20} />
                 </button>
                 <span className="text-sm font-medium text-slate-400">
-                  Page <span className="text-slate-200 font-bold">{page}</span> of {totalPages}
+                  Page <span className="text-amber-400 font-extrabold font-display">{page}</span> of {totalPages}
                 </span>
                 <button
                   disabled={page === totalPages}
                   onClick={() => setPage(prev => prev + 1)}
-                  className="p-2.5 border border-slate-800 hover:border-slate-700 bg-slate-900 hover:bg-slate-850 rounded-xl disabled:bg-slate-950 disabled:border-slate-900 disabled:text-slate-700 text-slate-300 transition-smooth cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  className="p-2.5 border border-slate-800 hover:border-amber-500/40 bg-slate-900 hover:bg-slate-850 rounded-xl disabled:bg-slate-950 disabled:border-slate-900 disabled:text-slate-700 text-slate-300 transition-smooth cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
                 >
                   <ChevronRight size={20} />
                 </button>

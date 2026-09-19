@@ -7,7 +7,8 @@ const {
   getOrderById,
   getAllOrders,
   updateOrderStatus,
-  getGuestOrder
+  getGuestOrder,
+  markPaymentCollected
 } = require('../controllers/orderController');
 const { protect, admin, optionalProtect } = require('../middleware/auth');
 
@@ -21,5 +22,6 @@ router.get('/:id', protect, getOrderById);
 // Admin-only Order Management routes
 router.get('/', protect, admin, getAllOrders);
 router.put('/:id/status', protect, admin, updateOrderStatus);
+router.put('/:id/collect-payment', protect, admin, markPaymentCollected);
 
 module.exports = router;

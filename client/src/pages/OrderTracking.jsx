@@ -91,7 +91,7 @@ const OrderTracking = () => {
         
         {/* Header Section */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 bg-clip-text text-transparent">
             Track Your Order
           </h1>
           <p className="text-slate-400 text-sm max-w-md mx-auto">
@@ -110,7 +110,7 @@ const OrderTracking = () => {
                 value={searchId}
                 onChange={(e) => setSearchId(e.target.value)}
                 required
-                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
               />
             </div>
             <div className="space-y-1">
@@ -121,13 +121,13 @@ const OrderTracking = () => {
                 value={searchEmail}
                 onChange={(e) => setSearchEmail(e.target.value)}
                 required
-                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-indigo-650 hover:bg-indigo-550 disabled:bg-slate-800 text-white font-bold py-2.5 rounded-xl transition-smooth shadow-lg shadow-indigo-600/15 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full bg-amber-500 hover:bg-amber-400 disabled:bg-slate-800 text-white font-bold py-2.5 rounded-xl transition-smooth shadow-lg shadow-amber-500/15 flex items-center justify-center gap-2 cursor-pointer"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -151,7 +151,7 @@ const OrderTracking = () => {
         {/* Tracking Details Results */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
             <p className="text-slate-450 text-xs">Retrieving order details...</p>
           </div>
         )}
@@ -165,7 +165,16 @@ const OrderTracking = () => {
               {/* Order Meta */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-850 pb-5">
                 <div>
-                  <span className="text-[10px] text-indigo-400 uppercase font-bold tracking-wider">Guest Purchase</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-amber-400 uppercase font-bold tracking-wider">
+                      {order.isGuest ? 'Guest Purchase' : 'Registered Order'}
+                    </span>
+                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
+                      order.paymentMethod === 'cod' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                    }`}>
+                      {order.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid Online (Stripe)'}
+                    </span>
+                  </div>
                   <h2 className="text-lg font-bold text-slate-200 mt-0.5">Order ID: #{order._id}</h2>
                   <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-1">
                     <Calendar size={13} />
@@ -173,12 +182,14 @@ const OrderTracking = () => {
                   </p>
                 </div>
                 <div className="flex flex-col items-end text-right">
-                  <span className="text-[10px] text-slate-450 uppercase font-bold tracking-wider">Total Amount</span>
-                  <span className="text-xl font-extrabold text-indigo-400 mt-0.5">₹{order.totalAmount.toFixed(2)}</span>
+                  <span className="text-[10px] text-slate-450 uppercase font-bold tracking-wider">
+                    {order.paymentMethod === 'cod' ? 'Amount Due at Delivery' : 'Total Amount'}
+                  </span>
+                  <span className="text-xl font-extrabold text-amber-400 mt-0.5">₹{order.totalAmount.toFixed(2)}</span>
                   <span className={`text-[9px] font-bold py-0.5 px-2.5 rounded-full mt-1.5 border uppercase tracking-wider ${
-                    order.paymentStatus === 'paid' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                    order.paymentStatus === 'paid' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
                   }`}>
-                    {order.paymentStatus}
+                    {order.paymentStatus === 'paid' ? 'Paid' : 'Pending (Pay on Arrival)'}
                   </span>
                 </div>
               </div>
@@ -208,7 +219,7 @@ const OrderTracking = () => {
                   <div className="flex flex-col items-center z-10">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-300 ${
                       getStepStatus('pending') === 'complete' || getStepStatus('pending') === 'active'
-                        ? 'bg-indigo-600 border-indigo-500 text-white'
+                        ? 'bg-amber-500 border-amber-500 text-white'
                         : 'bg-slate-950 border-slate-800 text-slate-500'
                     }`}>
                       <Clock size={16} />
@@ -220,7 +231,7 @@ const OrderTracking = () => {
                   <div className="flex flex-col items-center z-10">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-300 ${
                       getStepStatus('shipped') === 'complete'
-                        ? 'bg-indigo-600 border-indigo-500 text-white'
+                        ? 'bg-amber-500 border-amber-500 text-white'
                         : getStepStatus('shipped') === 'active'
                         ? 'bg-purple-650 border-purple-500 text-white'
                         : 'bg-slate-950 border-slate-800 text-slate-500'
@@ -252,7 +263,7 @@ const OrderTracking = () => {
               {/* Shipping & Delivery Details */}
               <div className="bg-slate-900 border border-slate-850 p-6 rounded-3xl shadow-xl space-y-4">
                 <h3 className="font-bold text-slate-200 text-sm border-b border-slate-850 pb-3 flex items-center gap-1.5">
-                  <MapPin size={16} className="text-indigo-400" />
+                  <MapPin size={16} className="text-amber-400" />
                   Delivery Details
                 </h3>
                 <div className="text-xs space-y-2 text-slate-400 leading-relaxed">
@@ -278,7 +289,7 @@ const OrderTracking = () => {
               {/* Items List Summary */}
               <div className="bg-slate-900 border border-slate-850 p-6 rounded-3xl shadow-xl space-y-4">
                 <h3 className="font-bold text-slate-200 text-sm border-b border-slate-850 pb-3 flex items-center gap-1.5">
-                  <Package size={16} className="text-indigo-400" />
+                  <Package size={16} className="text-amber-400" />
                   Purchased Items
                 </h3>
                 <div className="max-h-48 overflow-y-auto space-y-3 pr-1 divide-y divide-slate-850/50">
@@ -305,3 +316,4 @@ const OrderTracking = () => {
 };
 
 export default OrderTracking;
+

@@ -152,7 +152,7 @@ const ProfilePage = () => {
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'pending': return 'bg-amber-500/10 border border-amber-500/30 text-amber-400';
-      case 'shipped': return 'bg-indigo-500/10 border border-indigo-500/30 text-indigo-400';
+      case 'shipped': return 'bg-indigo-500/10 border border-amber-500/30 text-amber-400';
       case 'delivered': return 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400';
       case 'cancelled': return 'bg-rose-500/10 border border-rose-500/30 text-rose-400';
       default: return 'bg-slate-800 text-slate-400';
@@ -169,7 +169,7 @@ const ProfilePage = () => {
         {/* Sidebar Tabs Selector */}
         <div className="bg-slate-900 border border-slate-850 p-4 sm:p-6 rounded-2xl h-fit flex flex-col gap-4 md:gap-0 md:space-y-6">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-indigo-650 flex items-center justify-center font-bold text-lg text-white shrink-0">
+            <div className="h-10 w-10 rounded-full bg-amber-500 flex items-center justify-center font-bold text-lg text-white shrink-0">
               {user?.name?.[0]}
             </div>
             <div>
@@ -184,7 +184,7 @@ const ProfilePage = () => {
             <button
               onClick={() => handleTabChange('orders')}
               className={`flex items-center gap-2.5 py-2.5 px-3.5 rounded-xl text-left cursor-pointer transition-smooth shrink-0 whitespace-nowrap ${
-                activeTab === 'orders' ? 'bg-indigo-650 text-white font-semibold' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
+                activeTab === 'orders' ? 'bg-amber-500 text-white font-semibold' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
               }`}
             >
               <ShoppingBag size={18} />
@@ -193,7 +193,7 @@ const ProfilePage = () => {
             <button
               onClick={() => handleTabChange('addresses')}
               className={`flex items-center gap-2.5 py-2.5 px-3.5 rounded-xl text-left cursor-pointer transition-smooth shrink-0 whitespace-nowrap ${
-                activeTab === 'addresses' ? 'bg-indigo-650 text-white font-semibold' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
+                activeTab === 'addresses' ? 'bg-amber-500 text-white font-semibold' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
               }`}
             >
               <MapPin size={18} />
@@ -202,7 +202,7 @@ const ProfilePage = () => {
             <button
               onClick={() => handleTabChange('settings')}
               className={`flex items-center gap-2.5 py-2.5 px-3.5 rounded-xl text-left cursor-pointer transition-smooth shrink-0 whitespace-nowrap ${
-                activeTab === 'settings' ? 'bg-indigo-650 text-white font-semibold' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
+                activeTab === 'settings' ? 'bg-amber-500 text-white font-semibold' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
               }`}
             >
               <Settings size={18} />
@@ -218,13 +218,13 @@ const ProfilePage = () => {
           {activeTab === 'orders' && (
             <div className="space-y-6">
               <h2 className="text-xl font-bold text-slate-200 border-b border-slate-850 pb-4 flex items-center gap-2">
-                <ShoppingBag size={20} className="text-indigo-400" />
+                <ShoppingBag size={20} className="text-amber-400" />
                 Order History
               </h2>
 
               {ordersLoading ? (
                 <div className="flex flex-col items-center justify-center py-12 gap-3">
-                  <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
                   <p className="text-slate-500 text-xs">Loading orders...</p>
                 </div>
               ) : orders.length === 0 ? (
@@ -254,7 +254,7 @@ const ProfilePage = () => {
                         </span>
                         <button
                           onClick={() => setSelectedOrder(order)}
-                          className="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-indigo-400 hover:text-indigo-300 font-bold py-1.5 px-4 rounded-xl text-xs transition-smooth cursor-pointer"
+                          className="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-amber-400 hover:text-amber-300 font-bold py-1.5 px-4 rounded-xl text-xs transition-smooth cursor-pointer"
                         >
                           View Details
                         </button>
@@ -271,13 +271,13 @@ const ProfilePage = () => {
             <div className="space-y-6">
               <div className="flex items-center justify-between border-b border-slate-850 pb-4">
                 <h2 className="text-xl font-bold text-slate-200 flex items-center gap-2">
-                  <MapPin size={20} className="text-indigo-400" />
+                  <MapPin size={20} className="text-amber-400" />
                   Shipping Addresses
                 </h2>
                 {!isAddingAddr && (
                   <button
                     onClick={() => setIsAddingAddr(true)}
-                    className="bg-indigo-650 hover:bg-indigo-550 text-white font-semibold py-1.5 px-4 rounded-xl text-xs transition-smooth cursor-pointer"
+                    className="bg-amber-500 hover:bg-amber-400 text-white font-semibold py-1.5 px-4 rounded-xl text-xs transition-smooth cursor-pointer"
                   >
                     Add Address
                   </button>
@@ -309,7 +309,7 @@ const ProfilePage = () => {
                       value={street}
                       onChange={(e) => setStreet(e.target.value)}
                       required
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
                     />
                   </div>
 
@@ -321,7 +321,7 @@ const ProfilePage = () => {
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
                         required
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
                       />
                     </div>
                     <div className="space-y-1">
@@ -331,7 +331,7 @@ const ProfilePage = () => {
                         value={state}
                         onChange={(e) => setState(e.target.value)}
                         required
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
                       />
                     </div>
                   </div>
@@ -344,7 +344,7 @@ const ProfilePage = () => {
                         value={zipCode}
                         onChange={(e) => setZipCode(e.target.value)}
                         required
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
                       />
                     </div>
                     <div className="space-y-1">
@@ -354,7 +354,7 @@ const ProfilePage = () => {
                         value={country}
                         onChange={(e) => setCountry(e.target.value)}
                         required
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
                       />
                     </div>
                   </div>
@@ -369,7 +369,7 @@ const ProfilePage = () => {
                     </button>
                     <button
                       type="submit"
-                      className="bg-indigo-650 hover:bg-indigo-550 text-white font-semibold py-2 px-6 rounded-xl text-xs transition-smooth cursor-pointer"
+                      className="bg-amber-500 hover:bg-amber-400 text-white font-semibold py-2 px-6 rounded-xl text-xs transition-smooth cursor-pointer"
                     >
                       Save Address
                     </button>
@@ -390,7 +390,7 @@ const ProfilePage = () => {
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] uppercase font-bold text-slate-500">Address</span>
                             {addr.isDefault && (
-                              <span className="text-[9px] bg-indigo-500/20 border border-indigo-500/35 text-indigo-400 py-0.5 px-2 rounded-full font-bold">
+                              <span className="text-[9px] bg-indigo-500/20 border border-amber-500/35 text-amber-400 py-0.5 px-2 rounded-full font-bold">
                                 Default
                               </span>
                             )}
@@ -404,7 +404,7 @@ const ProfilePage = () => {
                           {!addr.isDefault && (
                             <button
                               onClick={() => setDefaultAddress(addr._id)}
-                              className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-smooth cursor-pointer"
+                              className="text-[10px] font-bold text-amber-400 hover:text-amber-300 transition-smooth cursor-pointer"
                             >
                               Set Default
                             </button>
@@ -431,7 +431,7 @@ const ProfilePage = () => {
               {/* Profile details */}
               <div className="space-y-4 max-w-xl">
                 <h2 className="text-lg font-bold text-slate-200 border-b border-slate-850 pb-3 flex items-center gap-2">
-                  <User size={18} className="text-indigo-400" />
+                  <User size={18} className="text-amber-400" />
                   Personal Information
                 </h2>
 
@@ -457,7 +457,7 @@ const ProfilePage = () => {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       required
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
                     />
                   </div>
                   <div className="space-y-1">
@@ -467,13 +467,13 @@ const ProfilePage = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={profileLoading}
-                    className="bg-indigo-650 hover:bg-indigo-550 text-white font-semibold py-2 px-6 rounded-xl text-xs transition-smooth cursor-pointer"
+                    className="bg-amber-500 hover:bg-amber-400 text-white font-semibold py-2 px-6 rounded-xl text-xs transition-smooth cursor-pointer"
                   >
                     {profileLoading ? 'Saving...' : 'Save Profile Details'}
                   </button>
@@ -483,7 +483,7 @@ const ProfilePage = () => {
               {/* Password change */}
               <div className="space-y-4 max-w-xl">
                 <h2 className="text-lg font-bold text-slate-200 border-b border-slate-850 pb-3 flex items-center gap-2">
-                  <Lock size={18} className="text-indigo-400" />
+                  <Lock size={18} className="text-amber-400" />
                   Security Configuration
                 </h2>
 
@@ -509,7 +509,7 @@ const ProfilePage = () => {
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
                       required
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
                     />
                   </div>
                   <div className="space-y-1">
@@ -519,7 +519,7 @@ const ProfilePage = () => {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       required
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
                     />
                   </div>
                   <div className="space-y-1">
@@ -529,13 +529,13 @@ const ProfilePage = () => {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={pwLoading}
-                    className="bg-indigo-650 hover:bg-indigo-550 text-white font-semibold py-2 px-6 rounded-xl text-xs transition-smooth cursor-pointer"
+                    className="bg-amber-500 hover:bg-amber-400 text-white font-semibold py-2 px-6 rounded-xl text-xs transition-smooth cursor-pointer"
                   >
                     {pwLoading ? 'Updating...' : 'Update Password'}
                   </button>
@@ -590,7 +590,7 @@ const ProfilePage = () => {
                         key={st}
                         className={`h-5 w-5 rounded-full flex items-center justify-center border-2 transition-smooth ${
                           getStepIndex(selectedOrder.orderStatus) >= i
-                            ? 'bg-indigo-600 border-indigo-500 text-white'
+                            ? 'bg-amber-500 border-amber-500 text-white'
                             : 'bg-slate-900 border-slate-880 text-slate-600'
                         }`}
                       >
@@ -630,7 +630,7 @@ const ProfilePage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-slate-400 leading-relaxed bg-slate-950/10 border border-slate-850/50 p-4 rounded-xl">
                 <div>
                   <h4 className="font-bold text-slate-350 uppercase text-[10px] tracking-wider mb-2 flex items-center gap-1.5">
-                    <Truck size={14} className="text-indigo-400" />
+                    <Truck size={14} className="text-amber-400" />
                     Delivery Destination
                   </h4>
                   <p>{selectedOrder.shippingAddress.street}</p>
@@ -639,15 +639,26 @@ const ProfilePage = () => {
                 </div>
                 <div className="space-y-1">
                   <h4 className="font-bold text-slate-350 uppercase text-[10px] tracking-wider mb-2 flex items-center gap-1.5">
-                    <CreditCard size={14} className="text-indigo-400" />
-                    Billing Status
+                    <CreditCard size={14} className="text-amber-400" />
+                    Billing & Payment
                   </h4>
+                  <p>
+                    Payment Method:{' '}
+                    <span className="font-semibold text-slate-200">
+                      {selectedOrder.paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Paid Online (Stripe)'}
+                    </span>
+                  </p>
                   <p>
                     Payment Status:{' '}
                     <span className={`font-bold capitalize ${selectedOrder.paymentStatus === 'paid' ? 'text-emerald-400' : 'text-amber-400'}`}>
-                      {selectedOrder.paymentStatus}
+                      {selectedOrder.paymentStatus === 'paid' ? 'Paid' : 'Pending (Pay at delivery)'}
                     </span>
                   </p>
+                  {selectedOrder.prepayDiscount > 0 && (
+                    <p className="text-emerald-400 text-[11px] font-medium">
+                      Prepay Discount Applied: -₹{selectedOrder.prepayDiscount.toFixed(2)}
+                    </p>
+                  )}
                   {selectedOrder.paymentIntentId && (
                     <p className="font-mono text-[10px] text-slate-500 mt-2 truncate">Ref: {selectedOrder.paymentIntentId}</p>
                   )}
@@ -669,3 +680,4 @@ const ProfilePage = () => {
 };
 
 export default ProfilePage;
+

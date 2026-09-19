@@ -67,7 +67,7 @@ const AdminDashboard = () => {
 
   const kpis = [
     { name: 'Total Revenue', value: `₹${stats.totalRevenue.toFixed(2)}`, icon: DollarSign, color: 'text-emerald-400 border-emerald-500/10 bg-emerald-500/5' },
-    { name: 'Orders Placed', value: stats.totalOrders, icon: ShoppingBag, color: 'text-indigo-400 border-indigo-500/10 bg-indigo-500/5' },
+    { name: 'Orders Placed', value: stats.totalOrders, icon: ShoppingBag, color: 'text-amber-400 border-amber-500/10 bg-amber-500/5' },
     { name: 'Total Customers', value: stats.totalCustomers, icon: Users, color: 'text-purple-400 border-purple-500/10 bg-purple-500/5' },
     { name: 'Low Stock Alerts', value: stats.lowStockAlerts, icon: AlertTriangle, color: stats.lowStockAlerts > 0 ? 'text-amber-400 border-amber-500/20 bg-amber-500/10 animate-pulse' : 'text-slate-400 border-slate-800 bg-slate-900/40' }
   ];
@@ -80,7 +80,7 @@ const AdminDashboard = () => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-900 pb-5">
           <div>
             <h1 className="text-3xl font-extrabold text-slate-100 flex items-center gap-2">
-              <ShieldCheck size={28} className="text-indigo-400" />
+              <ShieldCheck size={28} className="text-amber-400" />
               Admin Control Center
             </h1>
             <p className="text-slate-500 text-sm mt-1">Real-time inventory and financial performance diagnostics.</p>
@@ -88,13 +88,13 @@ const AdminDashboard = () => {
           <div className="flex gap-2">
             <Link
               to="/admin/products"
-              className="bg-slate-900 border border-slate-800 hover:bg-slate-850 hover:text-indigo-400 py-1.5 px-4 rounded-xl text-xs font-semibold transition-smooth"
+              className="bg-slate-900 border border-slate-800 hover:bg-slate-850 hover:text-amber-400 py-1.5 px-4 rounded-xl text-xs font-semibold transition-smooth"
             >
               Manage Catalog
             </Link>
             <Link
               to="/admin/orders"
-              className="bg-indigo-650 hover:bg-indigo-550 text-white py-1.5 px-4 rounded-xl text-xs font-semibold transition-smooth"
+              className="bg-amber-500 hover:bg-amber-400 text-white py-1.5 px-4 rounded-xl text-xs font-semibold transition-smooth"
             >
               Order Backlog
             </Link>
@@ -125,7 +125,7 @@ const AdminDashboard = () => {
           {/* Daily Revenue Bar Chart */}
           <div className="lg:col-span-2 bg-slate-900 border border-slate-850 rounded-2xl p-6 shadow-2xl flex flex-col justify-between h-96">
             <div className="flex items-center gap-1.5 font-bold text-slate-200 text-sm border-b border-slate-850 pb-3 mb-4">
-              <TrendingUp size={16} className="text-indigo-400" />
+              <TrendingUp size={16} className="text-amber-400" />
               Daily Sales Revenue (Last 7 Days)
             </div>
             
@@ -148,7 +148,7 @@ const AdminDashboard = () => {
           {/* Sales by Category Pie Chart */}
           <div className="bg-slate-900 border border-slate-850 rounded-2xl p-6 shadow-2xl flex flex-col justify-between h-96">
             <div className="flex items-center gap-1.5 font-bold text-slate-200 text-sm border-b border-slate-850 pb-3 mb-4">
-              <TrendingUp size={16} className="text-indigo-400" />
+              <TrendingUp size={16} className="text-amber-400" />
               Revenue Share by Category
             </div>
 
@@ -247,7 +247,7 @@ const AdminDashboard = () => {
           {/* Quick Actions Card */}
           <div className="bg-slate-900 border border-slate-850 rounded-2xl p-6 shadow-2xl space-y-4">
             <h3 className="font-bold text-slate-200 text-sm border-b border-slate-850 pb-3 flex items-center gap-1.5">
-              <Package size={16} className="text-indigo-400" />
+              <Package size={16} className="text-amber-400" />
               Inventory & Admin Management
             </h3>
 
@@ -257,21 +257,21 @@ const AdminDashboard = () => {
                 className="flex items-center justify-between p-3.5 bg-slate-950/30 hover:bg-slate-950 border border-slate-850 rounded-xl transition-smooth group"
               >
                 <span>Manage Products Catalog</span>
-                <ArrowRight size={14} className="text-slate-550 group-hover:translate-x-0.5 group-hover:text-indigo-400 transition-smooth" />
+                <ArrowRight size={14} className="text-slate-550 group-hover:translate-x-0.5 group-hover:text-amber-400 transition-smooth" />
               </Link>
               <Link
                 to="/admin/categories"
                 className="flex items-center justify-between p-3.5 bg-slate-950/30 hover:bg-slate-950 border border-slate-850 rounded-xl transition-smooth group"
               >
                 <span>Manage Categories Hierarchy</span>
-                <ArrowRight size={14} className="text-slate-550 group-hover:translate-x-0.5 group-hover:text-indigo-400 transition-smooth" />
+                <ArrowRight size={14} className="text-slate-550 group-hover:translate-x-0.5 group-hover:text-amber-400 transition-smooth" />
               </Link>
               <Link
                 to="/admin/customers"
                 className="flex items-center justify-between p-3.5 bg-slate-950/30 hover:bg-slate-950 border border-slate-850 rounded-xl transition-smooth group"
               >
                 <span>Review Customer Database</span>
-                <ArrowRight size={14} className="text-slate-550 group-hover:translate-x-0.5 group-hover:text-indigo-400 transition-smooth" />
+                <ArrowRight size={14} className="text-slate-550 group-hover:translate-x-0.5 group-hover:text-amber-400 transition-smooth" />
               </Link>
             </div>
           </div>
@@ -284,3 +284,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+

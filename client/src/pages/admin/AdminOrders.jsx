@@ -10,7 +10,11 @@ import {
   CreditCard,
   Truck,
   Eye,
-  RefreshCw
+  RefreshCw,
+  Banknote,
+  Filter,
+  CheckCircle2,
+  Sparkles
 } from 'lucide-react';
 
 const AdminOrders = () => {
@@ -19,9 +23,14 @@ const AdminOrders = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Filtering states
+  const [methodFilter, setMethodFilter] = useState('all'); // 'all' | 'online' | 'cod'
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'pending' | 'paid' | 'failed'
+
   // Selected Order Modal State
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [updatingStatusId, setUpdatingStatusId] = useState(null);
+  const [collectingPaymentId, setCollectingPaymentId] = useState(null);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -64,18 +73,47 @@ const AdminOrders = () => {
     }
   };
 
+  const handleMarkPaymentCollected = async (orderId) => {
+    setCollectingPaymentId(orderId);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await api.put(`/orders/${orderId}/collect-payment`);
+      if (response.data.success) {
+        setSuccess(`Payment for order #${orderId.substring(12).toUpperCase()} marked as Collected/Paid!`);
+        
+        setOrders(prev => prev.map(o => o._id === orderId ? { ...o, paymentStatus: 'paid' } : o));
+        
+        if (selectedOrder && selectedOrder._id === orderId) {
+          setSelectedOrder(prev => ({ ...prev, paymentStatus: 'paid' }));
+        }
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to mark payment collected');
+    } finally {
+      setCollectingPaymentId(null);
+    }
+  };
+
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'pending': return 'bg-amber-500/10 border border-amber-500/30 text-amber-400';
-      case 'shipped': return 'bg-indigo-500/10 border border-indigo-500/30 text-indigo-400';
+      case 'shipped': return 'bg-amber-500/10 border border-amber-500/30 text-amber-400';
       case 'delivered': return 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400';
       case 'cancelled': return 'bg-rose-500/10 border border-rose-500/30 text-rose-400';
       default: return 'bg-slate-800 text-slate-400';
     }
   };
 
-  const steps = ['pending', 'shipped', 'delivered'];
-  const getStepIndex = (status) => steps.indexOf(status);
+  // Filtered orders list
+  const filteredOrders = orders.filter(o => {
+    const matchesMethod = methodFilter === 'all' || (o.paymentMethod || 'online') === methodFilter;
+    const matchesStatus = statusFilter === 'all' || o.paymentStatus === statusFilter;
+    return matchesMethod && matchesStatus;
+  });
+
+  const codPendingCount = orders.filter(o => (o.paymentMethod || 'online') === 'cod' && o.paymentStatus === 'pending').length;
 
   return (
     <div className="bg-slate-950 text-slate-100 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
@@ -85,9 +123,9 @@ const AdminOrders = () => {
         <div className="flex items-center justify-between border-b border-slate-900 pb-5">
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100">Orders Management</h1>
-            <p className="text-slate-500 text-sm mt-1">Review orders backlog, confirm shipments, and track billing.</p>
+            <p className="text-slate-500 text-sm mt-1">Review orders backlog, confirm shipments, and track COD cash collections.</p>
           </div>
-          <button onClick={fetchOrders} className="text-slate-505 hover:text-slate-350 p-2">
+          <button onClick={fetchOrders} className="text-slate-505 hover:text-slate-350 p-2 cursor-pointer">
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
@@ -106,15 +144,67 @@ const AdminOrders = () => {
           </div>
         )}
 
+        {/* Filter Controls Bar */}
+        <div className="bg-slate-900 border border-slate-850 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5 mr-2">
+              <Filter size={14} className="text-amber-400" /> Payment Method:
+            </span>
+            <button
+              onClick={() => setMethodFilter('all')}
+              className={`py-1.5 px-3 rounded-xl text-xs font-semibold transition-smooth cursor-pointer ${
+                methodFilter === 'all' ? 'bg-amber-500 text-white' : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setMethodFilter('online')}
+              className={`py-1.5 px-3 rounded-xl text-xs font-semibold transition-smooth cursor-pointer ${
+                methodFilter === 'online' ? 'bg-amber-500 text-white' : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Pay Online
+            </button>
+            <button
+              onClick={() => setMethodFilter('cod')}
+              className={`py-1.5 px-3 rounded-xl text-xs font-semibold transition-smooth cursor-pointer flex items-center gap-1.5 ${
+                methodFilter === 'cod' ? 'bg-emerald-600 text-white' : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <span>COD</span>
+              {codPendingCount > 0 && (
+                <span className="bg-amber-500 text-slate-950 text-[9px] font-bold px-1.5 py-0.25 rounded-full">
+                  {codPendingCount} cash due
+                </span>
+              )}
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-400">Payment Status:</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-slate-950 border border-slate-800 focus:border-amber-500 text-xs font-semibold text-slate-200 rounded-xl py-1.5 px-3 outline-none cursor-pointer"
+            >
+              <option value="all">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="paid">Paid</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
+        </div>
+
         {/* Orders Table */}
         {loading && orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3 bg-slate-900 border border-slate-850 rounded-2xl">
-            <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
             <p className="text-slate-500 text-xs">Loading orders backlog...</p>
           </div>
-        ) : orders.length === 0 ? (
+        ) : filteredOrders.length === 0 ? (
           <div className="bg-slate-900 border border-slate-850 p-12 rounded-2xl text-center text-slate-500 italic text-sm">
-            No customer orders recorded yet.
+            No matching orders found for selected filters.
           </div>
         ) : (
           <div className="bg-slate-900 border border-slate-850 rounded-2xl overflow-hidden shadow-2xl">
@@ -126,14 +216,15 @@ const AdminOrders = () => {
                     <th className="p-4">Order ID</th>
                     <th className="p-4">Date</th>
                     <th className="p-4">Customer Details</th>
+                    <th className="p-4 text-center">Method</th>
                     <th className="p-4 text-right">Total Price</th>
-                    <th className="p-4 text-center">Payment</th>
+                    <th className="p-4 text-center">Payment Status</th>
                     <th className="p-4">Delivery Status</th>
                     <th className="p-4 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-850">
-                  {orders.map((o) => (
+                  {filteredOrders.map((o) => (
                     <tr key={o._id} className="text-slate-350 hover:bg-slate-950/10">
                       <td className="p-4 font-mono font-bold text-slate-200">
                         #{o._id.substring(12).toUpperCase()}
@@ -144,17 +235,35 @@ const AdminOrders = () => {
                       <td className="p-4">
                         <div className="font-semibold text-slate-200">{o.user?.name || o.guestName || 'Guest User'}</div>
                         <div className="text-[10px] text-slate-505 flex items-center gap-1 mt-0.5">
-                          {o.isGuest && <span className="bg-indigo-500/20 border border-indigo-500/30 text-indigo-450 text-[8px] px-1 py-0.25 rounded font-bold uppercase shrink-0">Guest</span>}
+                          {o.isGuest && <span className="bg-amber-500/20 border border-amber-500/30 text-indigo-450 text-[8px] px-1 py-0.25 rounded font-bold uppercase shrink-0">Guest</span>}
                           <span>{o.user?.email || o.guestEmail || 'N/A'}</span>
                         </div>
                       </td>
+                      <td className="p-4 text-center">
+                        <span className={`text-[9px] font-bold py-0.5 px-2 rounded-full border uppercase tracking-wider ${
+                          (o.paymentMethod || 'online') === 'cod' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                        }`}>
+                          {(o.paymentMethod || 'online') === 'cod' ? 'COD' : 'Online'}
+                        </span>
+                      </td>
                       <td className="p-4 text-right font-semibold">₹{o.totalAmount.toFixed(2)}</td>
                       <td className="p-4 text-center">
-                        <span className={`text-[9px] font-bold py-0.5 px-2 rounded-full ${
-                          o.paymentStatus === 'paid' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-455'
-                        }`}>
-                          {o.paymentStatus}
-                        </span>
+                        <div className="flex flex-col items-center gap-1">
+                          <span className={`text-[9px] font-bold py-0.5 px-2 rounded-full uppercase tracking-wider ${
+                            o.paymentStatus === 'paid' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+                          }`}>
+                            {o.paymentStatus}
+                          </span>
+                          {(o.paymentMethod || 'online') === 'cod' && o.paymentStatus === 'pending' && (
+                            <button
+                              onClick={() => handleMarkPaymentCollected(o._id)}
+                              disabled={collectingPaymentId === o._id}
+                              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[9px] px-2 py-0.5 rounded transition-smooth cursor-pointer shadow-sm flex items-center gap-1"
+                            >
+                              {collectingPaymentId === o._id ? 'Updating...' : 'Collect Cash'}
+                            </button>
+                          )}
+                        </div>
                       </td>
                       <td className="p-4">
                         {updatingStatusId === o._id ? (
@@ -163,7 +272,7 @@ const AdminOrders = () => {
                           <select
                             value={o.orderStatus}
                             onChange={(e) => handleStatusChange(o._id, e.target.value)}
-                            className={`bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-lg py-1 px-2.5 text-[10px] font-semibold uppercase outline-none cursor-pointer transition-smooth ${getStatusBadgeClass(o.orderStatus)}`}
+                            className={`bg-slate-950 border border-slate-850 focus:border-amber-500 rounded-lg py-1 px-2.5 text-[10px] font-semibold uppercase outline-none cursor-pointer transition-smooth ${getStatusBadgeClass(o.orderStatus)}`}
                           >
                             <option value="pending">Pending</option>
                             <option value="shipped">Shipped</option>
@@ -175,7 +284,7 @@ const AdminOrders = () => {
                       <td className="p-4 text-center">
                         <button
                           onClick={() => setSelectedOrder(o)}
-                          className="p-1.5 bg-slate-950 hover:bg-indigo-500/10 border border-slate-850 hover:border-indigo-500/20 text-slate-450 hover:text-indigo-400 rounded-lg transition-smooth cursor-pointer"
+                          className="p-1.5 bg-slate-950 hover:bg-amber-500/10 border border-slate-850 hover:border-amber-500/20 text-slate-450 hover:text-amber-400 rounded-lg transition-smooth cursor-pointer"
                         >
                           <Eye size={14} />
                         </button>
@@ -188,32 +297,45 @@ const AdminOrders = () => {
 
             {/* Mobile Card View */}
             <div className="md:hidden divide-y divide-slate-850">
-              {orders.map((o) => (
+              {filteredOrders.map((o) => (
                 <div key={o._id} className="p-4 space-y-3 bg-slate-900">
                   <div className="flex justify-between items-center">
                     <span className="font-mono font-bold text-slate-200 text-[11px]">
                       #{o._id.substring(12).toUpperCase()}
                     </span>
-                    <span className="text-slate-500 text-[10px]">
-                      {new Date(o.createdAt).toLocaleDateString()}
+                    <span className={`text-[9px] font-bold py-0.5 px-2 rounded-full border uppercase tracking-wider ${
+                      (o.paymentMethod || 'online') === 'cod' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                    }`}>
+                      {(o.paymentMethod || 'online') === 'cod' ? 'COD' : 'Online'}
                     </span>
                   </div>
                   
                   <div className="space-y-1">
                     <div className="font-semibold text-slate-200 text-xs">{o.user?.name || o.guestName || 'Guest User'}</div>
                     <div className="text-[10px] text-slate-500 truncate flex items-center gap-1.5">
-                      {o.isGuest && <span className="bg-indigo-500/20 border border-indigo-500/30 text-indigo-455 text-[8px] px-1 py-0.25 rounded font-bold uppercase shrink-0">Guest</span>}
+                      {o.isGuest && <span className="bg-amber-500/20 border border-amber-500/30 text-indigo-455 text-[8px] px-1 py-0.25 rounded font-bold uppercase shrink-0">Guest</span>}
                       <span className="break-all">{o.user?.email || o.guestEmail || 'N/A'}</span>
                     </div>
                   </div>
 
                   <div className="flex justify-between items-center pt-2 border-t border-slate-850/40">
                     <span className="font-semibold text-slate-300 text-xs">Total: ₹{o.totalAmount.toFixed(2)}</span>
-                    <span className={`text-[9px] font-bold py-0.5 px-2 rounded-full ${
-                      o.paymentStatus === 'paid' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-455'
-                    }`}>
-                      {o.paymentStatus}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[9px] font-bold py-0.5 px-2 rounded-full uppercase tracking-wider ${
+                        o.paymentStatus === 'paid' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+                      }`}>
+                        {o.paymentStatus}
+                      </span>
+                      {(o.paymentMethod || 'online') === 'cod' && o.paymentStatus === 'pending' && (
+                        <button
+                          onClick={() => handleMarkPaymentCollected(o._id)}
+                          disabled={collectingPaymentId === o._id}
+                          className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[9px] px-2 py-0.5 rounded transition-smooth cursor-pointer"
+                        >
+                          Collect Cash
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex justify-between items-center gap-3 pt-2 border-t border-slate-850/40">
@@ -224,7 +346,7 @@ const AdminOrders = () => {
                         <select
                           value={o.orderStatus}
                           onChange={(e) => handleStatusChange(o._id, e.target.value)}
-                          className={`w-full bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-lg py-1.5 px-2.5 text-[10px] font-semibold uppercase outline-none cursor-pointer transition-smooth ${getStatusBadgeClass(o.orderStatus)}`}
+                          className={`w-full bg-slate-950 border border-slate-850 focus:border-amber-500 rounded-lg py-1.5 px-2.5 text-[10px] font-semibold uppercase outline-none cursor-pointer transition-smooth ${getStatusBadgeClass(o.orderStatus)}`}
                         >
                           <option value="pending">Pending</option>
                           <option value="shipped">Shipped</option>
@@ -235,7 +357,7 @@ const AdminOrders = () => {
                     </div>
                     <button
                       onClick={() => setSelectedOrder(o)}
-                      className="p-2.5 bg-slate-950 hover:bg-indigo-500/10 border border-slate-850 hover:border-indigo-500/20 text-slate-450 hover:text-indigo-400 rounded-lg transition-smooth cursor-pointer shrink-0"
+                      className="p-2.5 bg-slate-950 hover:bg-amber-500/10 border border-slate-850 hover:border-amber-500/20 text-slate-450 hover:text-amber-400 rounded-lg transition-smooth cursor-pointer shrink-0"
                     >
                       <Eye size={14} />
                     </button>
@@ -271,19 +393,50 @@ const AdminOrders = () => {
             <div className="p-4 sm:p-6 space-y-6 overflow-y-auto flex-grow">
               
               {/* Order Status Select in Modal */}
-              <div className="flex items-center gap-4 bg-slate-950/20 border border-slate-850 p-4 rounded-xl">
-                <span className="text-xs font-semibold text-slate-400">Order Delivery Phase:</span>
-                <select
-                  value={selectedOrder.orderStatus}
-                  onChange={(e) => handleStatusChange(selectedOrder._id, e.target.value)}
-                  className={`bg-slate-950 border border-slate-800 rounded-lg py-1 px-3 text-xs font-semibold uppercase outline-none cursor-pointer ${getStatusBadgeClass(selectedOrder.orderStatus)}`}
-                >
-                  <option value="pending">Pending</option>
-                  <option value="shipped">Shipped</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
+              <div className="flex items-center justify-between gap-4 bg-slate-950/20 border border-slate-850 p-4 rounded-xl flex-wrap">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-semibold text-slate-400">Delivery Phase:</span>
+                  <select
+                    value={selectedOrder.orderStatus}
+                    onChange={(e) => handleStatusChange(selectedOrder._id, e.target.value)}
+                    className={`bg-slate-950 border border-slate-800 rounded-lg py-1 px-3 text-xs font-semibold uppercase outline-none cursor-pointer ${getStatusBadgeClass(selectedOrder.orderStatus)}`}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-400">Payment Option:</span>
+                  <span className={`text-[10px] font-bold py-0.5 px-2.5 rounded-full border uppercase ${
+                    (selectedOrder.paymentMethod || 'online') === 'cod' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                  }`}>
+                    {(selectedOrder.paymentMethod || 'online') === 'cod' ? 'Cash on Delivery' : 'Paid Online (Stripe)'}
+                  </span>
+                </div>
               </div>
+
+              {/* COD Action Banner in Modal */}
+              {(selectedOrder.paymentMethod || 'online') === 'cod' && selectedOrder.paymentStatus === 'pending' && (
+                <div className="bg-amber-500/10 border border-amber-500/25 p-4 rounded-xl flex items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                      <Banknote size={16} /> Cash Collection Pending (₹{selectedOrder.totalAmount.toFixed(2)})
+                    </p>
+                    <p className="text-[11px] text-slate-400">Mark as paid once cash is received from the courier.</p>
+                  </div>
+                  <button
+                    onClick={() => handleMarkPaymentCollected(selectedOrder._id)}
+                    disabled={collectingPaymentId === selectedOrder._id}
+                    className="shrink-0 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2 px-4 rounded-xl transition-smooth shadow-lg cursor-pointer flex items-center gap-1.5"
+                  >
+                    <CheckCircle2 size={15} />
+                    <span>{collectingPaymentId === selectedOrder._id ? 'Updating...' : 'Mark Payment Collected'}</span>
+                  </button>
+                </div>
+              )}
 
               {/* Items List */}
               <div className="space-y-3">
@@ -309,7 +462,7 @@ const AdminOrders = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-slate-400 leading-relaxed bg-slate-950/10 border border-slate-850/50 p-4 rounded-xl">
                 <div>
                   <h4 className="font-bold text-slate-350 uppercase text-[10px] tracking-wider mb-2 flex items-center gap-1.5">
-                    <Truck size={14} className="text-indigo-400" />
+                    <Truck size={14} className="text-amber-400" />
                     Delivery Destination
                   </h4>
                   <p className="font-medium text-slate-300 mb-1">{selectedOrder.user?.name || selectedOrder.guestName || 'Guest User'}</p>
@@ -319,14 +472,14 @@ const AdminOrders = () => {
                 </div>
                 <div className="space-y-1">
                   <h4 className="font-bold text-slate-355 uppercase text-[10px] tracking-wider mb-2 flex items-center gap-1.5">
-                    <CreditCard size={14} className="text-indigo-400" />
+                    <CreditCard size={14} className="text-amber-400" />
                     Payment Details
                   </h4>
                   <p className="flex items-center gap-1.5 flex-wrap">
                     <span>Email:</span>
                     <span className="break-all">{selectedOrder.user?.email || selectedOrder.guestEmail}</span>
                     {selectedOrder.isGuest && (
-                      <span className="bg-indigo-500/20 border border-indigo-500/35 text-indigo-400 text-[8px] px-1 rounded font-bold uppercase shrink-0">
+                      <span className="bg-amber-500/20 border border-amber-500/35 text-amber-400 text-[8px] px-1 rounded font-bold uppercase shrink-0">
                         Guest
                       </span>
                     )}
@@ -337,6 +490,11 @@ const AdminOrders = () => {
                       {selectedOrder.paymentStatus}
                     </span>
                   </p>
+                  {selectedOrder.prepayDiscount > 0 && (
+                    <p className="text-emerald-400 font-medium text-[11px]">
+                      Prepay Discount Applied: -₹{selectedOrder.prepayDiscount.toFixed(2)}
+                    </p>
+                  )}
                   {selectedOrder.paymentIntentId && (
                     <p className="font-mono text-[9px] text-slate-550 mt-2 select-all break-all">Ref: {selectedOrder.paymentIntentId}</p>
                   )}
@@ -359,3 +517,4 @@ const AdminOrders = () => {
 };
 
 export default AdminOrders;
+

@@ -47,6 +47,12 @@ const orderSchema = new mongoose.Schema({
     zipCode: { type: String, required: true },
     country: { type: String, required: true }
   },
+  paymentMethod: {
+    type: String,
+    enum: ['online', 'cod'],
+    default: 'online',
+    required: true
+  },
   paymentStatus: {
     type: String,
     enum: ['pending', 'paid', 'failed'],
@@ -59,6 +65,16 @@ const orderSchema = new mongoose.Schema({
     type: String,
     enum: ['pending', 'shipped', 'delivered', 'cancelled'],
     default: 'pending'
+  },
+  subtotal: {
+    type: Number,
+    required: true,
+    default: 0
+  },
+  prepayDiscount: {
+    type: Number,
+    required: true,
+    default: 0
   },
   totalAmount: {
     type: Number,

@@ -31,7 +31,7 @@ const AdminCustomers = () => {
         <div className="flex items-center justify-between border-b border-slate-900 pb-5">
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 flex items-center gap-2">
-              <Users size={28} className="text-indigo-400" />
+              <Users size={28} className="text-amber-400" />
               Customer Accounts
             </h1>
             <p className="text-slate-555 text-sm mt-1">Review accounts registered in the e-commerce database.</p>
@@ -50,7 +50,7 @@ const AdminCustomers = () => {
         {/* Database List */}
         {loading && customers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3 bg-slate-900 border border-slate-850 rounded-2xl">
-            <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
             <p className="text-slate-500 text-xs">Loading customer directory...</p>
           </div>
         ) : customers.length === 0 ? (
@@ -111,3 +111,4 @@ const AdminCustomers = () => {
 };
 
 export default AdminCustomers;
+

@@ -61,8 +61,8 @@ const LoginPromptModal = () => {
 
             {/* Content */}
             <div className="text-center space-y-4 mt-2">
-              <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-                <LogIn size={22} className="text-indigo-400" />
+              <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                <LogIn size={22} className="text-amber-400" />
               </div>
               <div className="space-y-1.5">
                 <h3 className="text-xl font-extrabold text-slate-100 tracking-tight leading-none">
@@ -78,7 +78,7 @@ const LoginPromptModal = () => {
             <div className="flex flex-col gap-3 mt-6">
               <button
                 onClick={handleSignIn}
-                className="w-full py-3 font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+                className="w-full py-3 font-bold text-white bg-amber-500 hover:bg-amber-500 rounded-xl transition-all shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
               >
                 <LogIn size={16} />
                 Sign In
@@ -109,3 +109,4 @@ const LoginPromptModal = () => {
 };
 
 export default LoginPromptModal;
+

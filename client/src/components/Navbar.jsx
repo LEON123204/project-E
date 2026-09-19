@@ -50,8 +50,8 @@ const Navbar = () => {
 
   const activeLink = (path) => {
     return location.pathname === path
-      ? 'text-indigo-400 font-semibold'
-      : 'text-slate-300 hover:text-indigo-400 transition-smooth';
+      ? 'text-amber-400 font-bold font-display'
+      : 'text-slate-300 hover:text-amber-400 transition-smooth font-medium';
   };
 
   return (
@@ -62,7 +62,7 @@ const Navbar = () => {
           <div className="flex items-center">
             <Link to="/" className="flex items-center gap-2.5 group">
               <img src="/favicon.svg" alt="Cartex Logo" className="h-6 w-auto group-hover:scale-110 transition-transform duration-200" />
-              <span className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              <span className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-amber-300 via-amber-400 to-amber-600 bg-clip-text text-transparent font-display">
                 Cartex
               </span>
             </Link>
@@ -82,9 +82,9 @@ const Navbar = () => {
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 rounded-full py-1.5 pl-4 pr-10 text-sm text-slate-100 placeholder-slate-500 outline-none transition-smooth"
+                className="w-full bg-slate-900 border border-slate-800 focus:border-amber-500 rounded-full py-1.5 pl-4 pr-10 text-sm text-slate-100 placeholder-slate-500 outline-none transition-smooth"
               />
-              <button type="submit" className="absolute right-3 top-2 text-slate-500 hover:text-indigo-400">
+              <button type="submit" className="absolute right-3 top-2 text-slate-500 hover:text-amber-400">
                 <Search size={18} />
               </button>
             </form>
@@ -103,10 +103,10 @@ const Navbar = () => {
             </Link>
 
             {/* Cart */}
-            <Link to="/cart" className="relative p-2 text-slate-300 hover:text-indigo-400 transition-smooth">
+            <Link to="/cart" className="relative p-2 text-slate-300 hover:text-amber-400 transition-smooth">
               <ShoppingBag size={20} />
               {cartCount > 0 && (
-                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-500 text-[10px] font-bold text-white">
+                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-slate-950">
                   {cartCount}
                 </span>
               )}
@@ -117,7 +117,7 @@ const Navbar = () => {
               <div className="relative">
                 <button
                   onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                  className="flex items-center gap-1.5 text-slate-300 hover:text-indigo-400 transition-smooth outline-none py-1"
+                  className="flex items-center gap-1.5 text-slate-300 hover:text-amber-400 transition-smooth outline-none py-1"
                 >
                   <User size={20} />
                   <span className="text-sm font-medium">{user.name.split(' ')[0]}</span>
@@ -130,7 +130,7 @@ const Navbar = () => {
                       <Link
                         to="/admin/dashboard"
                         onClick={() => setProfileDropdownOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-indigo-400 hover:bg-slate-850 hover:text-indigo-300 transition-smooth"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-amber-400 hover:bg-slate-850 hover:text-amber-300 transition-smooth font-display font-semibold"
                       >
                         <LayoutDashboard size={16} />
                         Admin Panel
@@ -139,7 +139,7 @@ const Navbar = () => {
                     <Link
                       to="/profile"
                       onClick={() => setProfileDropdownOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-850 hover:text-indigo-400 transition-smooth"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-850 hover:text-amber-400 transition-smooth"
                     >
                       <User size={16} />
                       My Profile
@@ -160,7 +160,7 @@ const Navbar = () => {
             ) : (
               <Link
                 to="/login"
-                className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-full text-sm font-medium transition-smooth shadow-lg shadow-indigo-600/20"
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-1.5 rounded-full text-sm font-extrabold transition-smooth shadow-lg shadow-amber-500/20 font-display"
               >
                 Sign In
               </Link>
@@ -170,15 +170,15 @@ const Navbar = () => {
           {/* Mobile menu button */}
           <div className="flex items-center md:hidden gap-3">
             {/* Search - Mobile Toggle (Takes to shop) */}
-            <Link to="/shop" className="text-slate-300 hover:text-indigo-400 p-1">
+            <Link to="/shop" className="text-slate-300 hover:text-amber-400 p-1">
               <Search size={20} />
             </Link>
 
             {/* Cart - Mobile */}
-            <Link to="/cart" className="relative text-slate-300 hover:text-indigo-400 p-1">
+            <Link to="/cart" className="relative text-slate-300 hover:text-amber-400 p-1">
               <ShoppingBag size={20} />
               {cartCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-500 text-[9px] font-bold text-white animate-pulse">
+                <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-slate-950 animate-pulse">
                   {cartCount}
                 </span>
               )}
@@ -186,7 +186,7 @@ const Navbar = () => {
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-slate-300 hover:text-indigo-400 focus:outline-none p-1"
+              className="text-slate-300 hover:text-amber-400 focus:outline-none p-1"
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -211,9 +211,9 @@ const Navbar = () => {
               placeholder="Search products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 rounded-full py-2.5 pl-4 pr-10 text-sm text-slate-100 placeholder-slate-500 outline-none transition-smooth"
+              className="w-full bg-slate-900 border border-slate-800 focus:border-amber-500 rounded-full py-2.5 pl-4 pr-10 text-sm text-slate-100 placeholder-slate-500 outline-none transition-smooth"
             />
-            <button type="submit" className="absolute right-3 top-2.5 text-slate-500 hover:text-indigo-400">
+            <button type="submit" className="absolute right-3 top-2.5 text-slate-500 hover:text-amber-400">
               <Search size={18} />
             </button>
           </form>
@@ -222,28 +222,28 @@ const Navbar = () => {
             <Link
               to="/"
               onClick={() => setMobileMenuOpen(false)}
-              className="block text-slate-300 hover:text-indigo-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+              className="block text-slate-300 hover:text-amber-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
             >
               Home
             </Link>
             <Link
               to="/shop"
               onClick={() => setMobileMenuOpen(false)}
-              className="block text-slate-300 hover:text-indigo-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+              className="block text-slate-300 hover:text-amber-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
             >
               Shop
             </Link>
             <Link
               to="/order-tracking"
               onClick={handleTrackOrderClick}
-              className="block text-slate-300 hover:text-indigo-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+              className="block text-slate-300 hover:text-amber-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
             >
               Track Order
             </Link>
             <Link
               to="/wishlist"
               onClick={() => setMobileMenuOpen(false)}
-              className="block text-slate-300 hover:text-indigo-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+              className="block text-slate-300 hover:text-amber-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
             >
               Wishlist {wishlist.length > 0 && <span className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">{wishlist.length}</span>}
             </Link>
@@ -256,7 +256,7 @@ const Navbar = () => {
                   <Link
                     to="/admin/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block text-indigo-400 hover:text-indigo-300 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+                    className="block text-amber-400 hover:text-amber-300 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth font-display"
                   >
                     Admin Panel
                   </Link>
@@ -264,7 +264,7 @@ const Navbar = () => {
                 <Link
                   to="/profile"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block text-slate-300 hover:text-indigo-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+                  className="block text-slate-300 hover:text-amber-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
                 >
                   My Profile / Orders
                 </Link>
@@ -282,7 +282,7 @@ const Navbar = () => {
               <Link
                 to="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block w-full text-center bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl text-sm font-medium transition-smooth mt-2"
+                className="block w-full text-center bg-amber-500 hover:bg-amber-400 text-slate-950 py-3 rounded-xl text-sm font-extrabold transition-smooth mt-2 font-display"
               >
                 Sign In
               </Link>
@@ -295,3 +295,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+

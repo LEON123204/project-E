@@ -102,13 +102,13 @@ const AdminCategories = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
                 />
               </div>
               <button
                 type="submit"
                 disabled={submitLoading || !name.trim()}
-                className="w-full bg-indigo-655 hover:bg-indigo-550 disabled:bg-slate-800 disabled:text-slate-650 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-smooth cursor-pointer"
+                className="w-full bg-indigo-655 hover:bg-amber-400 disabled:bg-slate-800 disabled:text-slate-650 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-smooth cursor-pointer"
               >
                 <Plus size={16} />
                 {submitLoading ? 'Creating...' : 'Create Category'}
@@ -157,3 +157,4 @@ const AdminCategories = () => {
 };
 
 export default AdminCategories;
+

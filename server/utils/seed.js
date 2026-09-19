@@ -1584,10 +1584,21 @@ const seedData = async () => {
     await Review.insertMany(reviewDocs);
 
     console.log('Updating average ratings and review counts for all products...');
-    for (const prod of seededProducts) {
-      await Review.calculateAverageRating(prod._id);
+    // Use a single aggregation + bulkWrite instead of N sequential updates
+    // (insertMany bypasses post('save') hooks, so we must update manually)
+    const ratingStats = await Review.aggregate([
+      { $group: { _id: '$product', ratingsAvg: { $avg: '$rating' }, reviewsCount: { $sum: 1 } } }
+    ]);
+    if (ratingStats.length > 0) {
+      const bulkOps = ratingStats.map(s => ({
+        updateOne: {
+          filter: { _id: s._id },
+          update: { $set: { ratingsAvg: Math.round(s.ratingsAvg * 10) / 10, reviewsCount: s.reviewsCount } }
+        }
+      }));
+      await mongoose.connection.collection('products').bulkWrite(bulkOps, { ordered: false });
+      console.log(`Updated ratings for ${bulkOps.length} products.`);
     }
-
 
     console.log('Database seeded successfully!');
     process.exit();

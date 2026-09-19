@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 import api from '../services/api';
 
 // Stripe imports
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { AlertCircle, Check, CreditCard, MapPin, Plus, Loader, Zap } from 'lucide-react';
+import { AlertCircle, Check, CreditCard, MapPin, Plus, Loader, Zap, Banknote, Percent, Sparkles } from 'lucide-react';
 
 // Initialize Stripe outside components to avoid recreating
 const isStripeActive = () => {
@@ -45,6 +46,7 @@ const StripeCheckoutForm = ({ shippingAddress, guestInfo, onPaymentSuccess, tota
         shippingAddress,
         guestEmail: guestInfo?.email,
         guestName: guestInfo?.name,
+        paymentMethod: 'online',
         isBuyNow
       });
 
@@ -110,7 +112,7 @@ const StripeCheckoutForm = ({ shippingAddress, guestInfo, onPaymentSuccess, tota
       <button
         type="submit"
         disabled={!stripe || loading}
-        className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold py-3 rounded-xl transition-smooth shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 cursor-pointer"
+        className="w-full bg-amber-500 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold py-3 rounded-xl transition-smooth shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer"
       >
         {loading ? (
           <>
@@ -151,6 +153,7 @@ const MockCheckoutForm = ({ shippingAddress, guestInfo, onPaymentSuccess, totalA
         shippingAddress,
         guestEmail: guestInfo?.email,
         guestName: guestInfo?.name,
+        paymentMethod: 'online',
         isBuyNow
       });
 
@@ -182,7 +185,7 @@ const MockCheckoutForm = ({ shippingAddress, guestInfo, onPaymentSuccess, totalA
       <button
         onClick={handleMockCheckout}
         disabled={loading}
-        className="w-full bg-indigo-650 hover:bg-indigo-550 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold py-3 rounded-xl transition-smooth shadow-lg shadow-indigo-600/10 flex items-center justify-center gap-2 cursor-pointer"
+        className="w-full bg-amber-500 hover:bg-amber-400 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold py-3 rounded-xl transition-smooth shadow-lg shadow-amber-500/10 flex items-center justify-center gap-2 cursor-pointer"
       >
         {loading ? (
           <>
@@ -192,7 +195,7 @@ const MockCheckoutForm = ({ shippingAddress, guestInfo, onPaymentSuccess, totalA
         ) : (
           <>
             <Check size={18} />
-            Place Order - Mock Payment (₹{totalAmount.toFixed(2)})
+            Place Order - Mock Online Payment (₹{totalAmount.toFixed(2)})
           </>
         )}
       </button>
@@ -200,10 +203,84 @@ const MockCheckoutForm = ({ shippingAddress, guestInfo, onPaymentSuccess, totalA
   );
 };
 
+// Internal COD Checkout Component
+const CodCheckoutForm = ({ shippingAddress, guestInfo, onCodSuccess, totalAmount, items, isBuyNow }) => {
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleCodSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMessage('');
+
+    try {
+      const orderRes = await api.post('/orders', {
+        items: items.map(item => ({
+          product: item.product._id,
+          quantity: item.quantity
+        })),
+        shippingAddress,
+        guestEmail: guestInfo?.email,
+        guestName: guestInfo?.name,
+        paymentMethod: 'cod',
+        isBuyNow
+      });
+
+      const { order } = orderRes.data;
+      await onCodSuccess(order);
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || 'COD Order placement failed. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleCodSubmit} className="space-y-4">
+      <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-xl text-xs space-y-1.5">
+        <p className="font-bold flex items-center gap-1.5">
+          <Banknote size={16} /> Cash on Delivery Selected
+        </p>
+        <p className="leading-relaxed text-slate-300">
+          Pay ₹{totalAmount.toFixed(2)} in cash when your order arrives. Items are reserved immediately upon placing your order.
+        </p>
+      </div>
+
+      {errorMessage && (
+        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-3 rounded-xl text-xs flex gap-2">
+          <AlertCircle size={16} className="shrink-0" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold py-3 rounded-xl transition-smooth shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer"
+      >
+        {loading ? (
+          <>
+            <Loader size={18} className="animate-spin" />
+            Placing Cash on Delivery Order...
+          </>
+        ) : (
+          <>
+            <Banknote size={18} />
+            Confirm & Place COD Order (₹{totalAmount.toFixed(2)})
+          </>
+        )}
+      </button>
+      <p className="text-[10px] text-slate-500 text-center">
+        📦 Stock is atomically reserved at order time. Please prepare exact cash for courier collection.
+      </p>
+    </form>
+  );
+};
+
 // Main CheckoutPage Component
 const CheckoutPage = () => {
   const { user, addAddress, isAuthenticated } = useAuth();
   const { cartItems, cartTotal, clearCart } = useCart();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -244,10 +321,14 @@ const CheckoutPage = () => {
   const [zipCode, setZipCode] = useState('');
   const [country, setCountry] = useState('');
 
-  // Cart pricing totals
+  // Payment Method State: 'online' | 'cod'
+  const [paymentMethod, setPaymentMethod] = useState('online');
+
+  // Cart pricing totals with server-matched calculation rules
+  const prepayDiscount = paymentMethod === 'online' ? (checkoutSubtotal * 0.05) : 0;
   const shippingCost = checkoutSubtotal > 1000 ? 0 : 99.00;
   const estimatedTax = checkoutSubtotal * 0.08;
-  const finalTotal = checkoutSubtotal + shippingCost + estimatedTax;
+  const finalTotal = Math.max(0, checkoutSubtotal - prepayDiscount + shippingCost + estimatedTax);
 
   useEffect(() => {
     if (isBuyNow) {
@@ -307,8 +388,19 @@ const CheckoutPage = () => {
         });
       }
     } catch (err) {
-      alert('Order placed, but payment verification failed. Please contact support.');
+      showToast('Order placed, but payment verification failed. Please contact support.', 'error');
     }
+  };
+
+  const handleCodSuccess = async (order) => {
+    if (isBuyNow) {
+      sessionStorage.removeItem('buyNowItem');
+    } else {
+      clearCart();
+    }
+    navigate(`/order-confirmation/${order._id}`, {
+      state: { order, guestEmail }
+    });
   };
 
   const isGuestFormValid = () => {
@@ -329,7 +421,7 @@ const CheckoutPage = () => {
         <div className="flex items-center justify-between gap-4 mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100">Checkout</h1>
           {isBuyNow && (
-            <div className="flex items-center gap-1.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm">
+            <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm">
               <Zap size={14} className="fill-indigo-400" />
               <span>Express Buy Now</span>
             </div>
@@ -337,14 +429,14 @@ const CheckoutPage = () => {
         </div>
 
         {!isAuthenticated && (
-          <div className="bg-slate-900 border border-indigo-500/10 p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 animate-fadeIn">
+          <div className="bg-slate-900 border border-amber-500/10 p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 animate-fadeIn">
             <div className="space-y-1">
               <p className="text-sm font-bold text-slate-200">Checking out as a Guest</p>
               <p className="text-xs text-slate-400">Have an account? Logging in speeds up checkout and tracks orders automatically.</p>
             </div>
             <button
               onClick={() => navigate('/login', { state: { from: { pathname: '/checkout' } } })}
-              className="shrink-0 bg-indigo-650 hover:bg-indigo-550 text-white font-semibold py-2 px-5 rounded-xl text-xs transition-smooth cursor-pointer shadow-lg shadow-indigo-600/10"
+              className="shrink-0 bg-amber-500 hover:bg-amber-400 text-white font-semibold py-2 px-5 rounded-xl text-xs transition-smooth cursor-pointer shadow-lg shadow-amber-500/10"
             >
               Log In
             </button>
@@ -360,13 +452,13 @@ const CheckoutPage = () => {
             <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl space-y-6">
               <div className="flex items-center justify-between border-b border-slate-850 pb-4">
                 <h2 className="text-lg font-bold text-slate-200 flex items-center gap-2">
-                  <MapPin size={20} className="text-indigo-400" />
+                  <MapPin size={20} className="text-amber-400" />
                   {isAuthenticated ? 'Shipping Address' : 'Guest Shipping Details'}
                 </h2>
                 {isAuthenticated && !isAddingAddress && user?.addresses?.length > 0 && (
                   <button
                     onClick={() => setIsAddingAddress(true)}
-                    className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 cursor-pointer"
+                    className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 cursor-pointer"
                   >
                     <Plus size={14} /> Add Address
                   </button>
@@ -386,7 +478,7 @@ const CheckoutPage = () => {
                         onChange={(e) => setGuestName(e.target.value)}
                         required
                         disabled={readyForPayment}
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                     </div>
                     <div className="space-y-1">
@@ -398,7 +490,7 @@ const CheckoutPage = () => {
                         onChange={(e) => setGuestEmail(e.target.value)}
                         required
                         disabled={readyForPayment}
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                     </div>
                   </div>
@@ -412,7 +504,7 @@ const CheckoutPage = () => {
                       onChange={(e) => setStreet(e.target.value)}
                       required
                       disabled={readyForPayment}
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
 
@@ -426,7 +518,7 @@ const CheckoutPage = () => {
                         onChange={(e) => setCity(e.target.value)}
                         required
                         disabled={readyForPayment}
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                     </div>
                     <div className="space-y-1">
@@ -438,7 +530,7 @@ const CheckoutPage = () => {
                         onChange={(e) => setState(e.target.value)}
                         required
                         disabled={readyForPayment}
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                     </div>
                   </div>
@@ -453,7 +545,7 @@ const CheckoutPage = () => {
                         onChange={(e) => setZipCode(e.target.value)}
                         required
                         disabled={readyForPayment}
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                     </div>
                     <div className="space-y-1">
@@ -465,7 +557,7 @@ const CheckoutPage = () => {
                         onChange={(e) => setCountry(e.target.value)}
                         required
                         disabled={readyForPayment}
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                     </div>
                   </div>
@@ -475,7 +567,7 @@ const CheckoutPage = () => {
                       <button
                         type="button"
                         onClick={() => setReadyForPayment(false)}
-                        className="w-full sm:w-auto bg-slate-950 border border-slate-800 hover:bg-slate-900 text-indigo-400 hover:text-indigo-300 font-semibold min-h-[44px] px-6 rounded-xl text-sm transition-smooth cursor-pointer"
+                        className="w-full sm:w-auto bg-slate-950 border border-slate-800 hover:bg-slate-900 text-amber-400 hover:text-amber-300 font-semibold min-h-[44px] px-6 rounded-xl text-sm transition-smooth cursor-pointer"
                       >
                         Edit Information
                       </button>
@@ -494,10 +586,10 @@ const CheckoutPage = () => {
                           ) {
                             setReadyForPayment(true);
                           } else {
-                            alert('Please fill out all required details before proceeding.');
+                            showToast('Please fill out all required details before proceeding.', 'info');
                           }
                         }}
-                        className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold min-h-[44px] px-6 rounded-xl text-sm transition-smooth cursor-pointer"
+                        className="w-full sm:w-auto bg-amber-500 hover:bg-amber-500 text-white font-semibold min-h-[44px] px-6 rounded-xl text-sm transition-smooth cursor-pointer"
                       >
                         Save & Continue to Payment
                       </button>
@@ -524,7 +616,7 @@ const CheckoutPage = () => {
                       value={street}
                       onChange={(e) => setStreet(e.target.value)}
                       required
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
                     />
                   </div>
 
@@ -537,7 +629,7 @@ const CheckoutPage = () => {
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
                         required
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
                       />
                     </div>
                     <div className="space-y-1">
@@ -548,7 +640,7 @@ const CheckoutPage = () => {
                         value={state}
                         onChange={(e) => setState(e.target.value)}
                         required
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
                       />
                     </div>
                   </div>
@@ -562,7 +654,7 @@ const CheckoutPage = () => {
                         value={zipCode}
                         onChange={(e) => setZipCode(e.target.value)}
                         required
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
                       />
                     </div>
                     <div className="space-y-1">
@@ -573,7 +665,7 @@ const CheckoutPage = () => {
                         value={country}
                         onChange={(e) => setCountry(e.target.value)}
                         required
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
                       />
                     </div>
                   </div>
@@ -590,7 +682,7 @@ const CheckoutPage = () => {
                     )}
                     <button
                       type="submit"
-                      className="bg-indigo-650 hover:bg-indigo-550 text-white font-semibold py-2 px-6 rounded-xl text-xs transition-smooth"
+                      className="bg-amber-500 hover:bg-amber-400 text-white font-semibold py-2 px-6 rounded-xl text-xs transition-smooth"
                     >
                       Save Address
                     </button>
@@ -605,7 +697,7 @@ const CheckoutPage = () => {
                       onClick={() => setSelectedAddressIndex(idx)}
                       className={`border rounded-xl p-4 cursor-pointer transition-smooth flex flex-col justify-between ${
                         selectedAddressIndex === idx
-                          ? 'border-indigo-500 bg-indigo-500/5'
+                          ? 'border-amber-500 bg-amber-500/5'
                           : 'border-slate-800 hover:border-slate-700 bg-slate-950/40'
                       }`}
                     >
@@ -615,7 +707,7 @@ const CheckoutPage = () => {
                             Address #{idx + 1}
                           </span>
                           {addr.isDefault && (
-                            <span className="text-[9px] bg-indigo-500/20 border border-indigo-500/35 text-indigo-400 py-0.5 px-2 rounded-full font-bold">
+                            <span className="text-[9px] bg-amber-500/20 border border-amber-500/35 text-amber-400 py-0.5 px-2 rounded-full font-bold">
                               Default
                             </span>
                           )}
@@ -636,30 +728,108 @@ const CheckoutPage = () => {
             {!isAddingAddress && (isAuthenticated ? selectedAddress : (readyForPayment && isGuestFormValid())) && (
               <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl space-y-6 animate-slideDown">
                 <h2 className="text-lg font-bold text-slate-200 border-b border-slate-850 pb-4 flex items-center gap-2">
-                  <CreditCard size={20} className="text-indigo-400" />
-                  Secure Payment Method
+                  <CreditCard size={20} className="text-amber-400" />
+                  Select Payment Option
                 </h2>
 
-                {isStripeActive() ? (
-                  <Elements stripe={stripePromise}>
-                    <StripeCheckoutForm
+                {/* Payment Method Selector Tabs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div
+                    onClick={() => setPaymentMethod('online')}
+                    className={`border rounded-xl p-4 cursor-pointer transition-smooth relative space-y-1.5 ${
+                      paymentMethod === 'online'
+                        ? 'border-amber-500 bg-amber-500/10 shadow-lg shadow-indigo-500/5'
+                        : 'border-slate-800 hover:border-slate-700 bg-slate-950/40'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 font-bold text-sm text-slate-100">
+                        <CreditCard size={18} className="text-amber-400" />
+                        <span>Pay Online</span>
+                      </div>
+                      <span className="bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <Percent size={10} /> SAVE 5%
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400">Card, UPI, Netbanking via Stripe</p>
+                  </div>
+
+                  <div
+                    onClick={() => setPaymentMethod('cod')}
+                    className={`border rounded-xl p-4 cursor-pointer transition-smooth space-y-1.5 ${
+                      paymentMethod === 'cod'
+                        ? 'border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/5'
+                        : 'border-slate-800 hover:border-slate-700 bg-slate-950/40'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 font-bold text-sm text-slate-100">
+                        <Banknote size={18} className="text-emerald-400" />
+                        <span>Cash on Delivery</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-400">Pay cash upon delivery at your door</p>
+                  </div>
+                </div>
+
+                {/* Incentive Banner for Online Payment */}
+                {paymentMethod === 'online' ? (
+                  <div className="space-y-4">
+                    <div className="bg-emerald-500/10 border border-emerald-500/25 p-3.5 rounded-xl text-xs flex items-center justify-between gap-3 text-emerald-400 font-medium">
+                      <div className="flex items-center gap-2">
+                        <Sparkles size={16} className="text-amber-400 shrink-0" />
+                        <span>Pay online now and get a <strong>5% prepay discount</strong>! You save ₹{(checkoutSubtotal * 0.05).toFixed(2)}.</span>
+                      </div>
+                      <span className="bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded text-[10px] uppercase shrink-0">5% Discount</span>
+                    </div>
+
+                    {isStripeActive() ? (
+                      <Elements stripe={stripePromise}>
+                        <StripeCheckoutForm
+                          shippingAddress={isAuthenticated ? selectedAddress : { street, city, state, zipCode, country }}
+                          guestInfo={isAuthenticated ? null : { email: guestEmail, name: guestName }}
+                          onPaymentSuccess={handlePaymentSuccess}
+                          totalAmount={finalTotal}
+                          items={checkoutItems}
+                          isBuyNow={isBuyNow}
+                        />
+                      </Elements>
+                    ) : (
+                      <MockCheckoutForm
+                        shippingAddress={isAuthenticated ? selectedAddress : { street, city, state, zipCode, country }}
+                        guestInfo={isAuthenticated ? null : { email: guestEmail, name: guestName }}
+                        onPaymentSuccess={handlePaymentSuccess}
+                        totalAmount={finalTotal}
+                        items={checkoutItems}
+                        isBuyNow={isBuyNow}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-xs text-slate-300 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <Banknote size={16} className="text-amber-400 shrink-0" />
+                        <span>COD order selected. Full amount collected at delivery.</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('online')}
+                        className="text-amber-400 hover:text-amber-300 underline font-semibold text-[11px] shrink-0 cursor-pointer"
+                      >
+                        Switch to Online & Save ₹{(checkoutSubtotal * 0.05).toFixed(2)}
+                      </button>
+                    </div>
+
+                    <CodCheckoutForm
                       shippingAddress={isAuthenticated ? selectedAddress : { street, city, state, zipCode, country }}
                       guestInfo={isAuthenticated ? null : { email: guestEmail, name: guestName }}
-                      onPaymentSuccess={handlePaymentSuccess}
+                      onCodSuccess={handleCodSuccess}
                       totalAmount={finalTotal}
                       items={checkoutItems}
                       isBuyNow={isBuyNow}
                     />
-                  </Elements>
-                ) : (
-                  <MockCheckoutForm
-                    shippingAddress={isAuthenticated ? selectedAddress : { street, city, state, zipCode, country }}
-                    guestInfo={isAuthenticated ? null : { email: guestEmail, name: guestName }}
-                    onPaymentSuccess={handlePaymentSuccess}
-                    totalAmount={finalTotal}
-                    items={checkoutItems}
-                    isBuyNow={isBuyNow}
-                  />
+                  </div>
                 )}
               </div>
             )}
@@ -695,6 +865,21 @@ const CheckoutPage = () => {
                 <span>Subtotal</span>
                 <span className="text-slate-200 font-semibold">₹{checkoutSubtotal.toFixed(2)}</span>
               </div>
+
+              {paymentMethod === 'online' ? (
+                <div className="flex justify-between text-emerald-400 font-semibold">
+                  <span className="flex items-center gap-1">
+                    <Sparkles size={13} className="text-amber-400" /> Prepay Discount (5%)
+                  </span>
+                  <span>-₹{(checkoutSubtotal * 0.05).toFixed(2)}</span>
+                </div>
+              ) : (
+                <div className="flex justify-between text-slate-500 text-xs">
+                  <span>Prepay Discount (5%)</span>
+                  <span className="italic">Pay Online to save ₹{(checkoutSubtotal * 0.05).toFixed(2)}</span>
+                </div>
+              )}
+
               <div className="flex justify-between text-slate-400">
                 <span>Shipping</span>
                 <span className="text-slate-200 font-semibold">
@@ -722,3 +907,4 @@ const CheckoutPage = () => {
 };
 
 export default CheckoutPage;
+

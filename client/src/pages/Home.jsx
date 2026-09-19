@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import api from "../services/api";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
+import { useToast } from "../context/ToastContext";
 import { Heart, ShoppingCart, Star, ArrowRight, Truck } from "lucide-react";
 import { ProductCardSkeleton } from "../components/SkeletonLoader";
 import useScrollReveal from "../hooks/useScrollReveal";
@@ -69,6 +70,7 @@ const AnimatedCounter = ({ target, duration = 2000, suffix = "" }) => {
 const Home = () => {
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { showToast } = useToast();
 
   const [products, setProducts] = useState([]);
   const [heroProducts, setHeroProducts] = useState([
@@ -162,8 +164,20 @@ const Home = () => {
     setAddingToCartId(product._id);
     const res = await addToCart(product, 1);
     setAddingToCartId(null);
-    if (!res.success) {
-      alert(res.message);
+    if (res.success) {
+      showToast(`Added ${product.name} to cart!`, "success");
+    } else {
+      showToast(res.message || "Failed to add item to cart", "error");
+    }
+  };
+
+  const handleToggleWishlist = (product) => {
+    const isWishlisted = isInWishlist(product._id);
+    toggleWishlist(product._id);
+    if (isWishlisted) {
+      showToast(`Removed ${product.name} from wishlist`, "info");
+    } else {
+      showToast(`Added ${product.name} to wishlist!`, "success");
     }
   };
 
@@ -172,57 +186,57 @@ const Home = () => {
       name: "Electronics",
       slug: "electronics",
       desc: "Noise cancelling gear, mechanical keyboards, smart watches",
-      img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=60",
+      img: "/images/categories/electronics.jpg",
     },
     {
       name: "Fashion & Apparel",
       slug: "fashion-apparel",
       desc: "Premium leather, denim, backpacks, and knitwear",
-      img: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop&q=60",
+      img: "/images/categories/fashion-apparel.jpg",
     },
     {
       name: "Home & Living",
       slug: "home-living",
       desc: "Diffusers, iron skillets, linens, and desk chairs",
-      img: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=600&auto=format&fit=crop&q=60",
+      img: "/images/categories/home-living.jpg",
     },
     {
       name: "Fitness & Outdoors",
       slug: "fitness-outdoors",
       desc: "Hydration flasks, yoga mats, kettlebells, and tents",
-      img: "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600&auto=format&fit=crop&q=60",
+      img: "/images/categories/fitness-outdoors.jpg",
     },
     {
       name: "Books & Stationery",
       slug: "books-stationery",
       desc: "Dotted journals, fineliners, organizers, and fountain pens",
-      img: "https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=600&auto=format&fit=crop&q=60",
+      img: "/images/categories/books-stationery.jpg",
     },
     {
       name: "Accessories",
       slug: "accessories",
       desc: "Premium wallets, polarized sunglasses, and silk ties",
-      img: "https://res.cloudinary.com/c9trtuqh/image/upload/v1785080005/leather_wallet_itvez3.jpg",
+      img: "/images/categories/accessories.jpg",
     },
     {
       name: "Skincare",
       slug: "skincare",
       desc: "Hyaluronic serums, organic face wash, and body creams",
-      img: "https://res.cloudinary.com/c9trtuqh/image/upload/v1785080010/hyaluronic_serum_tzncnp.jpg",
+      img: "/images/categories/skincare.jpg",
     },
     {
       name: "Car & Bike Accessories",
       slug: "car-bike-accessories",
       desc: "Phone mounts, steering covers, U-locks, and bike lights",
-      img: "https://res.cloudinary.com/c9trtuqh/image/upload/v1785079962/car_phone_mount_aangqi.jpg",
+      img: "/images/categories/car-bike-accessories.jpg",
     },
   ];
 
   return (
     <div className="bg-slate-950 text-slate-100 min-h-screen pb-16 overflow-x-hidden w-full">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-slate-950 to-slate-950 py-6 sm:py-14 lg:py-28 px-4 sm:px-6 lg:px-8">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.1),transparent_60%)] -z-10 blur-3xl"></div>
+      <section className="relative overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-950/20 via-slate-950 to-slate-950 py-6 sm:py-14 lg:py-28 px-4 sm:px-6 lg:px-8">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-[radial-gradient(circle_at_center,_rgba(245,158,11,0.08),transparent_60%)] -z-10 blur-3xl"></div>
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10 lg:gap-12 items-center">
           {/* Left Text Column */}
           <div className="lg:col-span-7 flex flex-col items-start text-left antialiased">
@@ -230,9 +244,9 @@ const Home = () => {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-indigo-400 font-sans mb-3 sm:mb-6"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-amber-400 font-sans mb-3 sm:mb-6"
             >
-              <Truck size={12} className="text-indigo-400" />
+              <Truck size={12} className="text-amber-400" />
               Free Shipping on Orders Over ₹1,000
             </motion.span>
 
@@ -240,10 +254,10 @@ const Home = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-[1.6rem] leading-[1.2] xs:text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-100 mb-3 sm:mb-8"
+              className="text-[1.6rem] leading-[1.2] xs:text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-100 mb-3 sm:mb-8 font-display"
             >
               Elevate Your Daily{" "}
-              <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent inline-block pb-1">
+              <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-amber-600 bg-clip-text text-transparent inline-block pb-1">
                 Workspace & Lifestyle
               </span>
             </motion.h1>
@@ -266,7 +280,7 @@ const Home = () => {
             >
               <Link
                 to="/shop"
-                className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-5 sm:py-3 sm:px-8 rounded-full shadow-lg shadow-indigo-600/30 transition-smooth flex items-center justify-center gap-2 group text-sm sm:text-base"
+                className="bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-extrabold py-2.5 px-5 sm:py-3 sm:px-8 rounded-full shadow-lg shadow-amber-500/20 transition-all duration-150 flex items-center justify-center gap-2 group text-sm sm:text-base font-display"
               >
                 Browse Shop
                 <ArrowRight
@@ -276,7 +290,7 @@ const Home = () => {
               </Link>
               <a
                 href="#categories"
-                className="bg-slate-900 hover:bg-slate-850 text-slate-300 border border-slate-800 hover:border-slate-700 font-semibold py-2.5 px-5 sm:py-3 sm:px-8 rounded-full transition-smooth flex items-center justify-center text-sm sm:text-base"
+                className="bg-slate-900 hover:bg-slate-850 active:scale-95 text-slate-300 border border-slate-800 hover:border-amber-500/40 font-semibold py-2.5 px-5 sm:py-3 sm:px-8 rounded-full transition-all duration-150 flex items-center justify-center text-sm sm:text-base font-sans"
               >
                 Categories
               </a>
@@ -312,7 +326,7 @@ const Home = () => {
                       <p className="text-[10px] font-bold text-slate-100 truncate">
                         {heroProducts[0].name}
                       </p>
-                      <p className="text-[10px] font-semibold text-indigo-400">
+                      <p className="text-[10px] font-semibold text-amber-400">
                         ₹{heroProducts[0].price.toFixed(2)}
                       </p>
                     </div>
@@ -472,17 +486,17 @@ const Home = () => {
         >
           <div className="text-center md:text-left mb-10 flex flex-col md:flex-row items-end justify-between gap-4">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-100">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-100 font-display">
                 Shop by Category
               </h2>
-              <p className="text-slate-500 mt-2">
+              <p className="text-slate-500 mt-2 font-sans">
                 Find exactly what you need to upgrade your style and
                 surroundings.
               </p>
             </div>
             <Link
               to="/shop"
-              className="text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 text-sm transition-smooth group"
+              className="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 text-sm transition-smooth group font-display"
             >
               Browse all categories
               <ArrowRight
@@ -502,14 +516,14 @@ const Home = () => {
                     ? `${index * 75}ms`
                     : "0ms",
                 }}
-                className={`group relative h-80 rounded-2xl overflow-hidden border border-slate-900 shadow-2xl flex flex-col justify-end p-6 hover:border-indigo-500/30 transition-all duration-700 transform ${
+                className={`group relative h-80 rounded-2xl overflow-hidden border border-slate-900 shadow-2xl flex flex-col justify-end p-6 hover:border-amber-500/40 hover:glow-amber transition-all duration-700 transform ${
                   categoriesVisible
                     ? "opacity-100 translate-y-0"
                     : "opacity-0 translate-y-12"
-                } hover:-translate-y-2 hover:shadow-indigo-950/60`}
+                } hover:-translate-y-2 hover:shadow-amber-950/40`}
               >
-                {/* Overlay background */}
-                <div className="absolute inset-0 bg-slate-950/40 group-hover:bg-slate-950/20 transition-smooth z-10"></div>
+                {/* Standardized gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/50 to-transparent z-10 transition-smooth group-hover:from-slate-950/90 group-hover:via-slate-950/40"></div>
                 <img
                   src={cat.img}
                   alt={cat.name}
@@ -517,10 +531,10 @@ const Home = () => {
                 />
                 {/* Content */}
                 <div className="z-20 space-y-2">
-                  <h3 className="text-lg font-bold text-slate-100 group-hover:text-indigo-300 transition-smooth">
+                  <h3 className="text-lg font-bold text-slate-100 group-hover:text-amber-400 transition-smooth font-display">
                     {cat.name}
                   </h3>
-                  <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed font-sans">
                     {cat.desc}
                   </p>
                 </div>
@@ -540,7 +554,7 @@ const Home = () => {
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div className="space-y-2">
-              <p className="text-4xl sm:text-5xl font-black tracking-tight text-indigo-400">
+              <p className="text-4xl sm:text-5xl font-black tracking-tight text-amber-400 font-display">
                 <AnimatedCounter target={10000} suffix="+" />
               </p>
               <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -548,7 +562,7 @@ const Home = () => {
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-4xl sm:text-5xl font-black tracking-tight text-purple-400">
+              <p className="text-4xl sm:text-5xl font-black tracking-tight text-amber-500 font-display">
                 <AnimatedCounter target={totalProductsCount} suffix="+" />
               </p>
               <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -556,7 +570,7 @@ const Home = () => {
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-4xl sm:text-5xl font-black tracking-tight text-pink-400">
+              <p className="text-4xl sm:text-5xl font-black tracking-tight text-amber-300 font-display">
                 <AnimatedCounter target={25} suffix="+" />
               </p>
               <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -564,7 +578,7 @@ const Home = () => {
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-4xl sm:text-5xl font-black tracking-tight text-emerald-400">
+              <p className="text-4xl sm:text-5xl font-black tracking-tight text-emerald-400 font-display">
                 24/7
               </p>
               <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -615,7 +629,7 @@ const Home = () => {
                     productsVisible
                       ? "opacity-100 translate-y-0"
                       : "opacity-0 translate-y-12"
-                  } hover:-translate-y-2 hover:shadow-indigo-950/50`}
+                  } hover:-translate-y-2 hover:shadow-amber-950/40`}
                 >
                   {/* Image and Wishlist button */}
                   <div className="relative h-36 sm:h-48 bg-slate-950 overflow-hidden">
@@ -629,19 +643,21 @@ const Home = () => {
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                       />
                     </Link>
-                    <button
-                      onClick={() => toggleWishlist(product._id)}
-                      className="absolute top-3 right-3 p-2 rounded-full bg-slate-950/80 border border-slate-850 hover:bg-slate-900 text-slate-300 hover:text-red-400 transition-smooth z-20"
+                    <motion.button
+                      whileTap={{ scale: 0.8 }}
+                      whileHover={{ scale: 1.1 }}
+                      onClick={() => handleToggleWishlist(product)}
+                      className="absolute top-3 right-3 p-2 rounded-full bg-slate-950/80 border border-slate-850 hover:bg-slate-900 text-slate-300 hover:text-red-400 transition-colors z-20 cursor-pointer shadow-md"
                     >
                       <Heart
                         size={16}
                         className={
                           isInWishlist(product._id)
-                            ? "fill-red-500 text-red-500"
-                            : ""
+                            ? "fill-red-500 text-red-500 transition-colors"
+                            : "transition-colors"
                         }
                       />
-                    </button>
+                    </motion.button>
                     {product.stock <= 5 && product.stock > 0 && (
                       <span className="absolute bottom-3 left-3 text-[10px] bg-amber-500/20 border border-amber-500/40 text-amber-400 py-0.5 px-2 rounded-full font-semibold">
                         Only {product.stock} left!
@@ -661,7 +677,7 @@ const Home = () => {
                         {product.category?.name || "Category"}
                       </span>
                       <Link to={`/product/${product._id}`} className="block">
-                        <h3 className="font-bold text-slate-200 line-clamp-1 group-hover:text-indigo-400 transition-smooth text-sm">
+                        <h3 className="font-bold text-slate-200 line-clamp-1 group-hover:text-amber-400 transition-smooth text-sm font-display">
                           {product.name}
                         </h3>
                       </Link>
@@ -681,18 +697,19 @@ const Home = () => {
                     </div>
 
                     <div className="flex items-center justify-between mt-4">
-                      <span className="text-base font-extrabold text-slate-100">
+                      <span className="text-base font-extrabold text-amber-400 font-display">
                         ₹{product.price.toFixed(2)}
                       </span>
-                      <button
+                      <motion.button
+                        whileTap={{ scale: 0.9 }}
                         disabled={
                           product.stock === 0 || addingToCartId === product._id
                         }
                         onClick={() => handleAddToCart(product)}
-                        className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white p-2.5 rounded-full transition-smooth shadow-lg shadow-indigo-600/10 disabled:shadow-none cursor-pointer"
+                        className="bg-amber-500 hover:bg-amber-400 active:scale-95 disabled:bg-slate-800 disabled:text-slate-600 text-slate-950 font-bold p-2.5 rounded-full transition-all duration-150 shadow-lg shadow-amber-500/10 disabled:shadow-none cursor-pointer"
                       >
                         <ShoppingCart size={16} />
-                      </button>
+                      </motion.button>
                     </div>
                   </div>
                 </div>
@@ -726,7 +743,7 @@ const Home = () => {
                   />
                 </div>
                 <div className="space-y-1">
-                  <h4 className="font-bold text-slate-200 line-clamp-1 group-hover:text-indigo-400 text-xs transition-smooth">
+                  <h4 className="font-bold text-slate-200 line-clamp-1 group-hover:text-amber-400 text-xs transition-smooth">
                     {item.name}
                   </h4>
                   <div className="flex items-center justify-between">

@@ -12,12 +12,13 @@ if (isStripeConfigured()) {
   stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 }
 
-// @desc    Create new order & initiate Stripe payment
+// @desc    Create new order & initiate payment flow (Stripe or COD)
 // @route   POST /api/v1/orders
-// @access  Private
+// @access  Private / Guest
 const createOrder = async (req, res, next) => {
   try {
-    const { items, shippingAddress, guestEmail, guestName } = req.body;
+    const { items, shippingAddress, guestEmail, guestName, paymentMethod: rawPaymentMethod } = req.body;
+    const paymentMethod = ['online', 'cod'].includes(rawPaymentMethod) ? rawPaymentMethod : 'online';
 
     if (!items || items.length === 0) {
       res.status(400);
@@ -36,7 +37,7 @@ const createOrder = async (req, res, next) => {
 
     // Verify stock and price from database for each item
     const orderItems = [];
-    let totalAmount = 0;
+    let subtotal = 0;
 
     for (const item of items) {
       const product = await Product.findById(item.product);
@@ -57,43 +58,85 @@ const createOrder = async (req, res, next) => {
         price: product.price // Save purchase-time price
       });
 
-      totalAmount += product.price * item.quantity;
+      subtotal += product.price * item.quantity;
     }
 
-    // Initialize Stripe Payment Intent if configured
+    // Calculate prepay discount: 5% off subtotal if online, 0 if COD
+    const PREPAY_DISCOUNT_PERCENT = 0.05;
+    const prepayDiscount = paymentMethod === 'online'
+      ? Math.round(subtotal * PREPAY_DISCOUNT_PERCENT * 100) / 100
+      : 0;
+
+    const shippingCost = subtotal > 1000 ? 0 : 99.00;
+    const estimatedTax = Math.round(subtotal * 0.08 * 100) / 100;
+    const totalAmount = Math.max(0, subtotal - prepayDiscount + shippingCost + estimatedTax);
+
     let clientSecret = null;
     let paymentIntentId = null;
 
-    if (isStripeConfigured()) {
-      try {
-        // Stripe expects amount in cents
-        const paymentIntent = await stripe.paymentIntents.create({
-          amount: Math.round(totalAmount * 100),
-          currency: 'inr',
-          metadata: { 
-            userId: req.user ? req.user._id.toString() : 'guest',
-            guestEmail: req.user ? undefined : guestEmail
-          }
-        });
-        clientSecret = paymentIntent.client_secret;
-        paymentIntentId = paymentIntent.id;
-      } catch (stripeError) {
-        console.error('Stripe PaymentIntent creation failed:', stripeError.message);
-        res.status(500);
-        throw new Error(`Stripe error: ${stripeError.message}`);
+    if (paymentMethod === 'online') {
+      // Initialize Stripe Payment Intent if configured
+      if (isStripeConfigured()) {
+        try {
+          // Stripe expects amount in cents
+          const paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(totalAmount * 100),
+            currency: 'inr',
+            metadata: { 
+              userId: req.user ? req.user._id.toString() : 'guest',
+              guestEmail: req.user ? undefined : guestEmail
+            }
+          });
+          clientSecret = paymentIntent.client_secret;
+          paymentIntentId = paymentIntent.id;
+        } catch (stripeError) {
+          console.error('Stripe PaymentIntent creation failed:', stripeError.message);
+          res.status(500);
+          throw new Error(`Stripe error: ${stripeError.message}`);
+        }
+      } else {
+        // Mock payment intent for fallback testing
+        clientSecret = 'mock_client_secret_' + Date.now();
+        paymentIntentId = 'mock_pi_' + Date.now();
       }
-    } else {
-      // Mock payment intent for fallback testing
-      clientSecret = 'mock_client_secret_' + Date.now();
-      paymentIntentId = 'mock_pi_' + Date.now();
+    } else if (paymentMethod === 'cod') {
+      // For COD: Perform atomic stock reservation/decrement immediately at order creation
+      const updatedProducts = [];
+      try {
+        for (const item of orderItems) {
+          const updatedProduct = await Product.findOneAndUpdate(
+            { _id: item.product, stock: { $gte: item.quantity } },
+            { $inc: { stock: -item.quantity } },
+            { new: true }
+          );
+
+          if (!updatedProduct) {
+            throw new Error(`Insufficient stock for product: ${item.name}`);
+          }
+          updatedProducts.push({ product: item.product, quantity: item.quantity });
+        }
+      } catch (err) {
+        // Rollback any successfully decremented items
+        for (const rolledBack of updatedProducts) {
+          await Product.findByIdAndUpdate(rolledBack.product, {
+            $inc: { stock: rolledBack.quantity }
+          });
+        }
+        res.status(400);
+        throw new Error(err.message || 'Order creation failed due to insufficient stock.');
+      }
     }
 
-    // Create the order in DB with 'pending' status
+    // Create the order in DB with 'pending' payment and order status
     const orderData = {
       items: orderItems,
       shippingAddress,
+      paymentMethod,
+      subtotal,
+      prepayDiscount,
       totalAmount,
       paymentStatus: 'pending',
+      orderStatus: 'pending',
       paymentIntentId
     };
 
@@ -395,6 +438,39 @@ const getGuestOrder = async (req, res, next) => {
   }
 };
 
+// @desc    Mark COD order payment as collected (Admin only)
+// @route   PUT /api/v1/orders/:id/collect-payment
+// @access  Private/Admin
+const markPaymentCollected = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      res.status(404);
+      throw new Error('Order not found');
+    }
+
+    if (order.paymentStatus === 'paid') {
+      return res.json({
+        success: true,
+        message: 'Payment is already marked as collected/paid',
+        order
+      });
+    }
+
+    order.paymentStatus = 'paid';
+    const updatedOrder = await order.save();
+
+    res.json({
+      success: true,
+      message: 'Payment marked as collected successfully',
+      order: updatedOrder
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createOrder,
   confirmPayment,
@@ -402,5 +478,6 @@ module.exports = {
   getOrderById,
   getAllOrders,
   updateOrderStatus,
-  getGuestOrder
+  getGuestOrder,
+  markPaymentCollected
 };
