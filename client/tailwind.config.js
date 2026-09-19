@@ -8,42 +8,22 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
-        display: ['Syne', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'],
+        display: ['Outfit', 'sans-serif'],
       },
       colors: {
         brand: {
-          50: '#fffbe6',
-          100: '#fef3c7',
-          200: '#fde68a',
-          300: '#fcd34d',
-          400: '#fbbf24',
-          500: '#f59e0b', // Primary Warm Amber Accent
-          600: '#d97706',
-          700: '#b45309',
-          800: '#92400e',
-          900: '#78350f',
-          950: '#451a03',
-        },
-        // Alias indigo to Warm Amber scale to ensure seamless codebase-wide theme transformation
-        indigo: {
-          50: '#fffbe6',
-          100: '#fef3c7',
-          200: '#fde68a',
-          300: '#fcd34d',
-          400: '#fbbf24',
-          500: '#f59e0b',
-          600: '#d97706',
-          700: '#b45309',
-          800: '#92400e',
-          900: '#78350f',
-          950: '#451a03',
-        },
-        accent: {
-          mint: '#10b981',
-          emerald: '#059669',
-          amber: '#f59e0b',
-          copper: '#ea580c',
+          50: '#eef2ff',
+          100: '#e0e7ff',
+          200: '#c7d2fe',
+          300: '#a5b4fc',
+          400: '#818cf8',
+          500: '#6366f1', // Indigo Accent
+          600: '#4f46e5',
+          700: '#4338ca',
+          800: '#3730a3',
+          900: '#312e81',
+          950: '#1e1b4b',
         },
         darkbg: {
           50: '#f8fafc',
@@ -51,11 +31,9 @@ export default {
           200: '#e2e8f0',
           300: '#cbd5e1',
           500: '#64748b',
-          750: '#1b2333',
-          800: '#131927',
-          850: '#0f1523',
-          900: '#0b0f19', // Main Obsidian dark background
-          950: '#070a12', // Deeper Obsidian elements
+          800: '#1e293b',
+          900: '#0f172a', // Main dark background
+          950: '#020617', // Deeper elements
         }
       }
     },

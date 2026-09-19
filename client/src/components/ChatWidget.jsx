@@ -487,12 +487,12 @@ const ChatWidget = () => {
                     initial={{ opacity: 0, x: 15, scale: 0.9 }}
                     animate={{ opacity: 1, x: 0, scale: 1 }}
                     exit={{ opacity: 0, x: 15, scale: 0.9 }}
-                    className="absolute right-[60px] md:right-[76px] bottom-1 md:bottom-2 bg-slate-900 border border-amber-500/20 text-slate-100 text-xs font-semibold px-3.5 py-2.5 rounded-xl shadow-2xl shadow-indigo-500/10 whitespace-nowrap z-50 flex items-center gap-2"
+                    className="absolute right-[60px] md:right-[76px] bottom-1 md:bottom-2 bg-slate-900 border border-indigo-500/20 text-slate-100 text-xs font-semibold px-3.5 py-2.5 rounded-xl shadow-2xl shadow-indigo-500/10 whitespace-nowrap z-50 flex items-center gap-2"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-purple-400" />
                     <span>Ask Rex anything</span>
                     {/* Tooltip pointer arrow */}
-                    <div className="absolute right-[-5px] top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-slate-900 border-t border-r border-amber-500/20 rotate-45" />
+                    <div className="absolute right-[-5px] top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-slate-900 border-t border-r border-indigo-500/20 rotate-45" />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -673,7 +673,7 @@ const ChatWidget = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Ask Rex about products, deals..."
-                className="flex-1 bg-slate-900/60 border border-slate-800 focus:border-amber-500 rounded-xl px-4 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none transition-smooth"
+                className="flex-1 bg-slate-900/60 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none transition-smooth"
                 maxLength={400}
               />
               <button
@@ -693,4 +693,3 @@ const ChatWidget = () => {
 };
 
 export default ChatWidget;
-

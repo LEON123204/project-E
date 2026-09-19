@@ -178,7 +178,7 @@ const AdminProducts = () => {
           </div>
           <button
             onClick={handleOpenAddModal}
-            className="w-full sm:w-auto bg-indigo-655 hover:bg-amber-400 text-white font-bold py-2.5 px-5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-smooth cursor-pointer"
+            className="w-full sm:w-auto bg-indigo-655 hover:bg-indigo-550 text-white font-bold py-2.5 px-5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-smooth cursor-pointer"
           >
             <Plus size={16} />
             Add New Product
@@ -206,7 +206,7 @@ const AdminProducts = () => {
             placeholder="Search products by title or description..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-full bg-slate-900 border border-slate-800 focus:border-amber-500 rounded-xl py-2 pl-10 pr-4 text-xs text-slate-100 outline-none transition-smooth"
+            className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 pl-10 pr-4 text-xs text-slate-100 outline-none transition-smooth"
           />
           <Search size={16} className="absolute left-3 top-2.5 text-slate-550" />
         </div>
@@ -214,7 +214,7 @@ const AdminProducts = () => {
         {/* Catalog Table */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3 bg-slate-900 border border-slate-850 rounded-2xl">
-            <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
             <p className="text-slate-500 text-xs">Loading products catalog...</p>
           </div>
         ) : products.length === 0 ? (
@@ -256,7 +256,7 @@ const AdminProducts = () => {
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => handleOpenEditModal(p)}
-                            className="p-1.5 bg-slate-950 hover:bg-amber-500/10 border border-slate-850 hover:border-amber-500/20 text-slate-450 hover:text-amber-400 rounded-lg transition-smooth cursor-pointer"
+                            className="p-1.5 bg-slate-950 hover:bg-indigo-500/10 border border-slate-850 hover:border-indigo-500/20 text-slate-450 hover:text-indigo-400 rounded-lg transition-smooth cursor-pointer"
                           >
                             <Edit size={14} />
                           </button>
@@ -295,7 +295,7 @@ const AdminProducts = () => {
                     <div className="flex gap-2 pt-2 justify-end border-t border-slate-850/40 mt-2">
                       <button
                         onClick={() => handleOpenEditModal(p)}
-                        className="p-2.5 bg-slate-950 hover:bg-amber-500/10 border border-slate-850 hover:border-amber-500/20 text-slate-450 hover:text-amber-400 rounded-lg transition-smooth cursor-pointer"
+                        className="p-2.5 bg-slate-950 hover:bg-indigo-500/10 border border-slate-850 hover:border-indigo-500/20 text-slate-450 hover:text-indigo-400 rounded-lg transition-smooth cursor-pointer"
                       >
                         <Edit size={14} />
                       </button>
@@ -367,7 +367,7 @@ const AdminProducts = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
                 />
               </div>
 
@@ -378,7 +378,7 @@ const AdminProducts = () => {
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   required
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-slate-200 outline-none transition-smooth cursor-pointer"
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2.5 px-3 text-sm text-slate-200 outline-none transition-smooth cursor-pointer"
                 >
                   {categories.map((cat) => (
                     <option key={cat._id} value={cat._id}>{cat.name}</option>
@@ -397,7 +397,7 @@ const AdminProducts = () => {
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     required
-                    className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
                   />
                 </div>
                 <div className="space-y-1">
@@ -408,7 +408,7 @@ const AdminProducts = () => {
                     value={stock}
                     onChange={(e) => setStock(e.target.value)}
                     required
-                    className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth"
                   />
                 </div>
               </div>
@@ -421,7 +421,7 @@ const AdminProducts = () => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   required
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth resize-none"
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth resize-none"
                 ></textarea>
               </div>
 
@@ -449,7 +449,7 @@ const AdminProducts = () => {
               {/* Image upload selector */}
               <div className="space-y-2">
                 <label className="text-[10px] text-slate-400 uppercase font-semibold">Upload Product Images</label>
-                <div className="border-2 border-dashed border-slate-800 hover:border-amber-500/50 rounded-xl p-4 transition-smooth bg-slate-950/20 text-center relative cursor-pointer">
+                <div className="border-2 border-dashed border-slate-800 hover:border-indigo-500/50 rounded-xl p-4 transition-smooth bg-slate-950/20 text-center relative cursor-pointer">
                   <input
                     type="file"
                     multiple
@@ -479,7 +479,7 @@ const AdminProducts = () => {
                 <button
                   type="submit"
                   disabled={submitLoading}
-                  className="bg-amber-500 hover:bg-amber-400 text-white font-bold py-2 px-8 rounded-xl text-xs flex items-center gap-1.5 transition-smooth cursor-pointer"
+                  className="bg-indigo-650 hover:bg-indigo-550 text-white font-bold py-2 px-8 rounded-xl text-xs flex items-center gap-1.5 transition-smooth cursor-pointer"
                 >
                   {submitLoading ? (
                     <>
@@ -501,4 +501,3 @@ const AdminProducts = () => {
 };
 
 export default AdminProducts;
-

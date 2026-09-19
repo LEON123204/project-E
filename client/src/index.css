@@ -28,21 +28,6 @@ img {
   border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-/* Base Typography setup */
-h1, h2, h3, h4, .font-heading {
-  font-family: 'Syne', sans-serif;
-  letter-spacing: -0.02em;
-}
-
-/* Custom Glow & Accent utilities */
-.glow-amber {
-  box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.3);
-}
-
-.glow-emerald {
-  box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.3);
-}
-
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
@@ -54,20 +39,20 @@ h1, h2, h3, h4, .font-heading {
 }
 
 .dark ::-webkit-scrollbar-track {
-  background: #0b0f19;
+  background: #0f172a;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #cbd5e1;
   border-radius: 9999px;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #334155;
 }
 
-::-webkit-scrollbar-thumb:hover, .dark ::-webkit-scrollbar-thumb:hover {
-  background: #f59e0b;
+::-webkit-scrollbar-thumb:hover {
+  background: #6366f1;
 }
 
 /* Smooth transitions */

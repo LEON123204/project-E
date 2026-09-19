@@ -1,13 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 // Context Providers
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
-import { ToastProvider } from './context/ToastContext';
-import { LoginPromptProvider } from './context/LoginPromptContext';
 
 // Components
 import Navbar from './components/Navbar';
@@ -15,8 +12,8 @@ import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import ChatWidget from './components/ChatWidget';
 import ScrollToTop from './components/ScrollToTop';
+import { LoginPromptProvider } from './context/LoginPromptContext';
 import LoginPromptModal from './components/LoginPromptModal';
-import AnimatedPage from './components/AnimatedPage';
 
 // Customer Pages
 import Home from './pages/Home';
@@ -38,112 +35,100 @@ import AdminCategories from './pages/admin/AdminCategories';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminCustomers from './pages/admin/AdminCustomers';
 
-const AnimatedRoutes = () => {
-  const location = useLocation();
-
-  return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        {/* Public routes */}
-        <Route path="/" element={<AnimatedPage><Home /></AnimatedPage>} />
-        <Route path="/shop" element={<AnimatedPage><Shop /></AnimatedPage>} />
-        <Route path="/product/:id" element={<AnimatedPage><ProductDetail /></AnimatedPage>} />
-        <Route path="/cart" element={<AnimatedPage><CartPage /></AnimatedPage>} />
-        <Route path="/wishlist" element={<AnimatedPage><WishlistPage /></AnimatedPage>} />
-        <Route path="/login" element={<AnimatedPage><Login /></AnimatedPage>} />
-        <Route path="/register" element={<AnimatedPage><Register /></AnimatedPage>} />
-
-        {/* Public checkout and tracking */}
-        <Route path="/checkout" element={<AnimatedPage><CheckoutPage /></AnimatedPage>} />
-        <Route path="/order-confirmation/:id" element={<AnimatedPage><OrderConfirmation /></AnimatedPage>} />
-        <Route path="/order-tracking" element={<AnimatedPage><OrderTracking /></AnimatedPage>} />
-        <Route path="/order-tracking/:id" element={<AnimatedPage><OrderTracking /></AnimatedPage>} />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <AnimatedPage><ProfilePage /></AnimatedPage>
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Admin Protected routes */}
-        <Route
-          path="/admin/dashboard"
-          element={
-            <ProtectedRoute adminOnly={true}>
-              <AnimatedPage><AdminDashboard /></AnimatedPage>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/products"
-          element={
-            <ProtectedRoute adminOnly={true}>
-              <AnimatedPage><AdminProducts /></AnimatedPage>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/categories"
-          element={
-            <ProtectedRoute adminOnly={true}>
-              <AnimatedPage><AdminCategories /></AnimatedPage>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/orders"
-          element={
-            <ProtectedRoute adminOnly={true}>
-              <AnimatedPage><AdminOrders /></AnimatedPage>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/customers"
-          element={
-            <ProtectedRoute adminOnly={true}>
-              <AnimatedPage><AdminCustomers /></AnimatedPage>
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </AnimatePresence>
-  );
-};
-
 function App() {
   return (
     <Router>
       <ScrollToTop />
       <AuthProvider>
-        <ToastProvider>
-          <LoginPromptProvider>
-            <CartProvider>
-              <WishlistProvider>
-                <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-amber-500 selection:text-slate-950">
-                  {/* Top Navigation */}
-                  <Navbar />
+        <LoginPromptProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
+                {/* Top Navigation */}
+                <Navbar />
 
-                  {/* Global Login Prompt Modal */}
-                  <LoginPromptModal />
+                {/* Global Login Prompt Modal */}
+                <LoginPromptModal />
 
-                  {/* Main Content Area */}
-                  <main className="flex-grow flex flex-col">
-                    <AnimatedRoutes />
-                  </main>
+              {/* Main Content Area */}
+              <main className="flex-grow">
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/" element={<Home />} />
+                  <Route path="/shop" element={<Shop />} />
+                  <Route path="/product/:id" element={<ProductDetail />} />
+                  <Route path="/cart" element={<CartPage />} />
+                  <Route path="/wishlist" element={<WishlistPage />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
 
-                  {/* Bottom Navigation */}
-                  <Footer />
+                  {/* Public checkout and tracking */}
+                  <Route path="/checkout" element={<CheckoutPage />} />
+                  <Route path="/order-confirmation/:id" element={<OrderConfirmation />} />
+                  <Route path="/order-tracking" element={<OrderTracking />} />
+                  <Route path="/order-tracking/:id" element={<OrderTracking />} />
+                  <Route
+                    path="/profile"
+                    element={
+                      <ProtectedRoute>
+                        <ProfilePage />
+                      </ProtectedRoute>
+                    }
+                  />
 
-                  {/* Floating AI Chat Assistant */}
-                  <ChatWidget />
-                </div>
-              </WishlistProvider>
-            </CartProvider>
-          </LoginPromptProvider>
-        </ToastProvider>
+                  {/* Admin Protected routes */}
+                  <Route
+                    path="/admin/dashboard"
+                    element={
+                      <ProtectedRoute adminOnly={true}>
+                        <AdminDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/products"
+                    element={
+                      <ProtectedRoute adminOnly={true}>
+                        <AdminProducts />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/categories"
+                    element={
+                      <ProtectedRoute adminOnly={true}>
+                        <AdminCategories />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/orders"
+                    element={
+                      <ProtectedRoute adminOnly={true}>
+                        <AdminOrders />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/customers"
+                    element={
+                      <ProtectedRoute adminOnly={true}>
+                        <AdminCustomers />
+                      </ProtectedRoute>
+                    }
+                  />
+                </Routes>
+              </main>
+
+              {/* Bottom Navigation */}
+              <Footer />
+
+              {/* Floating AI Chat Assistant */}
+              <ChatWidget />
+              </div>
+            </WishlistProvider>
+          </CartProvider>
+        </LoginPromptProvider>
       </AuthProvider>
     </Router>
   );

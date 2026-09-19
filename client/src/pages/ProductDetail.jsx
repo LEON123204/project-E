@@ -5,10 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useLoginPrompt } from '../context/LoginPromptContext';
-import { useToast } from '../context/ToastContext';
 import { ProductDetailSkeleton } from '../components/SkeletonLoader';
-import { Heart, ShoppingCart, Star, Plus, Minus, Check, AlertCircle, Zap, ZoomIn, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Heart, ShoppingCart, Star, Plus, Minus, Check, AlertCircle, Zap } from 'lucide-react';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -17,7 +15,6 @@ const ProductDetail = () => {
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { showPrompt } = useLoginPrompt();
-  const { showToast } = useToast();
 
   const [product, setProduct] = useState(null);
   const [reviews, setReviews] = useState([]);
@@ -25,9 +22,8 @@ const ProductDetail = () => {
   const [error, setError] = useState('');
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   
-  // Gallery, lightbox, and cart quantity state
+  // Gallery and cart quantity state
   const [activeImage, setActiveImage] = useState('');
-  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
@@ -110,28 +106,16 @@ const ProductDetail = () => {
     setIsAdding(false);
     if (res.success) {
       setJustAdded(true);
-      showToast(`Added ${quantity} × ${product.name} to cart!`, 'success');
       setTimeout(() => setJustAdded(false), 2000);
     } else {
-      showToast(res.message || 'Failed to add item to cart', 'error');
-    }
-  };
-
-  const handleToggleWishlist = () => {
-    if (!product) return;
-    const isWishlisted = isInWishlist(product._id);
-    toggleWishlist(product._id);
-    if (isWishlisted) {
-      showToast(`Removed ${product.name} from wishlist`, 'info');
-    } else {
-      showToast(`Added ${product.name} to wishlist!`, 'success');
+      alert(res.message);
     }
   };
 
   const handleBuyNow = () => {
     if (!product || product.stock <= 0) return;
     if (quantity > product.stock) {
-      showToast(`Only ${product.stock} items are in stock.`, 'info');
+      alert(`Only ${product.stock} items are in stock.`);
       return;
     }
 
@@ -196,7 +180,7 @@ const ProductDetail = () => {
       <div className="max-w-7xl mx-auto px-4 py-24 text-center space-y-4">
         <AlertCircle size={48} className="mx-auto text-rose-500" />
         <h2 className="text-xl font-bold text-slate-100">{error || 'Product not found'}</h2>
-        <Link to="/shop" className="inline-block bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-2 rounded-full mt-4 transition-smooth">
+        <Link to="/shop" className="inline-block bg-indigo-600 text-white px-6 py-2 rounded-full font-medium mt-4">
           Back to Shop
         </Link>
       </div>
@@ -213,37 +197,26 @@ const ProductDetail = () => {
         {/* Core Product Layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
           
-          {/* Left Panel: Image Gallery with Zoom & Lightbox */}
+          {/* Left Panel: Image Gallery */}
           <div className="flex flex-col gap-4">
-            <div 
-              onClick={() => setIsLightboxOpen(true)}
-              className="w-full aspect-square bg-slate-900 border border-slate-850 rounded-2xl overflow-hidden flex items-center justify-center relative shadow-2xl group cursor-zoom-in"
-            >
+            <div className="w-full aspect-square bg-slate-900 border border-slate-850 rounded-2xl overflow-hidden flex items-center justify-center relative shadow-2xl">
               <img
                 src={activeImage}
                 alt={product.name}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
+                className="w-full h-full object-cover"
               />
-              <div className="absolute top-4 left-4 p-2 rounded-xl bg-slate-950/70 backdrop-blur-md border border-slate-800 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-xs font-medium">
-                <ZoomIn size={14} />
-                <span>Zoom</span>
-              </div>
-              <motion.button
-                whileTap={{ scale: 0.85 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleToggleWishlist();
-                }}
-                className="absolute top-4 right-4 p-3 rounded-full bg-slate-950/80 border border-slate-800 hover:bg-slate-900 text-slate-300 hover:text-red-400 transition-colors shadow-lg cursor-pointer"
+              <button
+                onClick={() => toggleWishlist(product._id)}
+                className="absolute top-4 right-4 p-3 rounded-full bg-slate-950/80 border border-slate-800 hover:bg-slate-900 text-slate-300 hover:text-red-400 transition-smooth shadow-lg"
               >
                 <Heart
                   size={20}
-                  className={isInWishlist(product._id) ? 'fill-red-500 text-red-500 transition-colors' : 'transition-colors'}
+                  className={isInWishlist(product._id) ? 'fill-red-500 text-red-500' : ''}
                 />
-              </motion.button>
+              </button>
             </div>
             
-            {/* Gallery Thumbnails */}
+            {/* Gallery Thumbnails (Only show if multiple images exist) */}
             {product.images.length > 1 && (
               <div className="grid grid-cols-5 gap-2">
                 {product.images.map((img, idx) => (
@@ -251,7 +224,7 @@ const ProductDetail = () => {
                     key={idx}
                     onClick={() => setActiveImage(img)}
                     className={`aspect-square rounded-xl overflow-hidden border bg-slate-900 transition-smooth cursor-pointer ${
-                      activeImage === img ? 'border-amber-500 scale-95' : 'border-slate-850 hover:border-slate-700'
+                      activeImage === img ? 'border-indigo-500 scale-95' : 'border-slate-850 hover:border-slate-700'
                     }`}
                   >
                     <img src={img} alt="" className="w-full h-full object-cover" />
@@ -264,10 +237,10 @@ const ProductDetail = () => {
           {/* Right Panel: Detail Info & Checkout Controls */}
           <div className="flex flex-col justify-start py-2 space-y-6">
             <div className="space-y-2">
-              <span className="text-xs font-semibold text-amber-400 uppercase tracking-widest font-display">
+              <span className="text-xs font-semibold text-indigo-400 uppercase tracking-widest">
                 {product.category?.name || 'Category'}
               </span>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-100 tracking-tight leading-tight font-display">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-100 tracking-tight leading-tight">
                 {product.name}
               </h1>
               
@@ -287,12 +260,12 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            <div className="text-3xl font-extrabold text-amber-400 font-display">₹{product.price.toFixed(2)}</div>
+            <div className="text-3xl font-extrabold text-slate-100">₹{product.price.toFixed(2)}</div>
 
             <hr className="border-slate-900" />
 
             <div className="space-y-2">
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-display">Description</h3>
+              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Description</h3>
               <p className="text-slate-350 text-sm leading-relaxed whitespace-pre-line">
                 {product.description}
               </p>
@@ -315,42 +288,39 @@ const ProductDetail = () => {
 
             {/* Cart & Buy Now section */}
             <div className="flex flex-col sm:flex-row items-stretch gap-3 pt-4">
-              {/* Quantity Toggle */}
+              {/* Quantity Toggle — min 44px tall for touch */}
               <div className={`flex items-center border border-slate-800 bg-slate-900/60 rounded-xl px-1 min-h-[44px] w-full sm:w-[120px] shrink-0 ${isOutOfStock ? 'opacity-50 select-none' : ''}`}>
-                <motion.button
-                  whileTap={{ scale: 0.85 }}
+                <button
                   type="button"
                   disabled={isOutOfStock || quantity <= 1}
                   onClick={() => handleQuantityChange('dec')}
-                  className="flex-1 flex items-center justify-center min-h-[44px] hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-100 transition-smooth disabled:text-slate-700 cursor-pointer"
+                  className="flex-1 flex items-center justify-center min-h-[44px] hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-100 transition-smooth disabled:text-slate-700"
                 >
                   <Minus size={16} />
-                </motion.button>
+                </button>
                 <span className="font-semibold text-slate-100 text-sm select-none px-1 text-center w-6">{isOutOfStock ? 0 : quantity}</span>
-                <motion.button
-                  whileTap={{ scale: 0.85 }}
+                <button
                   type="button"
                   disabled={isOutOfStock || quantity >= product.stock}
                   onClick={() => handleQuantityChange('inc')}
-                  className="flex-1 flex items-center justify-center min-h-[44px] hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-100 transition-smooth disabled:text-slate-700 cursor-pointer"
+                  className="flex-1 flex items-center justify-center min-h-[44px] hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-100 transition-smooth disabled:text-slate-700"
                 >
                   <Plus size={16} />
-                </motion.button>
+                </button>
               </div>
 
-              {/* Action Buttons: Add to Cart & Buy Now */}
+              {/* Action Buttons: Add to Cart (Secondary Outline) & Buy Now (Primary Solid) */}
               <div className="flex flex-1 flex-col sm:flex-row gap-3">
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
+                <button
                   type="button"
                   disabled={isOutOfStock || isAdding}
                   onClick={handleAddToCart}
-                  className={`flex-1 min-h-[44px] px-4 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-150 text-sm sm:text-base font-display ${
+                  className={`flex-1 min-h-[44px] px-4 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-smooth text-sm sm:text-base ${
                     isOutOfStock
                       ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800/50'
                       : justAdded
                         ? 'bg-emerald-600/20 border border-emerald-500 text-emerald-400'
-                        : 'border border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400'
+                        : 'border border-indigo-500/50 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300'
                   }`}
                 >
                   {isOutOfStock ? (
@@ -369,17 +339,16 @@ const ProductDetail = () => {
                       <span>{isAdding ? 'Adding...' : 'Add to Cart'}</span>
                     </>
                   )}
-                </motion.button>
+                </button>
 
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
+                <button
                   type="button"
                   disabled={isOutOfStock}
                   onClick={handleBuyNow}
-                  className={`flex-1 min-h-[44px] px-4 rounded-xl font-extrabold flex items-center justify-center gap-2 cursor-pointer transition-all duration-150 shadow-lg text-sm sm:text-base font-display ${
+                  className={`flex-1 min-h-[44px] px-4 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-smooth shadow-lg text-sm sm:text-base ${
                     isOutOfStock
                       ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800/50 shadow-none'
-                      : 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/20'
+                      : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
                   }`}
                 >
                   {isOutOfStock ? (
@@ -393,7 +362,7 @@ const ProductDetail = () => {
                       <span>Buy Now</span>
                     </>
                   )}
-                </motion.button>
+                </button>
               </div>
             </div>
           </div>
@@ -465,21 +434,21 @@ const ProductDetail = () => {
 
                 {/* Comment area */}
                 <div className="space-y-1">
-                  <label className="text-xs text-slate-400 uppercase font-semibold font-display">Comment</label>
+                  <label className="text-xs text-slate-400 uppercase font-semibold">Comment</label>
                   <textarea
                     rows={4}
                     placeholder="Share your thoughts about this product..."
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                     required
-                    className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth resize-none"
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 text-sm text-slate-100 outline-none transition-smooth resize-none"
                   ></textarea>
                 </div>
 
                 <button
                   type="submit"
                   disabled={reviewLoading || !comment.trim()}
-                  className="w-full bg-amber-500 hover:bg-amber-400 disabled:bg-slate-800 disabled:text-slate-600 text-slate-950 py-2 px-4 rounded-xl text-sm font-extrabold transition-smooth cursor-pointer font-display"
+                  className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white py-2 px-4 rounded-xl text-sm font-semibold transition-smooth cursor-pointer"
                 >
                   {reviewLoading ? 'Submitting...' : 'Submit Review'}
                 </button>
@@ -553,7 +522,7 @@ const ProductDetail = () => {
                     />
                   </div>
                   <div className="space-y-1">
-                    <h4 className="font-bold text-slate-200 line-clamp-1 group-hover:text-amber-400 text-xs transition-smooth">
+                    <h4 className="font-bold text-slate-200 line-clamp-1 group-hover:text-indigo-400 text-xs transition-smooth">
                       {item.name}
                     </h4>
                     <div className="flex items-center justify-between">
@@ -604,17 +573,16 @@ const ProductDetail = () => {
           )}
           
           {/* Add to Cart button */}
-          <motion.button
-            whileTap={{ scale: 0.95 }}
+          <button
             type="button"
             disabled={isOutOfStock || isAdding}
             onClick={handleAddToCart}
-            className={`py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all duration-150 font-display ${
+            className={`py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-smooth ${
               isOutOfStock
                 ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-750/50 shadow-none'
                 : justAdded 
                   ? 'bg-emerald-600 text-white shadow-emerald-600/10'
-                  : 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/20'
+                  : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
             }`}
           >
             {isOutOfStock ? (
@@ -630,43 +598,9 @@ const ProductDetail = () => {
                 {isAdding ? 'Adding...' : 'Add to Cart'}
               </>
             )}
-          </motion.button>
+          </button>
         </div>
       </div>
-
-      {/* Lightbox Modal */}
-      <AnimatePresence>
-        {isLightboxOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setIsLightboxOpen(false)}
-            className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative max-w-4xl max-h-[85vh] w-full bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col items-center justify-center p-2"
-            >
-              <button
-                onClick={() => setIsLightboxOpen(false)}
-                className="absolute top-4 right-4 z-10 p-2 rounded-full bg-slate-950/80 border border-slate-800 text-slate-300 hover:text-slate-100 transition-colors cursor-pointer"
-              >
-                <X size={20} />
-              </button>
-              <img
-                src={activeImage}
-                alt={product.name}
-                className="max-h-[80vh] w-auto object-contain rounded-2xl"
-              />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

@@ -2,21 +2,19 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
-import { useToast } from '../context/ToastContext';
 import { Heart, ShoppingCart, Star, ArrowRight, Trash2 } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 const WishlistPage = () => {
   const { wishlist, loading, toggleWishlist } = useWishlist();
   const { addToCart } = useCart();
-  const { showToast } = useToast();
 
   const handleAddToCart = async (product) => {
     const res = await addToCart(product, 1);
     if (res.success) {
-      showToast(`Added ${product.name} to cart!`, 'success');
+      // Remove from wishlist automatically once added to cart (optional, let's keep it in wishlist unless they remove it, or remove it. Let's keep it in wishlist, it's nice)
+      alert('Product added to cart!');
     } else {
-      showToast(res.message || 'Failed to add product to cart', 'error');
+      alert(res.message);
     }
   };
 
@@ -24,7 +22,7 @@ const WishlistPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-slate-400 text-sm">Loading wishlist...</p>
         </div>
       </div>
@@ -45,7 +43,7 @@ const WishlistPage = () => {
             </p>
             <Link
               to="/shop"
-              className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold py-2.5 px-6 rounded-full transition-smooth shadow-lg shadow-amber-500/20 cursor-pointer"
+              className="inline-flex items-center gap-2 bg-indigo-650 hover:bg-indigo-550 text-white font-semibold py-2.5 px-6 rounded-full transition-smooth shadow-lg shadow-indigo-600/10 cursor-pointer"
             >
               Discover Products
               <ArrowRight size={16} />
@@ -92,7 +90,7 @@ const WishlistPage = () => {
                       {product.category?.name || 'Category'}
                     </span>
                     <Link to={`/product/${product._id}`} className="block">
-                      <h3 className="font-bold text-slate-200 line-clamp-1 group-hover:text-amber-400 transition-smooth text-sm">
+                      <h3 className="font-bold text-slate-200 line-clamp-1 group-hover:text-indigo-400 transition-smooth text-sm">
                         {product.name}
                       </h3>
                     </Link>
@@ -111,7 +109,7 @@ const WishlistPage = () => {
                     <button
                       disabled={product.stock === 0}
                       onClick={() => handleAddToCart(product)}
-                      className="bg-amber-500 hover:bg-amber-400 disabled:bg-slate-800 disabled:text-slate-600 text-slate-950 p-2 rounded-full transition-smooth shadow-lg shadow-amber-500/10 disabled:shadow-none cursor-pointer"
+                      className="bg-indigo-650 hover:bg-indigo-550 disabled:bg-slate-800 disabled:text-slate-600 text-white p-2 rounded-full transition-smooth shadow-lg shadow-indigo-600/10 disabled:shadow-none cursor-pointer"
                     >
                       <ShoppingCart size={16} />
                     </button>

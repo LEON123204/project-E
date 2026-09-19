@@ -13,7 +13,7 @@ const Footer = () => {
           <div className="flex flex-col gap-4">
             <Link to="/" className="flex items-center gap-2 group w-fit">
               <img src="/favicon.svg" alt="Cartex Logo" className="h-5 w-auto group-hover:scale-110 transition-transform duration-200" />
-              <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-amber-300 via-amber-400 to-amber-600 bg-clip-text text-transparent font-display">
+              <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                 Cartex
               </span>
             </Link>
@@ -24,41 +24,41 @@ const Footer = () => {
 
           {/* Quick links */}
           <div>
-            <h3 className="text-slate-100 font-bold mb-4 tracking-wider uppercase text-xs font-display">Navigation</h3>
+            <h3 className="text-slate-100 font-semibold mb-4 tracking-wider uppercase text-xs">Navigation</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/" className="hover:text-amber-400 transition-smooth">Home Page</Link>
+                <Link to="/" className="hover:text-indigo-400 transition-smooth">Home Page</Link>
               </li>
               <li>
-                <Link to="/shop" className="hover:text-amber-400 transition-smooth">Browse Shop</Link>
+                <Link to="/shop" className="hover:text-indigo-400 transition-smooth">Browse Shop</Link>
               </li>
               <li>
-                <Link to="/cart" className="hover:text-amber-400 transition-smooth">My Cart</Link>
+                <Link to="/cart" className="hover:text-indigo-400 transition-smooth">My Cart</Link>
               </li>
               <li>
-                <Link to="/wishlist" className="hover:text-amber-400 transition-smooth">My Wishlist</Link>
+                <Link to="/wishlist" className="hover:text-indigo-400 transition-smooth">My Wishlist</Link>
               </li>
             </ul>
           </div>
 
           {/* Categories Shortcuts */}
           <div>
-            <h3 className="text-slate-100 font-bold mb-4 tracking-wider uppercase text-xs font-display">Featured Categories</h3>
+            <h3 className="text-slate-100 font-semibold mb-4 tracking-wider uppercase text-xs">Featured Categories</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/shop?category=electronics" className="hover:text-amber-400 transition-smooth">Electronics</Link>
+                <Link to="/shop?category=electronics" className="hover:text-indigo-400 transition-smooth">Electronics</Link>
               </li>
               <li>
-                <Link to="/shop?category=fashion-apparel" className="hover:text-amber-400 transition-smooth">Fashion & Apparel</Link>
+                <Link to="/shop?category=fashion-apparel" className="hover:text-indigo-400 transition-smooth">Fashion & Apparel</Link>
               </li>
               <li>
-                <Link to="/shop?category=accessories" className="hover:text-amber-400 transition-smooth">Accessories</Link>
+                <Link to="/shop?category=accessories" className="hover:text-indigo-400 transition-smooth">Accessories</Link>
               </li>
               <li>
-                <Link to="/shop?category=skincare" className="hover:text-amber-400 transition-smooth">Skincare</Link>
+                <Link to="/shop?category=skincare" className="hover:text-indigo-400 transition-smooth">Skincare</Link>
               </li>
               <li>
-                <Link to="/shop?category=car-bike-accessories" className="hover:text-amber-400 transition-smooth">Car & Bike Accessories</Link>
+                <Link to="/shop?category=car-bike-accessories" className="hover:text-indigo-400 transition-smooth">Car & Bike Accessories</Link>
               </li>
             </ul>
           </div>
@@ -79,4 +79,3 @@ const Footer = () => {
 };
 
 export default Footer;
-

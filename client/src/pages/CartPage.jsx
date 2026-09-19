@@ -35,7 +35,7 @@ const CartPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-slate-400 text-sm">Loading your cart...</p>
         </div>
       </div>
@@ -56,7 +56,7 @@ const CartPage = () => {
             </p>
             <Link
               to="/shop"
-              className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-white font-semibold py-2.5 px-6 rounded-full transition-smooth shadow-lg shadow-amber-500/10 cursor-pointer"
+              className="inline-flex items-center gap-2 bg-indigo-650 hover:bg-indigo-550 text-white font-semibold py-2.5 px-6 rounded-full transition-smooth shadow-lg shadow-indigo-600/10 cursor-pointer"
             >
               Start Shopping
               <ArrowRight size={16} />
@@ -84,7 +84,7 @@ const CartPage = () => {
                     <div className="space-y-1">
                       <Link
                         to={`/product/${item.product?._id}`}
-                        className="font-bold text-slate-200 hover:text-amber-400 transition-smooth text-sm sm:text-base line-clamp-1"
+                        className="font-bold text-slate-200 hover:text-indigo-400 transition-smooth text-sm sm:text-base line-clamp-1"
                       >
                         {item.product?.name}
                       </Link>
@@ -162,7 +162,7 @@ const CartPage = () => {
                   <span className="text-slate-200 font-semibold">₹{estimatedTax.toFixed(2)}</span>
                 </div>
                 {shippingCost > 0 && (
-                  <p className="text-[10px] text-amber-400 bg-amber-500/5 p-2 rounded-lg border border-amber-500/10">
+                  <p className="text-[10px] text-indigo-400 bg-indigo-500/5 p-2 rounded-lg border border-indigo-500/10">
                     💡 Spend ₹{(1000 - cartTotal).toFixed(2)} more to qualify for FREE shipping!
                   </p>
                 )}
@@ -197,14 +197,14 @@ const CartPage = () => {
                   }
                 }}
                 disabled={hasInsufficientStock}
-                className="w-full bg-amber-500 hover:bg-amber-400 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold py-3 rounded-xl transition-smooth shadow-lg shadow-amber-500/20 disabled:shadow-none flex items-center justify-center gap-2 group cursor-pointer"
+                className="w-full bg-indigo-650 hover:bg-indigo-550 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold py-3 rounded-xl transition-smooth shadow-lg shadow-indigo-600/20 disabled:shadow-none flex items-center justify-center gap-2 group cursor-pointer"
               >
                 Proceed to Checkout
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
 
               <div className="text-center">
-                <Link to="/shop" className="text-xs text-slate-500 hover:text-amber-400 transition-smooth">
+                <Link to="/shop" className="text-xs text-slate-500 hover:text-indigo-400 transition-smooth">
                   Continue Shopping
                 </Link>
               </div>
@@ -218,4 +218,3 @@ const CartPage = () => {
 };
 
 export default CartPage;
-

@@ -44,7 +44,7 @@ const Login = () => {
   return (
     <div className="bg-slate-950 min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Background gradients */}
-      <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl -z-10"></div>
+      <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl -z-10"></div>
       <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl -z-10"></div>
 
       <div className="max-w-md w-full space-y-8 bg-slate-900 border border-slate-850 p-8 sm:p-10 rounded-2xl shadow-2xl">
@@ -76,7 +76,7 @@ const Login = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2 px-3 pl-10 text-sm text-slate-100 outline-none transition-smooth"
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 pl-10 text-sm text-slate-100 outline-none transition-smooth"
                 />
               </div>
             </div>
@@ -85,7 +85,7 @@ const Login = () => {
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <label className="text-[10px] text-slate-400 uppercase font-semibold">Password</label>
-                <span className="text-[10px] text-slate-550 hover:text-amber-400 cursor-pointer transition-smooth">
+                <span className="text-[10px] text-slate-550 hover:text-indigo-400 cursor-pointer transition-smooth">
                   Forgot Password?
                 </span>
               </div>
@@ -99,7 +99,7 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2 px-3 pl-10 pr-10 text-sm text-slate-100 outline-none transition-smooth"
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl py-2 px-3 pl-10 pr-10 text-sm text-slate-100 outline-none transition-smooth"
                 />
                 <button
                   type="button"
@@ -116,7 +116,7 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-amber-500 hover:bg-amber-500 disabled:bg-slate-850 disabled:text-slate-600 text-white font-bold py-3 rounded-xl transition-smooth shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-850 disabled:text-slate-600 text-white font-bold py-3 rounded-xl transition-smooth shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 cursor-pointer"
           >
             {loading ? (
               <>
@@ -131,7 +131,7 @@ const Login = () => {
 
         <div className="text-center pt-2 text-xs text-slate-500">
           New to Cartex?{' '}
-          <Link to="/register" className="text-amber-400 hover:text-amber-300 font-semibold transition-smooth">
+          <Link to="/register" className="text-indigo-400 hover:text-indigo-300 font-semibold transition-smooth">
             Create an Account
           </Link>
         </div>
@@ -149,4 +149,3 @@ const Login = () => {
 };
 
 export default Login;
-
