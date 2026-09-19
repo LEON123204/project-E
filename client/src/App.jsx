@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
+import { ToastProvider } from './context/ToastContext';
 
 // Components
 import Navbar from './components/Navbar';
@@ -40,9 +41,10 @@ function App() {
     <Router>
       <ScrollToTop />
       <AuthProvider>
-        <LoginPromptProvider>
-          <CartProvider>
-            <WishlistProvider>
+        <ToastProvider>
+          <LoginPromptProvider>
+            <CartProvider>
+              <WishlistProvider>
               <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
                 {/* Top Navigation */}
                 <Navbar />
@@ -126,9 +128,10 @@ function App() {
               {/* Floating AI Chat Assistant */}
               <ChatWidget />
               </div>
-            </WishlistProvider>
-          </CartProvider>
-        </LoginPromptProvider>
+              </WishlistProvider>
+            </CartProvider>
+          </LoginPromptProvider>
+        </ToastProvider>
       </AuthProvider>
     </Router>
   );
