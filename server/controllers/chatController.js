@@ -166,7 +166,10 @@ async function searchProducts(message, conversationHistory) {
     'its', 'your', 'our', 'their', 'his', 'her', 'about', 'find', 'show',
     'tell', 'give', 'looking', 'look', 'does', 'need', 'want', 'like', 'just',
     'under', 'below', 'above', 'between', 'cheaper', 'cheap', 'options',
-    'items', 'products', 'affordable', 'budget', 'price', 'cost',
+    // Both singular and plural forms — 'product' (singular) was the primary leak:
+    // queries like "find product under 1000" would pass 'product' through the keyword
+    // filter and create an $and({name:/product/i}, {price:...}) query returning 0 results.
+    'item', 'items', 'product', 'products', 'affordable', 'budget', 'price', 'cost',
     'anything', 'something', 'buy', 'get', 'see', 'less', 'than', 'more',
     'over', 'within', 'range', 'priced', 'cheapest', 'least',
     'stuff', 'around', 'about', 'roughly', 'near', 'rupees', 'rs', 'for', 'at',
@@ -177,7 +180,9 @@ async function searchProducts(message, conversationHistory) {
     'good', 'nice', 'great', 'top', 'best', 'every', 'each', 'those', 'them',
     'they', 'these', 'make', 'made', 'type', 'kind', 'sort', 'way', 'any',
     'many', 'much', 'most', 'such', 'into', 'onto', 'back', 'both', 'more',
-    'take', 'have', 'help', 'info', 'give'
+    'take', 'have', 'help', 'info', 'give',
+    // Common preamble/filler words in price-queries that must not become keyword filters
+    'some', 'available', 'please', 'store', 'shop', 'using', 'with',
   ]);
 
 
