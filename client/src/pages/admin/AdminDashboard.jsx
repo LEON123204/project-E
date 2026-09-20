@@ -25,7 +25,7 @@ import {
   Package
 } from 'lucide-react';
 
-const COLORS = ['#6366f1', '#a855f7', '#ec4899', '#eab308', '#10b981', '#f97316'];
+const COLORS = ['#6D2932', '#561C24', '#e8a3ae', '#eab308', '#10b981', '#f97316'];
 
 const AdminDashboard = () => {
   const [data, setData] = useState(null);
@@ -79,8 +79,8 @@ const AdminDashboard = () => {
         {/* Header Title */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-900 pb-5">
           <div>
-            <h1 className="text-3xl font-extrabold text-slate-100 flex items-center gap-2">
-              <ShieldCheck size={28} className="text-indigo-400" />
+            <h1 className="text-3xl font-extrabold text-slate-100 flex items-center gap-3">
+              <img src="/cartex-icon.svg" alt="Cartex" className="w-8 h-8 rounded-lg shadow-md shadow-[#6D2932]/20" />
               Admin Control Center
             </h1>
             <p className="text-slate-500 text-sm mt-1">Real-time inventory and financial performance diagnostics.</p>
@@ -139,7 +139,7 @@ const AdminDashboard = () => {
                     labelStyle={{ color: '#94a3b8', fontWeight: 'bold' }}
                     itemStyle={{ color: '#f8fafc' }}
                   />
-                  <Bar dataKey="revenue" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="revenue" fill="#6D2932" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

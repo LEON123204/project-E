@@ -489,7 +489,7 @@ const ChatWidget = () => {
                     exit={{ opacity: 0, x: 15, scale: 0.9 }}
                     className="absolute right-[60px] md:right-[76px] bottom-1 md:bottom-2 bg-slate-900 border border-indigo-500/20 text-slate-100 text-xs font-semibold px-3.5 py-2.5 rounded-xl shadow-2xl shadow-indigo-500/10 whitespace-nowrap z-50 flex items-center gap-2"
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                    <Sparkles className="w-3.5 h-3.5 text-[#e8a3ae]" />
                     <span>Ask Rex anything</span>
                     {/* Tooltip pointer arrow */}
                     <div className="absolute right-[-5px] top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-slate-900 border-t border-r border-indigo-500/20 rotate-45" />
@@ -500,7 +500,7 @@ const ChatWidget = () => {
               {/* Main Collapsed Bubble Button */}
               <button
                 onClick={handleToggle}
-                className="relative flex items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-xl shadow-purple-500/20 text-white cursor-pointer active:scale-95 transition-transform outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-950 w-12 h-12 md:w-[60px] md:h-[60px]"
+                className="relative flex items-center justify-center rounded-full bg-gradient-to-tr from-[#561C24] via-[#6D2932] to-[#e8a3ae] shadow-xl shadow-[#6D2932]/30 text-white cursor-pointer active:scale-95 transition-transform outline-none focus:ring-2 focus:ring-[#e8a3ae] focus:ring-offset-2 focus:ring-offset-slate-950 w-12 h-12 md:w-[60px] md:h-[60px]"
                 aria-label="Open chat assistant"
               >
                 <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-white" />
@@ -510,7 +510,7 @@ const ChatWidget = () => {
                   {[...Array(2)].map((_, i) => (
                     <motion.div
                       key={i}
-                      className="absolute inset-0 rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500"
+                      className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#561C24] via-[#6D2932] to-[#e8a3ae]"
                       initial={{ scale: 1, opacity: 0.4 }}
                       animate={{ scale: 1.6, opacity: 0 }}
                       transition={{
@@ -536,7 +536,7 @@ const ChatWidget = () => {
             className="fixed inset-0 sm:inset-4 md:inset-auto md:bottom-6 md:right-6 md:w-[360px] md:h-[580px] z-50 flex flex-col bg-slate-950 border border-slate-900 shadow-2xl rounded-none sm:rounded-2xl overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white select-none">
+            <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#561C24] via-[#6D2932] to-[#561C24] text-white select-none">
               <div className="flex items-center gap-2.5">
                 <div className="p-1.5 bg-white/10 rounded-lg">
                   <Sparkles className="w-5 h-5 text-white" />
@@ -575,7 +575,7 @@ const ChatWidget = () => {
                   >
                     {/* Rex Avatar */}
                     {!isUser && (
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-[10px] text-white font-bold shrink-0 shadow-md shadow-purple-500/10">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#561C24] via-[#6D2932] to-[#e8a3ae] flex items-center justify-center text-[10px] text-white font-bold shrink-0 shadow-md shadow-[#6D2932]/20">
                         <Sparkles className="w-3.5 h-3.5 text-white" />
                       </div>
                     )}
@@ -633,7 +633,7 @@ const ChatWidget = () => {
                       </div>
                     ) : (
                       /* User bubble — no chips or ATC, plain single div */
-                      <div className="px-3.5 py-2.5 rounded-2xl rounded-tr-none text-sm shadow-sm leading-relaxed whitespace-pre-wrap max-w-[78%] bg-gradient-to-tr from-indigo-500 to-purple-600 text-white border border-indigo-400/10">
+                      <div className="px-3.5 py-2.5 rounded-2xl rounded-tr-none text-sm shadow-sm leading-relaxed whitespace-pre-wrap max-w-[78%] bg-gradient-to-tr from-[#561C24] to-[#6D2932] text-white border border-[#e8a3ae]/20">
                         {renderMessageContent(message.content, isUser)}
                       </div>
                     )}
@@ -649,7 +649,7 @@ const ChatWidget = () => {
                   animate={{ opacity: 1, y: 0 }}
                   className="flex items-start gap-2.5 justify-start"
                 >
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-[10px] text-white font-bold shrink-0 shadow-md shadow-purple-500/10">
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#561C24] via-[#6D2932] to-[#e8a3ae] flex items-center justify-center text-[10px] text-white font-bold shrink-0 shadow-md shadow-[#6D2932]/20">
                     <Sparkles className="w-3.5 h-3.5 text-white" />
                   </div>
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm flex gap-1 items-center">
@@ -679,7 +679,7 @@ const ChatWidget = () => {
               <button
                 type="submit"
                 disabled={!inputValue.trim()}
-                className="p-2.5 bg-gradient-to-tr from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 disabled:opacity-40 disabled:hover:from-indigo-500 disabled:hover:to-purple-500 text-white rounded-xl transition-all duration-200 shadow-md shadow-purple-500/10 flex items-center justify-center shrink-0"
+                className="p-2.5 bg-gradient-to-tr from-[#561C24] to-[#6D2932] hover:from-[#45161c] hover:to-[#561C24] disabled:opacity-40 disabled:hover:from-[#561C24] disabled:hover:to-[#6D2932] text-white rounded-xl transition-all duration-200 shadow-md shadow-[#6D2932]/20 flex items-center justify-center shrink-0"
                 aria-label="Send message"
               >
                 <Send className="w-4 h-4" />

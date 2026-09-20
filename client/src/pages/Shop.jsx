@@ -160,7 +160,7 @@ const Shop = () => {
       {/* Categories Filter */}
       <div className="space-y-2">
         <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Category</label>
-        <div className="flex flex-col gap-1 max-h-48 overflow-y-auto pr-1">
+        <div className="flex flex-col gap-1">
           <button
             onClick={() => setCategory('')}
             className={`text-left text-sm py-2 px-3 rounded-lg transition-smooth cursor-pointer ${

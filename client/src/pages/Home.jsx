@@ -221,8 +221,8 @@ const Home = () => {
   return (
     <div className="bg-slate-950 text-slate-100 min-h-screen pb-16 overflow-x-hidden w-full">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-slate-950 to-slate-950 py-6 sm:py-14 lg:py-28 px-4 sm:px-6 lg:px-8">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.1),transparent_60%)] -z-10 blur-3xl"></div>
+      <section className="relative overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1f0b0e]/30 via-slate-950 to-slate-950 py-6 sm:py-14 lg:py-28 px-4 sm:px-6 lg:px-8">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-[radial-gradient(circle_at_center,_rgba(109,41,50,0.15),transparent_60%)] -z-10 blur-3xl"></div>
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10 lg:gap-12 items-center">
           {/* Left Text Column */}
           <div className="lg:col-span-7 flex flex-col items-start text-left antialiased">
@@ -243,7 +243,7 @@ const Home = () => {
               className="text-[1.6rem] leading-[1.2] xs:text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-100 mb-3 sm:mb-8"
             >
               Elevate Your Daily{" "}
-              <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent inline-block pb-1">
+              <span className="bg-gradient-to-r from-[#e8a3ae] via-[#6D2932] to-[#561C24] bg-clip-text text-transparent inline-block pb-1">
                 Workspace & Lifestyle
               </span>
             </motion.h1>
@@ -540,7 +540,7 @@ const Home = () => {
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div className="space-y-2">
-              <p className="text-4xl sm:text-5xl font-black tracking-tight text-indigo-400">
+              <p className="text-4xl sm:text-5xl font-black tracking-tight text-[#e8a3ae]">
                 <AnimatedCounter target={10000} suffix="+" />
               </p>
               <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -548,7 +548,7 @@ const Home = () => {
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-4xl sm:text-5xl font-black tracking-tight text-purple-400">
+              <p className="text-4xl sm:text-5xl font-black tracking-tight text-[#6D2932]">
                 <AnimatedCounter target={totalProductsCount} suffix="+" />
               </p>
               <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -556,7 +556,7 @@ const Home = () => {
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-4xl sm:text-5xl font-black tracking-tight text-pink-400">
+              <p className="text-4xl sm:text-5xl font-black tracking-tight text-[#e8a3ae]">
                 <AnimatedCounter target={25} suffix="+" />
               </p>
               <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">

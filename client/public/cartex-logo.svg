@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" width="100%" height="100%">
+  <defs>
+    <linearGradient id="logoBoltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e8a3ae"/>
+      <stop offset="45%" stop-color="#6D2932"/>
+      <stop offset="100%" stop-color="#561C24"/>
+    </linearGradient>
+    <linearGradient id="logoTextGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="70%" stop-color="#f5f5f5"/>
+      <stop offset="100%" stop-color="#e8a3ae"/>
+    </linearGradient>
+    <linearGradient id="logoIconBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a1a"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </linearGradient>
+    <filter id="iconGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#6D2932" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Icon Container Squircle -->
+  <g transform="translate(10, 10)">
+    <rect x="0" y="0" width="140" height="140" rx="36" fill="url(#logoIconBg)" stroke="#6D2932" stroke-width="3" stroke-opacity="0.5"/>
+    <!-- Ambient glow behind bolt -->
+    <path d="M 85 22 L 44 76 H 76 L 60 120 L 98 68 H 67 Z" fill="#6D2932" opacity="0.4" filter="url(#iconGlow)"/>
+    <!-- Bolt -->
+    <path d="M 85 22 L 44 76 H 76 L 60 120 L 98 68 H 67 Z" fill="url(#logoBoltGrad)" filter="url(#iconGlow)"/>
+    <!-- Highlight line -->
+    <path d="M 85 22 L 44 76 H 76" fill="none" stroke="#e8a3ae" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+  </g>
+
+  <!-- Brand Wordmark Text -->
+  <text x="175" y="104" font-family="'Outfit', 'Inter', system-ui, -apple-system, sans-serif" font-weight="900" font-size="78" letter-spacing="-2.5" fill="url(#logoTextGrad)">
+    Cartex
+  </text>
+
+  <!-- Accent dot/spark -->
+  <circle cx="438" cy="46" r="6" fill="#e8a3ae"/>
+</svg>

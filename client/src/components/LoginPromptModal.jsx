@@ -49,7 +49,7 @@ const LoginPromptModal = () => {
             className="relative w-full max-w-md p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-10"
           >
             {/* Top decorative gradient bar */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#561C24] via-[#6D2932] to-[#e8a3ae]" />
 
             {/* Close Button */}
             <button
@@ -61,7 +61,7 @@ const LoginPromptModal = () => {
 
             {/* Content */}
             <div className="text-center space-y-4 mt-2">
-              <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+              <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#561C24]/20 via-[#6D2932]/20 to-[#e8a3ae]/20 border border-[#6D2932]/30 flex items-center justify-center text-indigo-400">
                 <LogIn size={22} className="text-indigo-400" />
               </div>
               <div className="space-y-1.5">

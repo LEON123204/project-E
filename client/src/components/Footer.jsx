@@ -12,10 +12,7 @@ const Footer = () => {
           {/* Brand Info */}
           <div className="flex flex-col gap-4">
             <Link to="/" className="flex items-center gap-2 group w-fit">
-              <img src="/favicon.svg" alt="Cartex Logo" className="h-5 w-auto group-hover:scale-110 transition-transform duration-200" />
-              <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Cartex
-              </span>
+              <img src="/cartex-logo.svg" alt="Cartex Logo" className="h-7 sm:h-8 w-auto group-hover:scale-105 transition-transform duration-200" />
             </Link>
             <p className="text-slate-500 leading-relaxed">
               Premium hardware, lifestyle accessories, and apparel for technology enthusiasts and creators.

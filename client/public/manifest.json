@@ -1,0 +1,20 @@
+{
+  "short_name": "Cartex",
+  "name": "Cartex | Premium Tech Workspace & Apparel",
+  "icons": [
+    {
+      "src": "/cartex-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512 192x192 64x64 32x32"
+    },
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0a0a0a",
+  "theme_color": "#6D2932",
+  "display": "standalone"
+}
