@@ -277,7 +277,7 @@ const ProfilePage = () => {
                 {!isAddingAddr && (
                   <button
                     onClick={() => setIsAddingAddr(true)}
-                    className="bg-amber-500 hover:bg-amber-400 text-white font-semibold py-1.5 px-4 rounded-xl text-xs transition-smooth cursor-pointer"
+                    className="bg-indigo-650 hover:bg-indigo-550 text-white font-semibold py-1.5 px-4 rounded-xl text-xs transition-smooth cursor-pointer"
                   >
                     Add Address
                   </button>
@@ -369,7 +369,7 @@ const ProfilePage = () => {
                     </button>
                     <button
                       type="submit"
-                      className="bg-amber-500 hover:bg-amber-400 text-white font-semibold py-2 px-6 rounded-xl text-xs transition-smooth cursor-pointer"
+                      className="bg-indigo-650 hover:bg-indigo-550 text-white font-semibold py-2 px-6 rounded-xl text-xs transition-smooth cursor-pointer"
                     >
                       Save Address
                     </button>
@@ -473,7 +473,7 @@ const ProfilePage = () => {
                   <button
                     type="submit"
                     disabled={profileLoading}
-                    className="bg-amber-500 hover:bg-amber-400 text-white font-semibold py-2 px-6 rounded-xl text-xs transition-smooth cursor-pointer"
+                    className="bg-indigo-650 hover:bg-indigo-550 text-white font-semibold py-2 px-6 rounded-xl text-xs transition-smooth cursor-pointer"
                   >
                     {profileLoading ? 'Saving...' : 'Save Profile Details'}
                   </button>
@@ -535,7 +535,7 @@ const ProfilePage = () => {
                   <button
                     type="submit"
                     disabled={pwLoading}
-                    className="bg-amber-500 hover:bg-amber-400 text-white font-semibold py-2 px-6 rounded-xl text-xs transition-smooth cursor-pointer"
+                    className="bg-indigo-650 hover:bg-indigo-550 text-white font-semibold py-2 px-6 rounded-xl text-xs transition-smooth cursor-pointer"
                   >
                     {pwLoading ? 'Updating...' : 'Update Password'}
                   </button>

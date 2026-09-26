@@ -127,7 +127,7 @@ const OrderTracking = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-amber-500 hover:bg-amber-400 disabled:bg-slate-800 text-white font-bold py-2.5 rounded-xl transition-smooth shadow-lg shadow-amber-500/15 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full bg-indigo-650 hover:bg-indigo-550 disabled:bg-slate-800 text-white font-bold py-2.5 rounded-xl transition-smooth shadow-lg shadow-indigo-600/15 flex items-center justify-center gap-2 cursor-pointer"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

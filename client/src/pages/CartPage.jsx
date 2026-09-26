@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useLoginPrompt } from '../context/LoginPromptContext';
 import { Trash2, Plus, Minus, ArrowRight, ShoppingBag, AlertCircle } from 'lucide-react';
+import CheckoutProgressIndicator from '../components/CheckoutProgressIndicator';
 
 const CartPage = () => {
   const { cartItems, loading, updateQuantity, removeFromCart, cartTotal } = useCart();
@@ -45,6 +46,7 @@ const CartPage = () => {
   return (
     <div className="bg-slate-950 text-slate-100 min-h-screen py-8 sm:py-12 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
       <div className="max-w-7xl mx-auto">
+        <CheckoutProgressIndicator currentStep={1} />
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 mb-6 sm:mb-8">Shopping Cart</h1>
 
         {cartItems.length === 0 ? (

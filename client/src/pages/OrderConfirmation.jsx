@@ -3,6 +3,7 @@ import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
+import CheckoutProgressIndicator from '../components/CheckoutProgressIndicator';
 import { 
   CheckCircle, 
   Truck, 
@@ -170,7 +171,7 @@ const OrderConfirmation = () => {
           <div className="pt-2 flex flex-col gap-2">
             <Link
               to="/shop"
-              className="w-full bg-amber-500 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl text-xs transition-smooth"
+              className="w-full bg-indigo-650 hover:bg-indigo-550 text-white font-bold py-2.5 rounded-xl text-xs transition-smooth"
             >
               Continue Shopping
             </Link>
@@ -182,7 +183,8 @@ const OrderConfirmation = () => {
 
   return (
     <div className="bg-slate-950 text-slate-100 min-h-screen py-8 sm:py-12 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
-      <div className="max-w-4xl mx-auto space-y-8 sm:space-y-12">
+      <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
+        <CheckoutProgressIndicator currentStep={3} isBuyNow={order?.isBuyNow} />
         
         {/* Celebration & Confirmation Card */}
         <div className="bg-slate-900 border border-slate-850 p-6 sm:p-10 rounded-3xl shadow-2xl text-center space-y-6 relative overflow-hidden">
@@ -225,7 +227,7 @@ const OrderConfirmation = () => {
             {/* Prominent Track Your Order Button */}
             <button
               onClick={handleTrackOrder}
-              className="w-full sm:w-auto bg-amber-500 hover:bg-amber-400 text-white font-bold py-3 px-6 rounded-xl transition-smooth shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2.5 text-xs sm:text-sm cursor-pointer group"
+              className="w-full sm:w-auto bg-indigo-650 hover:bg-indigo-550 text-white font-bold py-3 px-6 rounded-xl transition-smooth shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2.5 text-xs sm:text-sm cursor-pointer group"
             >
               <Truck size={18} className="group-hover:translate-x-0.5 transition-transform" />
               <span>Track Your Order</span>
@@ -401,7 +403,7 @@ const OrderConfirmation = () => {
                         className={`w-full py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-smooth cursor-pointer ${
                           isAdded
                             ? 'bg-emerald-600 text-white'
-                            : 'bg-amber-500/15 border border-amber-500/30 hover:bg-amber-500 text-amber-300 hover:text-white'
+                            : 'bg-indigo-600/15 border border-indigo-500/30 hover:bg-indigo-600 text-indigo-300 hover:text-white'
                         }`}
                       >
                         {isAdded ? (

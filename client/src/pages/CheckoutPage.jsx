@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import api from '../services/api';
+import CheckoutProgressIndicator from '../components/CheckoutProgressIndicator';
 
 // Stripe imports
 import { loadStripe } from '@stripe/stripe-js';
@@ -112,7 +113,7 @@ const StripeCheckoutForm = ({ shippingAddress, guestInfo, onPaymentSuccess, tota
       <button
         type="submit"
         disabled={!stripe || loading}
-        className="w-full bg-amber-500 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold py-3 rounded-xl transition-smooth shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer"
+        className="w-full bg-indigo-650 hover:bg-indigo-550 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold py-3 rounded-xl transition-smooth shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 cursor-pointer"
       >
         {loading ? (
           <>
@@ -185,7 +186,7 @@ const MockCheckoutForm = ({ shippingAddress, guestInfo, onPaymentSuccess, totalA
       <button
         onClick={handleMockCheckout}
         disabled={loading}
-        className="w-full bg-amber-500 hover:bg-amber-400 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold py-3 rounded-xl transition-smooth shadow-lg shadow-amber-500/10 flex items-center justify-center gap-2 cursor-pointer"
+        className="w-full bg-indigo-650 hover:bg-indigo-550 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold py-3 rounded-xl transition-smooth shadow-lg shadow-indigo-600/10 flex items-center justify-center gap-2 cursor-pointer"
       >
         {loading ? (
           <>
@@ -418,6 +419,7 @@ const CheckoutPage = () => {
   return (
     <div className="bg-slate-950 text-slate-100 min-h-screen py-8 sm:py-12 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
       <div className="max-w-7xl mx-auto">
+        <CheckoutProgressIndicator currentStep={2} isBuyNow={isBuyNow} />
         <div className="flex items-center justify-between gap-4 mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100">Checkout</h1>
           {isBuyNow && (
@@ -436,7 +438,7 @@ const CheckoutPage = () => {
             </div>
             <button
               onClick={() => navigate('/login', { state: { from: { pathname: '/checkout' } } })}
-              className="shrink-0 bg-amber-500 hover:bg-amber-400 text-white font-semibold py-2 px-5 rounded-xl text-xs transition-smooth cursor-pointer shadow-lg shadow-amber-500/10"
+              className="shrink-0 bg-indigo-650 hover:bg-indigo-550 text-white font-semibold py-2 px-5 rounded-xl text-xs transition-smooth cursor-pointer shadow-lg shadow-indigo-600/10"
             >
               Log In
             </button>
@@ -589,7 +591,7 @@ const CheckoutPage = () => {
                             showToast('Please fill out all required details before proceeding.', 'info');
                           }
                         }}
-                        className="w-full sm:w-auto bg-amber-500 hover:bg-amber-500 text-white font-semibold min-h-[44px] px-6 rounded-xl text-sm transition-smooth cursor-pointer"
+                        className="w-full sm:w-auto bg-indigo-650 hover:bg-indigo-550 text-white font-semibold min-h-[44px] px-6 rounded-xl text-sm transition-smooth cursor-pointer shadow-lg shadow-indigo-600/10"
                       >
                         Save & Continue to Payment
                       </button>
@@ -682,7 +684,7 @@ const CheckoutPage = () => {
                     )}
                     <button
                       type="submit"
-                      className="bg-amber-500 hover:bg-amber-400 text-white font-semibold py-2 px-6 rounded-xl text-xs transition-smooth"
+                      className="bg-indigo-650 hover:bg-indigo-550 text-white font-semibold py-2 px-6 rounded-xl text-xs transition-smooth shadow-md shadow-indigo-600/10"
                     >
                       Save Address
                     </button>

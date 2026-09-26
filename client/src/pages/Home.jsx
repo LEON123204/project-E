@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import api from "../services/api";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
-import { Heart, ShoppingCart, Star, ArrowRight, Truck } from "lucide-react";
+import { Heart, ShoppingCart, Star, ArrowRight, Truck, ShieldCheck, Percent, PackageCheck } from "lucide-react";
 import { ProductCardSkeleton } from "../components/SkeletonLoader";
 import useScrollReveal from "../hooks/useScrollReveal";
 import { motion } from "framer-motion";
@@ -457,6 +457,59 @@ const Home = () => {
                 </motion.div>
               )}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Verified Trust Badges Strip */}
+      <section className="border-y border-slate-850/80 bg-slate-900/60 backdrop-blur-sm py-6 sm:py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            
+            {/* Badge 1: Free Shipping */}
+            <div className="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl bg-slate-950/50 border border-slate-850/70 hover:border-[#6D2932]/40 transition-smooth">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#6D2932]/20 border border-[#6D2932]/40 text-[#e8a3ae] flex items-center justify-center shrink-0 shadow-sm">
+                <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-[#e8a3ae]" />
+              </div>
+              <div className="space-y-0.5 min-w-0">
+                <h4 className="text-xs sm:text-sm font-bold text-slate-100 truncate">Free Shipping</h4>
+                <p className="text-[10px] sm:text-xs text-slate-400 font-medium truncate">On orders over ₹1,000</p>
+              </div>
+            </div>
+
+            {/* Badge 2: Secure Payments */}
+            <div className="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl bg-slate-950/50 border border-slate-850/70 hover:border-[#6D2932]/40 transition-smooth">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#6D2932]/20 border border-[#6D2932]/40 text-[#e8a3ae] flex items-center justify-center shrink-0 shadow-sm">
+                <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#e8a3ae]" />
+              </div>
+              <div className="space-y-0.5 min-w-0">
+                <h4 className="text-xs sm:text-sm font-bold text-slate-100 truncate">Secure Payments</h4>
+                <p className="text-[10px] sm:text-xs text-slate-400 font-medium truncate">Stripe & Cash on Delivery</p>
+              </div>
+            </div>
+
+            {/* Badge 3: 5% Prepay Savings */}
+            <div className="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl bg-slate-950/50 border border-slate-850/70 hover:border-[#6D2932]/40 transition-smooth">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#6D2932]/20 border border-[#6D2932]/40 text-[#e8a3ae] flex items-center justify-center shrink-0 shadow-sm">
+                <Percent className="w-4 h-4 sm:w-5 sm:h-5 text-[#e8a3ae]" />
+              </div>
+              <div className="space-y-0.5 min-w-0">
+                <h4 className="text-xs sm:text-sm font-bold text-slate-100 truncate">5% Prepay Discount</h4>
+                <p className="text-[10px] sm:text-xs text-slate-400 font-medium truncate">Instant savings online</p>
+              </div>
+            </div>
+
+            {/* Badge 4: Live Order Tracking */}
+            <div className="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl bg-slate-950/50 border border-slate-850/70 hover:border-[#6D2932]/40 transition-smooth">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#6D2932]/20 border border-[#6D2932]/40 text-[#e8a3ae] flex items-center justify-center shrink-0 shadow-sm">
+                <PackageCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#e8a3ae]" />
+              </div>
+              <div className="space-y-0.5 min-w-0">
+                <h4 className="text-xs sm:text-sm font-bold text-slate-100 truncate">Real-Time Tracking</h4>
+                <p className="text-[10px] sm:text-xs text-slate-400 font-medium truncate">Track status by order ID</p>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
