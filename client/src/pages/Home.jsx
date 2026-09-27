@@ -7,6 +7,7 @@ import { Heart, ShoppingCart, Star, ArrowRight, Truck, ShieldCheck, Percent, Pac
 import { ProductCardSkeleton } from "../components/SkeletonLoader";
 import useScrollReveal from "../hooks/useScrollReveal";
 import { motion } from "framer-motion";
+import TrendingCarousel from "../components/TrendingCarousel";
 
 // Custom Count-Up Counter component using IntersectionObserver
 const AnimatedCounter = ({ target, duration = 2000, suffix = "" }) => {
@@ -513,6 +514,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Trending / Featured Products Carousel */}
+      <TrendingCarousel />
 
       {/* Featured Categories */}
       <section

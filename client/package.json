@@ -13,6 +13,8 @@
     "@stripe/react-stripe-js": "^6.7.0",
     "@stripe/stripe-js": "^9.9.0",
     "axios": "^1.18.1",
+    "embla-carousel-react": "^8.6.0",
+    "embla-carousel-wheel-gestures": "^8.1.0",
     "framer-motion": "^12.43.0",
     "lucide-react": "^1.24.0",
     "react": "^19.2.7",
