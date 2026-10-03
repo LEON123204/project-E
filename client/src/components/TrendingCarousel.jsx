@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import useEmblaCarousel from "embla-carousel-react";
 import { WheelGesturesPlugin } from "embla-carousel-wheel-gestures";
 import { ChevronLeft, ChevronRight, Heart, ShoppingCart, Star, Sparkles } from "lucide-react";
@@ -17,6 +17,12 @@ const TrendingCarousel = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [scrollSnaps, setScrollSnaps] = useState([]);
   const [addingToCartId, setAddingToCartId] = useState(null);
+
+  // Track whether the user is currently dragging the carousel.
+  // emblaApi.clickAllowed() was REMOVED in Embla v8 — calling it returns
+  // undefined (falsy), so the old guard blocked every single click.
+  // Instead we listen to Embla's own pointer events to set this flag.
+  const isDragging = useRef(false);
 
   // Configure Embla Carousel with WheelGesturesPlugin for laptop trackpad horizontal swipe
   const [emblaRef, emblaApi] = useEmblaCarousel(
@@ -42,28 +48,66 @@ const TrendingCarousel = () => {
     emblaApi.on("select", onSelect);
     emblaApi.on("reInit", onSelect);
 
+    // Track drag state using Embla v8 pointer events so we can
+    // distinguish a tap (navigate) from a drag (don't navigate).
+    const onPointerDown = () => { isDragging.current = false; };
+    const onPointerUp   = () => { /* flag stays as set by pointermove */ };
+
+    emblaApi.on("pointerDown", onPointerDown);
+    emblaApi.on("pointerUp", onPointerUp);
+
     return () => {
       emblaApi.off("select", onSelect);
       emblaApi.off("reInit", onSelect);
+      emblaApi.off("pointerDown", onPointerDown);
+      emblaApi.off("pointerUp", onPointerUp);
     };
   }, [emblaApi, onSelect]);
 
-  // Trackpad two-finger horizontal swipe wheel listener
+  // Trackpad two-finger horizontal swipe wheel listener + native drag detection.
+  // We use native pointerdown/pointermove/pointerup on the viewport to set
+  // isDragging.current — Embla v8 no longer exposes clickAllowed() publicly.
   useEffect(() => {
     if (!emblaApi) return;
     const viewport = emblaRef.current;
     if (!viewport) return;
 
+    // --- Drag detection via native pointer events ---
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+    const DRAG_THRESHOLD_PX = 5; // pixels of movement = drag intent
+
+    const onPtrDown = (e) => {
+      isDragging.current = false;
+      pointerStartX = e.clientX;
+      pointerStartY = e.clientY;
+    };
+    const onPtrMove = (e) => {
+      const dx = Math.abs(e.clientX - pointerStartX);
+      const dy = Math.abs(e.clientY - pointerStartY);
+      if (dx > DRAG_THRESHOLD_PX || dy > DRAG_THRESHOLD_PX) {
+        isDragging.current = true;
+      }
+    };
+    const onPtrUp = () => {
+      // Reset after a short delay so the click handler fires first.
+      setTimeout(() => { isDragging.current = false; }, 0);
+    };
+
+    viewport.addEventListener("pointerdown", onPtrDown);
+    viewport.addEventListener("pointermove", onPtrMove);
+    viewport.addEventListener("pointerup", onPtrUp);
+    viewport.addEventListener("pointercancel", onPtrUp);
+
+    // --- Trackpad two-finger horizontal swipe ---
     let accumulatedDeltaX = 0;
     let scrollTimeout = null;
 
     const handleWheel = (e) => {
-      // Check horizontal scroll intent (two-finger horizontal swipe deltaX or Shift + deltaY)
       const isHorizontalScroll = Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.shiftKey;
       const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.shiftKey ? e.deltaY : 0;
 
       if (isHorizontalScroll && Math.abs(delta) > 4) {
-        // Prevent default browser back/forward swipe history navigation
         e.preventDefault();
         accumulatedDeltaX += delta;
 
@@ -84,6 +128,10 @@ const TrendingCarousel = () => {
     viewport.addEventListener("wheel", handleWheel, { passive: false });
 
     return () => {
+      viewport.removeEventListener("pointerdown", onPtrDown);
+      viewport.removeEventListener("pointermove", onPtrMove);
+      viewport.removeEventListener("pointerup", onPtrUp);
+      viewport.removeEventListener("pointercancel", onPtrUp);
       viewport.removeEventListener("wheel", handleWheel);
       if (scrollTimeout) clearTimeout(scrollTimeout);
     };
@@ -115,26 +163,21 @@ const TrendingCarousel = () => {
     fetchFeaturedProducts();
   }, []);
 
-  // Card click handler: distinguishes between drag gesture and tap click
-  const handleCardClick = (e, index, productId) => {
-    // If user dragged the carousel, prevent click navigation
-    if (emblaApi && !emblaApi.clickAllowed()) {
-      e.preventDefault();
-      e.stopPropagation();
+  // Card click handler — Embla v8 removed clickAllowed(), so we track
+  // drag state ourselves via the isDragging ref set in pointerDown/move/up
+  // listeners on the viewport element.
+  const handleCardClick = (e, productId) => {
+    if (isDragging.current) {
+      isDragging.current = false;
       return;
     }
-
-    if (index !== selectedIndex) {
-      scrollTo(index);
-    } else {
-      navigate(`/product/${productId}`);
-    }
+    navigate(`/product/${productId}`);
   };
 
   const handleAddToCart = async (e, product) => {
     e.stopPropagation();
     e.preventDefault();
-    if (emblaApi && !emblaApi.clickAllowed()) return;
+    if (isDragging.current) return;
     setAddingToCartId(product._id);
     const res = await addToCart(product, 1);
     setAddingToCartId(null);
@@ -146,7 +189,7 @@ const TrendingCarousel = () => {
   const handleToggleWishlist = (e, productId) => {
     e.stopPropagation();
     e.preventDefault();
-    if (emblaApi && !emblaApi.clickAllowed()) return;
+    if (isDragging.current) return;
     toggleWishlist(productId);
   };
 
@@ -292,15 +335,15 @@ const TrendingCarousel = () => {
               return (
                 <div
                   key={product._id}
-                  onClick={(e) => handleCardClick(e, index, product._id)}
+                  onClick={(e) => handleCardClick(e, product._id)}
                   className="flex-[0_0_260px] sm:flex-[0_0_290px] md:flex-[0_0_320px] pl-2 sm:pl-3 shrink-0 min-w-0"
                 >
                   {/* Inner Card */}
                   <div
-                    className={`group relative rounded-3xl overflow-hidden bg-slate-900/90 border transition-all duration-300 ease-out transform flex flex-col justify-between h-[360px] sm:h-[410px] ${
+                    className={`group relative rounded-3xl overflow-hidden bg-slate-900/90 border transition-all duration-300 ease-out transform flex flex-col justify-between h-[360px] sm:h-[410px] cursor-pointer ${
                       isCenter
                         ? "scale-105 sm:scale-108 z-20 opacity-100 -translate-y-2 sm:-translate-y-3 border-[#6D2932] shadow-[0_20px_50px_rgba(109,41,50,0.35)] ring-1 ring-[#e8a3ae]/30"
-                        : "scale-92 sm:scale-95 z-10 opacity-60 hover:opacity-85 border-slate-800 shadow-xl cursor-pointer"
+                        : "scale-92 sm:scale-95 z-10 opacity-60 hover:opacity-85 border-slate-800 shadow-xl"
                     }`}
                   >
                     {/* Card Top Header: Badge & Wishlist */}

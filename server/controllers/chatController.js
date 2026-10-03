@@ -49,6 +49,65 @@ const lowerIncludes = (text, keywords) =>
   keywords.some(kw => text.toLowerCase().includes(kw));
 
 // ---------------------------------------------------------------------------
+// Product-vocabulary allowlist cache
+// ---------------------------------------------------------------------------
+//
+// WHY: The old STOP_WORDS blocklist required manually listing every common
+// English word that should not be treated as a product keyword. It broke
+// repeatedly whenever a new filler word appeared (e.g. "give", "purchase",
+// "looking"). The root issue is that we were using a BLOCKLIST ("exclude these
+// known-bad words") when an ALLOWLIST ("only include words that actually exist
+// in product data") is far more robust.
+//
+// HOW: On first use we fetch every product name + description + category name
+// from MongoDB, tokenize them, and store the resulting vocabulary set. A word
+// in the user's query only becomes a keyword filter if it appears in this set.
+// Common English words like "give", "have", "what", "purchase" never appear in
+// product data, so they're automatically excluded — no manual list needed.
+
+let _productVocab = null;       // Set<string> — populated lazily on first use
+let _vocabBuiltAt  = 0;         // ms timestamp — refreshed every 10 minutes
+const VOCAB_TTL_MS = 10 * 60 * 1000;
+
+/**
+ * Returns a Set of lowercase word-tokens extracted from every product name,
+ * description, and category name in the database. Result is cached in memory
+ * for VOCAB_TTL_MS milliseconds so it doesn't hit the DB on every message.
+ */
+async function getProductVocab() {
+  const now = Date.now();
+  if (_productVocab && (now - _vocabBuiltAt) < VOCAB_TTL_MS) {
+    return _productVocab;
+  }
+
+  const [products, categories] = await Promise.all([
+    Product.find().select('name description').lean(),
+    Category.find().select('name').lean()
+  ]);
+
+  const vocab = new Set();
+  const addWords = (text) => {
+    if (!text) return;
+    text.toLowerCase()
+      .replace(/[^a-z0-9 ]/g, ' ')
+      .split(/\s+/)
+      .forEach(w => { if (w.length >= 3) vocab.add(w); });
+  };
+
+  for (const p of products) {
+    addWords(p.name);
+    addWords(p.description);
+  }
+  for (const c of categories) {
+    addWords(c.name);
+  }
+
+  _productVocab = vocab;
+  _vocabBuiltAt  = now;
+  return vocab;
+}
+
+// ---------------------------------------------------------------------------
 // RAG helpers
 // ---------------------------------------------------------------------------
 
@@ -159,31 +218,26 @@ function parsePriceConstraints(message) {
  *   is used alone so purely price-based queries still return results.
  */
 async function searchProducts(message, conversationHistory) {
+  // Lightweight pre-filter: pure noise / price-related words that are
+  // guaranteed never to be product keywords. This is intentionally SMALL —
+  // the heavy lifting of "is this word a real product term?" is now done by
+  // the product-vocabulary allowlist (getProductVocab), which is DB-backed
+  // and therefore never needs manual updates when new query phrasings appear.
   const STOP_WORDS = new Set([
-    'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'any',
-    'has', 'was', 'had', 'will', 'would', 'could', 'should', 'that', 'this',
-    'with', 'from', 'have', 'been', 'what', 'some', 'which', 'when', 'how',
-    'its', 'your', 'our', 'their', 'his', 'her', 'about', 'find', 'show',
-    'tell', 'give', 'looking', 'look', 'does', 'need', 'want', 'like', 'just',
-    'under', 'below', 'above', 'between', 'cheaper', 'cheap', 'options',
-    // Both singular and plural forms — 'product' (singular) was the primary leak:
-    // queries like "find product under 1000" would pass 'product' through the keyword
-    // filter and create an $and({name:/product/i}, {price:...}) query returning 0 results.
-    'item', 'items', 'product', 'products', 'affordable', 'budget', 'price', 'cost',
-    'anything', 'something', 'buy', 'get', 'see', 'less', 'than', 'more',
-    'over', 'within', 'range', 'priced', 'cheapest', 'least',
-    'stuff', 'around', 'about', 'roughly', 'near', 'rupees', 'rs', 'for', 'at',
-    'me', 'i', 'want',
-    // Conversational / UI meta words — not product keywords
-    'link', 'links', 'list', 'please', 'send', 'share', 'provide',
-    'here', 'there', 'also', 'too', 'now', 'only', 'just', 'even', 'very',
-    'good', 'nice', 'great', 'top', 'best', 'every', 'each', 'those', 'them',
-    'they', 'these', 'make', 'made', 'type', 'kind', 'sort', 'way', 'any',
-    'many', 'much', 'most', 'such', 'into', 'onto', 'back', 'both', 'more',
-    'take', 'have', 'help', 'info', 'give',
-    // Common preamble/filler words in price-queries that must not become keyword filters
-    'some', 'available', 'please', 'store', 'shop', 'using', 'with',
+    // Price/quantity words (handled by parsePriceConstraints instead)
+    'under', 'below', 'above', 'between', 'over', 'within', 'around', 'about',
+    'roughly', 'near', 'less', 'than', 'more', 'least', 'most', 'cheapest',
+    'cheaper', 'cheap', 'affordable', 'budget', 'priced', 'price', 'cost',
+    'rupees', 'rs', 'for', 'at',
+    // Generic product/item words (too broad to be useful as regex filters)
+    'product', 'products', 'item', 'items', 'stuff', 'things', 'options',
+    'range', 'anything', 'something',
+    // Pure stop-words / articles / pronouns (guaranteed non-product)
+    'the', 'and', 'but', 'not', 'you', 'all', 'any', 'has', 'was', 'had',
+    'its', 'our', 'their', 'his', 'her', 'some', 'into', 'onto', 'back',
+    'both', 'many', 'much', 'such', 'each', 'those', 'them', 'they', 'these',
   ]);
+
 
 
   // Use [''\u2019] to match both straight (') and curly/smart (\u2019) apostrophes
@@ -216,10 +270,19 @@ async function searchProducts(message, conversationHistory) {
         }
       }
 
+      // Apply the same vocab-allowlist used by the main keyword extraction:
+      // only keep terms that actually appear in product/category data.
+      const vocab = await getProductVocab();
       recentTerms = recentTexts
         .replace(/[^a-z0-9 ]/g, ' ')
         .split(/\s+/)
-        .filter(w => w.length >= 3 && !STOP_WORDS.has(w) && !/^\d+$/.test(w) && w !== 'stock' && w !== 'available' && w !== 'sale' && w !== 'deal' && w !== 'discount');
+        .filter(w =>
+          w.length >= 3 &&
+          !STOP_WORDS.has(w) &&
+          !/^\d+$/.test(w) &&
+          w !== 'stock' && w !== 'available' && w !== 'sale' && w !== 'deal' && w !== 'discount' &&
+          vocab.has(w)
+        );
     }
     return { matchedCategoryIds, recentTerms };
   };
@@ -561,11 +624,24 @@ async function searchProducts(message, conversationHistory) {
   const priceFilter = parsePriceConstraints(message);
 
   // --- Keyword terms (text regex filter) ---
+  // PRIMARY GATE: only keep a word if it actually appears in product/category
+  // data in the database (allowlist approach). This naturally excludes all
+  // common English filler words ("give", "have", "what", "purchase", "looking",
+  // etc.) without needing them explicitly listed anywhere. STOP_WORDS above
+  // handles the remaining obvious noise (price-related words, generic nouns)
+  // that DO appear in product descriptions but should never be keyword filters.
+  const productVocab = await getProductVocab();
+
   const terms = message
     .toLowerCase()
     .replace(/[^a-z0-9 ]/g, ' ')
     .split(/\s+/)
-    .filter(w => w.length >= 3 && !STOP_WORDS.has(w) && !/^\d+$/.test(w))
+    .filter(w =>
+      w.length >= 3 &&
+      !STOP_WORDS.has(w) &&
+      !/^\d+$/.test(w) &&
+      productVocab.has(w)   // ← allowlist: word must exist in real product data
+    )
     .slice(0, 4);
 
   // Build the final MongoDB query
