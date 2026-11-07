@@ -52,6 +52,10 @@ const registerUser = async (req, res, next) => {
           name: user.name,
           email: user.email,
           role: user.role,
+          sellerApplicationStatus: user.sellerApplicationStatus,
+          businessName: user.businessName,
+          businessDescription: user.businessDescription,
+          contactPhone: user.contactPhone,
           addresses: user.addresses
         }
       });
@@ -89,6 +93,10 @@ const loginUser = async (req, res, next) => {
           name: user.name,
           email: user.email,
           role: user.role,
+          sellerApplicationStatus: user.sellerApplicationStatus,
+          businessName: user.businessName,
+          businessDescription: user.businessDescription,
+          contactPhone: user.contactPhone,
           addresses: user.addresses
         }
       });
@@ -206,6 +214,10 @@ const updateUserProfile = async (req, res, next) => {
           name: updatedUser.name,
           email: updatedUser.email,
           role: updatedUser.role,
+          sellerApplicationStatus: updatedUser.sellerApplicationStatus,
+          businessName: updatedUser.businessName,
+          businessDescription: updatedUser.businessDescription,
+          contactPhone: updatedUser.contactPhone,
           addresses: updatedUser.addresses
         }
       });

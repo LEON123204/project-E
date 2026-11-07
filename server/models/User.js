@@ -23,8 +23,28 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: {
     type: String,
-    enum: ['customer', 'admin'],
+    enum: ['customer', 'seller', 'admin'],
     default: 'customer'
+  },
+  sellerApplicationStatus: {
+    type: String,
+    enum: [null, 'none', 'pending', 'approved', 'rejected'],
+    default: 'none'
+  },
+  businessName: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  businessDescription: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  contactPhone: {
+    type: String,
+    trim: true,
+    default: ''
   },
   addresses: [addressSchema],
   refreshToken: { type: String, default: null }

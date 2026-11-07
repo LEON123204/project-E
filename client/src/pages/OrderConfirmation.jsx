@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import CheckoutProgressIndicator from '../components/CheckoutProgressIndicator';
@@ -23,6 +24,7 @@ const OrderConfirmation = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { addToCart } = useCart();
   const { showToast } = useToast();
 
@@ -126,6 +128,8 @@ const OrderConfirmation = () => {
   }, [order]);
 
   const handleAddToCart = async (product) => {
+    const isOwnListing = Boolean(product.isOwnListing || (user && product.sellerId && (product.sellerId._id || product.sellerId).toString() === user._id.toString()));
+    if (isOwnListing) return;
     const res = await addToCart(product, 1);
     if (res.success) {
       showToast(`Added ${product.name} to cart!`, 'success');
@@ -398,26 +402,32 @@ const OrderConfirmation = () => {
 
                     {/* Add to Cart Button */}
                     <div className="p-4 pt-0">
-                      <button
-                        onClick={() => handleAddToCart(product)}
-                        className={`w-full py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-smooth cursor-pointer ${
-                          isAdded
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-indigo-600/15 border border-indigo-500/30 hover:bg-indigo-600 text-indigo-300 hover:text-white'
-                        }`}
-                      >
-                        {isAdded ? (
-                          <>
-                            <Check size={14} />
-                            <span>Added!</span>
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingCart size={14} />
-                            <span>Add to Cart</span>
-                          </>
-                        )}
-                      </button>
+                      {product.isOwnListing || (user && product.sellerId && (product.sellerId._id || product.sellerId).toString() === user._id.toString()) ? (
+                        <span className="w-full py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center text-indigo-400 bg-indigo-950/60 border border-indigo-500/30">
+                          Your listing
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleAddToCart(product)}
+                          className={`w-full py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-smooth cursor-pointer ${
+                            isAdded
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-indigo-600/15 border border-indigo-500/30 hover:bg-indigo-600 text-indigo-300 hover:text-white'
+                          }`}
+                        >
+                          {isAdded ? (
+                            <>
+                              <Check size={14} />
+                              <span>Added!</span>
+                            </>
+                          ) : (
+                            <>
+                              <ShoppingCart size={14} />
+                              <span>Add to Cart</span>
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                 );

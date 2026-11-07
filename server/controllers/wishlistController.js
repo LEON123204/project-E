@@ -19,12 +19,20 @@ const getWishlist = async (req, res, next) => {
     
     const populatedWishlist = await wishlist.populate({
       path: 'products',
-      select: 'name price images stock ratingsAvg reviewsCount'
+      match: { status: { $in: ['approved', null] } },
+      select: 'name price images stock ratingsAvg reviewsCount sellerId'
+    });
+
+    const validProducts = (populatedWishlist.products || []).filter(Boolean).map(prod => {
+      const p = prod.toObject ? prod.toObject() : prod;
+      const sellerIdStr = p.sellerId ? (p.sellerId._id || p.sellerId).toString() : null;
+      p.isOwnListing = Boolean(req.user && sellerIdStr && sellerIdStr === req.user._id.toString());
+      return p;
     });
 
     res.json({
       success: true,
-      wishlist: populatedWishlist.products
+      wishlist: validProducts
     });
   } catch (error) {
     next(error);
@@ -41,7 +49,7 @@ const toggleWishlist = async (req, res, next) => {
 
     // Verify product exists
     const product = await Product.findById(productId);
-    if (!product) {
+    if (!product || (product.status && product.status !== 'approved')) {
       res.status(404);
       throw new Error('Product not found');
     }

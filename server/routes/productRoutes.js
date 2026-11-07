@@ -8,13 +8,13 @@ const {
   deleteProduct
 } = require('../controllers/productController');
 const { createProductReview } = require('../controllers/reviewController');
-const { protect, admin } = require('../middleware/auth');
+const { protect, admin, optionalProtect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const { reviewValidation } = require('../middleware/validation');
 
 // Public Product routes
-router.get('/', getProducts);
-router.get('/:id', getProductById);
+router.get('/', optionalProtect, getProducts);
+router.get('/:id', optionalProtect, getProductById);
 
 // Admin-only Product CRUD routes (with image uploads)
 router.post('/', protect, admin, upload.array('images', 5), createProduct);

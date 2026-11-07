@@ -20,7 +20,7 @@ const getProducts = async (req, res, next) => {
       sort
     } = req.query;
 
-    const query = {};
+    const query = { status: { $in: ['approved', null] } }; // Only show publicly approved products (or legacy products without status)
 
     // Debounced text search (matches name/description case-insensitively)
     if (search) {
@@ -73,16 +73,28 @@ const getProducts = async (req, res, next) => {
 
     const products = await Product.find(query)
       .populate('category', 'name slug')
+      .populate('sellerId', 'name businessName')
       .sort(sortCondition)
       .skip(skip)
       .limit(Number(limit));
+
+    const formattedProducts = products.map(prod => {
+      const p = prod.toObject ? prod.toObject() : prod;
+      if (req.user) {
+        const sellerIdStr = p.sellerId ? (p.sellerId._id || p.sellerId).toString() : null;
+        p.isOwnListing = Boolean(sellerIdStr && sellerIdStr === req.user._id.toString());
+      } else {
+        p.isOwnListing = false;
+      }
+      return p;
+    });
 
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / Number(limit));
 
     res.json({
       success: true,
-      products,
+      products: formattedProducts,
       page: Number(page),
       totalPages,
       totalProducts
@@ -97,10 +109,23 @@ const getProducts = async (req, res, next) => {
 // @access  Public
 const getProductById = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id).populate('category', 'name slug');
+    const product = await Product.findById(req.params.id)
+      .populate('category', 'name slug')
+      .populate('sellerId', 'name businessName');
     if (!product) {
       res.status(404);
       throw new Error('Product not found');
+    }
+
+    // Hide pending/rejected products from guests/regular customers
+    // Only the owning seller and admins are allowed to view them
+    if (product.status && product.status !== 'approved') {
+      const isOwnerSeller = req.user && product.sellerId && (product.sellerId._id || product.sellerId).toString() === req.user._id.toString();
+      const isAdmin = req.user && req.user.role === 'admin';
+      if (!isOwnerSeller && !isAdmin) {
+        res.status(404);
+        throw new Error('Product not found');
+      }
     }
 
     // Find and populate reviews
@@ -108,9 +133,13 @@ const getProductById = async (req, res, next) => {
       .populate('user', 'name')
       .sort({ createdAt: -1 });
 
+    const isOwnerSeller = Boolean(req.user && product.sellerId && (product.sellerId._id || product.sellerId).toString() === req.user._id.toString());
+    const productData = product.toObject ? product.toObject() : product;
+    productData.isOwnListing = isOwnerSeller;
+
     res.json({
       success: true,
-      product,
+      product: productData,
       reviews
     });
   } catch (error) {
@@ -144,7 +173,10 @@ const createProduct = async (req, res, next) => {
       price: Number(price),
       category,
       stock: Number(stock),
-      images
+      images,
+      discountPercent: req.body.discountPercent ? Number(req.body.discountPercent) : 0,
+      status: 'approved' // Admin-created products go live immediately
+      // sellerId intentionally not set — admin products have no seller
     });
 
     res.status(201).json({
@@ -206,6 +238,10 @@ const updateProduct = async (req, res, next) => {
     product.description = description || product.description;
     product.price = price !== undefined ? Number(price) : product.price;
     product.stock = stock !== undefined ? Number(stock) : product.stock;
+    if (req.body.discountPercent !== undefined) {
+      product.discountPercent = Number(req.body.discountPercent);
+    }
+    // Note: sellerId and status are intentionally NOT updated here (admin route)
 
     const updatedProduct = await product.save();
     res.json({

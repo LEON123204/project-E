@@ -54,6 +54,7 @@ const wishlistRoutes = require('./routes/wishlistRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const sellerRoutes = require('./routes/sellerRoutes');
 
 // Mount Routes
 app.use('/api/v1/auth', authRoutes);
@@ -64,6 +65,7 @@ app.use('/api/v1/wishlist', wishlistRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/chat', chatRoutes);
+app.use('/api/v1/seller', sellerRoutes);
 
 // Root Endpoint for checking API health
 app.get('/api/v1', (req, res) => {

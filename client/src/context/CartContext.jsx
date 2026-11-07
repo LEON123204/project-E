@@ -50,6 +50,12 @@ export const CartProvider = ({ children }) => {
   }, [cartItems, isAuthenticated, loading]);
 
   const addToCart = async (product, quantity = 1) => {
+    // If the logged-in user is the owning seller, reject immediately and never call the API
+    const sellerId = product.sellerId?._id || product.sellerId;
+    if (product.isOwnListing || (user && sellerId && sellerId.toString() === user._id.toString())) {
+      return { success: false, message: 'You cannot purchase your own product' };
+    }
+
     if (isAuthenticated) {
       try {
         const response = await api.post('/cart', {

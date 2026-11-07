@@ -4,6 +4,7 @@ const Product = require('../models/Product');
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Category = require('../models/Category');
+const mongoose = require('mongoose');
 
 // ---------------------------------------------------------------------------
 // Keyword heuristics for RAG routing
@@ -81,7 +82,7 @@ async function getProductVocab() {
   }
 
   const [products, categories] = await Promise.all([
-    Product.find().select('name description').lean(),
+    Product.find({ status: { $in: ['approved', null] } }).select('name description').lean(),
     Category.find().select('name').lean()
   ]);
 
@@ -287,9 +288,11 @@ async function searchProducts(message, conversationHistory) {
     return { matchedCategoryIds, recentTerms };
   };
 
+  const APPROVED_STATUS = { status: { $in: ['approved', null] } };
+
   // 1. Stock Query Path
   if (isStockQuery) {
-    let stockQuery = { stock: { $gt: 0 } };
+    let stockQuery = { stock: { $gt: 0 }, ...APPROVED_STATUS };
     const { matchedCategoryIds, recentTerms } = await getHistoryContext();
     let hasContext = false;
 
@@ -300,6 +303,7 @@ async function searchProducts(message, conversationHistory) {
       ]);
       stockQuery = {
         $and: [
+          APPROVED_STATUS,
           { stock: { $gt: 0 } },
           { category: { $in: matchedCategoryIds } },
           { $or: regexConditions }
@@ -307,7 +311,7 @@ async function searchProducts(message, conversationHistory) {
       };
       hasContext = true;
     } else if (matchedCategoryIds.length > 0) {
-      stockQuery = { stock: { $gt: 0 }, category: { $in: matchedCategoryIds } };
+      stockQuery = { stock: { $gt: 0 }, ...APPROVED_STATUS, category: { $in: matchedCategoryIds } };
       hasContext = true;
     } else if (recentTerms.length > 0) {
       const regexConditions = recentTerms.flatMap(term => [
@@ -316,6 +320,7 @@ async function searchProducts(message, conversationHistory) {
       ]);
       stockQuery = {
         $and: [
+          APPROVED_STATUS,
           { stock: { $gt: 0 } },
           { $or: regexConditions }
         ]
@@ -334,7 +339,7 @@ async function searchProducts(message, conversationHistory) {
     }
 
     if (products.length === 0) {
-      products = await Product.find({ stock: { $gt: 0 } })
+      products = await Product.find({ stock: { $gt: 0 }, ...APPROVED_STATUS })
         .populate('category', 'name')
         .select('name description price stock ratingsAvg category discountPercent')
         .sort({ ratingsAvg: -1 })
@@ -346,7 +351,7 @@ async function searchProducts(message, conversationHistory) {
 
   // 2. Sale Query Path
   if (isSaleQuery) {
-    let saleQuery = { discountPercent: { $gt: 0 } };
+    let saleQuery = { discountPercent: { $gt: 0 }, ...APPROVED_STATUS };
     const { matchedCategoryIds, recentTerms } = await getHistoryContext();
     let hasContext = false;
 
@@ -357,6 +362,7 @@ async function searchProducts(message, conversationHistory) {
       ]);
       saleQuery = {
         $and: [
+          APPROVED_STATUS,
           { discountPercent: { $gt: 0 } },
           { category: { $in: matchedCategoryIds } },
           { $or: regexConditions }
@@ -364,7 +370,7 @@ async function searchProducts(message, conversationHistory) {
       };
       hasContext = true;
     } else if (matchedCategoryIds.length > 0) {
-      saleQuery = { discountPercent: { $gt: 0 }, category: { $in: matchedCategoryIds } };
+      saleQuery = { discountPercent: { $gt: 0 }, ...APPROVED_STATUS, category: { $in: matchedCategoryIds } };
       hasContext = true;
     } else if (recentTerms.length > 0) {
       const regexConditions = recentTerms.flatMap(term => [
@@ -373,6 +379,7 @@ async function searchProducts(message, conversationHistory) {
       ]);
       saleQuery = {
         $and: [
+          APPROVED_STATUS,
           { discountPercent: { $gt: 0 } },
           { $or: regexConditions }
         ]
@@ -391,7 +398,7 @@ async function searchProducts(message, conversationHistory) {
     }
 
     if (products.length === 0) {
-      products = await Product.find({ discountPercent: { $gt: 0 } })
+      products = await Product.find({ discountPercent: { $gt: 0 }, ...APPROVED_STATUS })
         .populate('category', 'name')
         .select('name description price stock ratingsAvg category discountPercent')
         .sort({ discountPercent: -1, ratingsAvg: -1 })
@@ -418,12 +425,13 @@ async function searchProducts(message, conversationHistory) {
 
     let products = [];
     if (productIds.length > 0) {
-      const refProduct = await Product.findById(productIds[0]).lean();
+      const refProduct = await Product.findOne({ _id: productIds[0], ...APPROVED_STATUS }).lean();
       if (refProduct) {
         products = await Product.find({
           category: refProduct.category,
           _id: { $ne: refProduct._id },
-          stock: { $gt: 0 }
+          stock: { $gt: 0 },
+          ...APPROVED_STATUS
         })
           .populate('category', 'name')
           .select('name description price stock ratingsAvg category discountPercent')
@@ -435,7 +443,7 @@ async function searchProducts(message, conversationHistory) {
     if (products.length === 0) {
       const { matchedCategoryIds } = await getHistoryContext();
       if (matchedCategoryIds.length > 0) {
-        products = await Product.find({ category: { $in: matchedCategoryIds }, stock: { $gt: 0 } })
+        products = await Product.find({ category: { $in: matchedCategoryIds }, stock: { $gt: 0 }, ...APPROVED_STATUS })
           .populate('category', 'name')
           .select('name description price stock ratingsAvg category discountPercent')
           .limit(5)
@@ -444,7 +452,7 @@ async function searchProducts(message, conversationHistory) {
     }
 
     if (products.length === 0) {
-      products = await Product.find({ stock: { $gt: 0 } })
+      products = await Product.find({ stock: { $gt: 0 }, ...APPROVED_STATUS })
         .populate('category', 'name')
         .select('name description price stock ratingsAvg category discountPercent')
         .sort({ ratingsAvg: -1 })
@@ -471,12 +479,13 @@ async function searchProducts(message, conversationHistory) {
 
     let products = [];
     if (productIds.length > 0) {
-      const refProduct = await Product.findById(productIds[0]).lean();
+      const refProduct = await Product.findOne({ _id: productIds[0], ...APPROVED_STATUS }).lean();
       if (refProduct) {
         products = await Product.find({
           category: refProduct.category,
           price: { $lt: refProduct.price },
-          stock: { $gt: 0 }
+          stock: { $gt: 0 },
+          ...APPROVED_STATUS
         })
           .populate('category', 'name')
           .select('name description price stock ratingsAvg category discountPercent')
@@ -488,7 +497,8 @@ async function searchProducts(message, conversationHistory) {
           products = await Product.find({
             category: refProduct.category,
             _id: { $ne: refProduct._id },
-            stock: { $gt: 0 }
+            stock: { $gt: 0 },
+            ...APPROVED_STATUS
           })
             .populate('category', 'name')
             .select('name description price stock ratingsAvg category discountPercent')
@@ -500,7 +510,7 @@ async function searchProducts(message, conversationHistory) {
     }
 
     if (products.length === 0) {
-      products = await Product.find({ stock: { $gt: 0 } })
+      products = await Product.find({ stock: { $gt: 0 }, ...APPROVED_STATUS })
         .populate('category', 'name')
         .select('name description price stock ratingsAvg category discountPercent')
         .sort({ price: 1 })
@@ -515,7 +525,7 @@ async function searchProducts(message, conversationHistory) {
     const categories = await Category.find().lean();
     const products = [];
     for (const cat of categories) {
-      const prod = await Product.findOne({ category: cat._id, stock: { $gt: 0 } })
+      const prod = await Product.findOne({ category: cat._id, stock: { $gt: 0 }, ...APPROVED_STATUS })
         .populate('category', 'name')
         .select('name description price stock ratingsAvg category discountPercent')
         .sort({ ratingsAvg: -1 })
@@ -529,7 +539,7 @@ async function searchProducts(message, conversationHistory) {
 
   // 6. Popular Query Path
   if (isPopularQuery) {
-    let popQuery = { stock: { $gt: 0 } };
+    let popQuery = { stock: { $gt: 0 }, ...APPROVED_STATUS };
     const { matchedCategoryIds } = await getHistoryContext();
     if (matchedCategoryIds.length > 0) {
       popQuery.category = { $in: matchedCategoryIds };
@@ -561,7 +571,7 @@ async function searchProducts(message, conversationHistory) {
 
     let products = [];
     if (productIds.length > 0) {
-      products = await Product.find({ _id: { $in: productIds } })
+      products = await Product.find({ _id: { $in: productIds }, ...APPROVED_STATUS })
         .populate('category', 'name')
         .select('name description price stock ratingsAvg category discountPercent')
         .lean();
@@ -578,7 +588,7 @@ async function searchProducts(message, conversationHistory) {
         }
       }
 
-      const extraQuery = { stock: { $gt: 0 } };
+      const extraQuery = { stock: { $gt: 0 }, ...APPROVED_STATUS };
       if (categoryId) {
         extraQuery.category = categoryId;
       }
@@ -599,7 +609,7 @@ async function searchProducts(message, conversationHistory) {
 
   // 8. Browse All Query Path
   if (isBrowseAllQuery) {
-    const products = await Product.find({ stock: { $gt: 0 } })
+    const products = await Product.find({ stock: { $gt: 0 }, ...APPROVED_STATUS })
       .populate('category', 'name')
       .select('name description price stock ratingsAvg category discountPercent')
       .sort({ ratingsAvg: -1 })
@@ -611,7 +621,7 @@ async function searchProducts(message, conversationHistory) {
   // 9. Cart Query Path — when searchProducts is called for a cart message (e.g. as a guest),
   //    return popular in-stock items so Rex has something useful to work with.
   if (isCartQuery) {
-    const products = await Product.find({ stock: { $gt: 0 } })
+    const products = await Product.find({ stock: { $gt: 0 }, ...APPROVED_STATUS })
       .populate('category', 'name')
       .select('name description price stock ratingsAvg category discountPercent')
       .sort({ ratingsAvg: -1 })
@@ -654,19 +664,19 @@ async function searchProducts(message, conversationHistory) {
       { name: { $regex: term, $options: 'i' } },
       { description: { $regex: term, $options: 'i' } }
     ]);
-    query = { $and: [{ $or: regexConditions }, { price: priceFilter }] };
+    query = { $and: [APPROVED_STATUS, { $or: regexConditions }, { price: priceFilter }] };
   } else if (hasPriceFilter) {
-    query = { price: priceFilter };
+    query = { ...APPROVED_STATUS, price: priceFilter };
   } else if (hasKeywords) {
     const regexConditions = terms.flatMap(term => [
       { name: { $regex: term, $options: 'i' } },
       { description: { $regex: term, $options: 'i' } }
     ]);
-    query = { $or: regexConditions };
+    query = { $and: [APPROVED_STATUS, { $or: regexConditions }] };
   } else {
     // No usable keywords or price filter — return popular in-stock items as a safe fallback
     // so Rex always has context rather than a completely empty product list.
-    return Product.find({ stock: { $gt: 0 } })
+    return Product.find({ stock: { $gt: 0 }, ...APPROVED_STATUS })
       .populate('category', 'name')
       .select('name description price stock ratingsAvg category discountPercent')
       .sort({ ratingsAvg: -1 })
@@ -705,7 +715,7 @@ async function fetchUserCart(userId) {
  */
 async function fetchCatalogStats() {
   const [totalProducts, categories] = await Promise.all([
-    Product.countDocuments(),
+    Product.countDocuments({ status: { $in: ['approved', null] } }),
     Category.find().select('name').sort('name').lean()
   ]);
   return {
@@ -768,7 +778,7 @@ function formatCartContext(cart) {
     return 'Your shopping cart is currently empty.';
   }
   const itemsText = cart.items
-    .filter(item => item.product)
+    .filter(item => item.product && (item.product.status === 'approved' || item.product.status == null))
     .map((item, i) => {
       const p = item.product;
       return `• ${p.name} | ID: ${p._id} | Price: ₹${p.price.toFixed(2)} | Quantity: ${item.quantity} | Total: ₹${(p.price * item.quantity).toFixed(2)}`;
@@ -776,7 +786,7 @@ function formatCartContext(cart) {
     .join('\n');
   
   const grandTotal = cart.items
-    .filter(item => item.product)
+    .filter(item => item.product && (item.product.status === 'approved' || item.product.status == null))
     .reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   
   return `USER'S SHOPPING CART ITEMS:\n${itemsText}\nCart Grand Total: ₹${grandTotal.toFixed(2)}`;
@@ -1080,13 +1090,19 @@ const handleAddToCart = async (req, res) => {
   try {
     const { productId, quantity = 1 } = req.body;
 
-    if (!productId) {
-      return res.status(400).json({ success: false, message: 'productId is required.' });
+    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ success: false, message: 'Valid productId is required.' });
     }
 
-    const product = await Product.findById(productId).select('name stock price');
+    const product = await Product.findById(productId).select('name stock price status sellerId');
     if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found.' });
+      return res.status(400).json({ success: false, message: 'Product not found.' });
+    }
+    if (product.sellerId && req.user && product.sellerId.toString() === req.user._id.toString()) {
+      return res.status(400).json({ success: false, message: 'You cannot purchase your own product' });
+    }
+    if (product.status && product.status !== 'approved') {
+      return res.status(400).json({ success: false, message: 'Product is not available for purchase.' });
     }
     if (product.stock === 0) {
       return res.status(400).json({

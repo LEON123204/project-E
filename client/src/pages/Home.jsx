@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
+import { useToast } from "../context/ToastContext";
 import { Heart, ShoppingCart, Star, ArrowRight, Truck, ShieldCheck, Percent, PackageCheck } from "lucide-react";
 import { ProductCardSkeleton } from "../components/SkeletonLoader";
 import useScrollReveal from "../hooks/useScrollReveal";
@@ -68,8 +70,10 @@ const AnimatedCounter = ({ target, duration = 2000, suffix = "" }) => {
 };
 
 const Home = () => {
+  const { user } = useAuth();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { showToast } = useToast();
 
   const [products, setProducts] = useState([]);
   const [heroProducts, setHeroProducts] = useState([
@@ -160,11 +164,13 @@ const Home = () => {
   }, []);
 
   const handleAddToCart = async (product) => {
+    const isOwnListing = Boolean(product.isOwnListing || (user && product.sellerId && (product.sellerId._id || product.sellerId).toString() === user._id.toString()));
+    if (isOwnListing) return;
     setAddingToCartId(product._id);
     const res = await addToCart(product, 1);
     setAddingToCartId(null);
     if (!res.success) {
-      alert(res.message);
+      showToast(res.message, 'error');
     }
   };
 
@@ -741,15 +747,21 @@ const Home = () => {
                       <span className="text-base font-extrabold text-slate-100">
                         ₹{product.price.toFixed(2)}
                       </span>
-                      <button
-                        disabled={
-                          product.stock === 0 || addingToCartId === product._id
-                        }
-                        onClick={() => handleAddToCart(product)}
-                        className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white p-2.5 rounded-full transition-smooth shadow-lg shadow-indigo-600/10 disabled:shadow-none cursor-pointer"
-                      >
-                        <ShoppingCart size={16} />
-                      </button>
+                      {product.isOwnListing || (user && product.sellerId && (product.sellerId._id || product.sellerId).toString() === user._id.toString()) ? (
+                        <span className="text-[10px] font-semibold text-indigo-400 bg-indigo-950/60 border border-indigo-500/30 px-2 py-1 rounded-md">
+                          Your listing
+                        </span>
+                      ) : (
+                        <button
+                          disabled={
+                            product.stock === 0 || addingToCartId === product._id
+                          }
+                          onClick={() => handleAddToCart(product)}
+                          className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white p-2.5 rounded-full transition-smooth shadow-lg shadow-indigo-600/10 disabled:shadow-none cursor-pointer"
+                        >
+                          <ShoppingCart size={16} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

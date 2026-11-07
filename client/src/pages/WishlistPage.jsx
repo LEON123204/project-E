@@ -1,20 +1,25 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 import { Heart, ShoppingCart, Star, ArrowRight, Trash2 } from 'lucide-react';
 
 const WishlistPage = () => {
+  const { user } = useAuth();
   const { wishlist, loading, toggleWishlist } = useWishlist();
   const { addToCart } = useCart();
+  const { showToast } = useToast();
 
   const handleAddToCart = async (product) => {
+    const isOwnListing = Boolean(product.isOwnListing || (user && product.sellerId && (product.sellerId._id || product.sellerId).toString() === user._id.toString()));
+    if (isOwnListing) return;
     const res = await addToCart(product, 1);
     if (res.success) {
-      // Remove from wishlist automatically once added to cart (optional, let's keep it in wishlist unless they remove it, or remove it. Let's keep it in wishlist, it's nice)
-      alert('Product added to cart!');
+      showToast('Product added to cart!', 'success');
     } else {
-      alert(res.message);
+      showToast(res.message, 'error');
     }
   };
 
@@ -106,13 +111,19 @@ const WishlistPage = () => {
 
                   <div className="flex items-center justify-between mt-4">
                     <span className="text-base font-extrabold text-slate-100">₹{product.price.toFixed(2)}</span>
-                    <button
-                      disabled={product.stock === 0}
-                      onClick={() => handleAddToCart(product)}
-                      className="bg-indigo-650 hover:bg-indigo-550 disabled:bg-slate-800 disabled:text-slate-600 text-white p-2 rounded-full transition-smooth shadow-lg shadow-indigo-600/10 disabled:shadow-none cursor-pointer"
-                    >
-                      <ShoppingCart size={16} />
-                    </button>
+                    {product.isOwnListing || (user && product.sellerId && (product.sellerId._id || product.sellerId).toString() === user._id.toString()) ? (
+                      <span className="text-[10px] font-semibold text-indigo-400 bg-indigo-950/60 border border-indigo-500/30 px-2 py-1 rounded-md">
+                        Your listing
+                      </span>
+                    ) : (
+                      <button
+                        disabled={product.stock === 0}
+                        onClick={() => handleAddToCart(product)}
+                        className="bg-indigo-650 hover:bg-indigo-550 disabled:bg-slate-800 disabled:text-slate-600 text-white p-2 rounded-full transition-smooth shadow-lg shadow-indigo-600/10 disabled:shadow-none cursor-pointer"
+                      >
+                        <ShoppingCart size={16} />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

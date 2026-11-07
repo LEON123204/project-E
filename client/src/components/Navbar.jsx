@@ -13,11 +13,12 @@ import {
   Menu, 
   X, 
   LayoutDashboard,
-  ChevronDown
+  ChevronDown,
+  Store
 } from 'lucide-react';
 
 const Navbar = () => {
-  const { user, logout, isAuthenticated, isAdmin } = useAuth();
+  const { user, logout, isAuthenticated, isAdmin, isSeller } = useAuth();
   const { cartCount } = useCart();
   const { wishlist } = useWishlist();
   const navigate = useNavigate();
@@ -68,6 +69,8 @@ const Navbar = () => {
               <Link to="/" className={activeLink('/')}>Home</Link>
               <Link to="/shop" className={activeLink('/shop')}>Shop</Link>
               <Link to="/order-tracking" onClick={handleTrackOrderClick} className={activeLink('/order-tracking')}>Track Order</Link>
+              {isSeller && <Link to="/seller/dashboard" className={activeLink('/seller/dashboard')}>Seller Dashboard</Link>}
+              {!isSeller && !isAdmin && <Link to="/become-seller" className={activeLink('/become-seller')}>Become a Seller</Link>}
             </div>
           </div>
 
@@ -133,6 +136,16 @@ const Navbar = () => {
                         Admin Panel
                       </Link>
                     )}
+                    {isSeller && (
+                      <Link
+                        to="/seller/dashboard"
+                        onClick={() => setProfileDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-emerald-400 hover:bg-slate-850 hover:text-emerald-300 transition-smooth"
+                      >
+                        <Store size={16} />
+                        Seller Dashboard
+                      </Link>
+                    )}
                     <Link
                       to="/profile"
                       onClick={() => setProfileDropdownOpen(false)}
@@ -141,6 +154,23 @@ const Navbar = () => {
                       <User size={16} />
                       My Profile
                     </Link>
+                    {!isSeller && !isAdmin && (
+                    <Link
+                      to="/become-seller"
+                      onClick={() => setProfileDropdownOpen(false)}
+                      className="flex items-center justify-between px-4 py-2 text-sm text-slate-300 hover:bg-slate-850 hover:text-indigo-400 transition-smooth"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Store size={16} />
+                        Become a Seller
+                      </div>
+                      {user?.sellerApplicationStatus === 'pending' && (
+                        <span className="text-[9px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded font-bold">
+                          Pending
+                        </span>
+                      )}
+                    </Link>
+                    )}
                     <button
                       onClick={() => {
                         setProfileDropdownOpen(false);
@@ -244,6 +274,24 @@ const Navbar = () => {
             >
               Wishlist {wishlist.length > 0 && <span className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">{wishlist.length}</span>}
             </Link>
+            {isSeller && (
+            <Link
+              to="/seller/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-slate-300 hover:text-indigo-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+            >
+              Seller Dashboard
+            </Link>
+            )}
+            {!isSeller && !isAdmin && (
+            <Link
+              to="/become-seller"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-slate-300 hover:text-indigo-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+            >
+              Become a Seller {user?.sellerApplicationStatus === 'pending' && <span className="ml-1 text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded font-bold">Pending</span>}
+            </Link>
+            )}
           </div>
 
           <div className="border-t border-slate-900/70 pt-2 space-y-0.5">
@@ -256,6 +304,15 @@ const Navbar = () => {
                     className="block text-indigo-400 hover:text-indigo-300 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
                   >
                     Admin Panel
+                  </Link>
+                )}
+                {isSeller && (
+                  <Link
+                    to="/seller/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block text-emerald-400 hover:text-emerald-300 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+                  >
+                    Seller Dashboard
                   </Link>
                 )}
                 <Link

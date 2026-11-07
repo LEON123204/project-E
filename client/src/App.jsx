@@ -28,6 +28,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import OrderTracking from './pages/OrderTracking';
 import OrderConfirmation from './pages/OrderConfirmation';
+import BecomeSeller from './pages/BecomeSeller';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -35,6 +36,11 @@ import AdminProducts from './pages/admin/AdminProducts';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminCustomers from './pages/admin/AdminCustomers';
+import AdminSellerApplications from './pages/admin/AdminSellerApplications';
+import AdminSellerProducts from './pages/admin/AdminSellerProducts';
+
+// Seller Pages
+import SellerDashboard from './pages/seller/SellerDashboard';
 
 function App() {
   return (
@@ -77,6 +83,14 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+                  <Route
+                    path="/become-seller"
+                    element={
+                      <ProtectedRoute>
+                        <BecomeSeller />
+                      </ProtectedRoute>
+                    }
+                  />
 
                   {/* Admin Protected routes */}
                   <Route
@@ -116,6 +130,32 @@ function App() {
                     element={
                       <ProtectedRoute adminOnly={true}>
                         <AdminCustomers />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/seller-applications"
+                    element={
+                      <ProtectedRoute adminOnly={true}>
+                        <AdminSellerApplications />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/seller-products"
+                    element={
+                      <ProtectedRoute adminOnly={true}>
+                        <AdminSellerProducts />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Seller Protected routes */}
+                  <Route
+                    path="/seller/dashboard"
+                    element={
+                      <ProtectedRoute sellerOnly={true}>
+                        <SellerDashboard />
                       </ProtectedRoute>
                     }
                   />

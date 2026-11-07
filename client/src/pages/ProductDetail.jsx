@@ -5,22 +5,27 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useLoginPrompt } from '../context/LoginPromptContext';
+import { useToast } from '../context/ToastContext';
 import { ProductDetailSkeleton } from '../components/SkeletonLoader';
-import { Heart, ShoppingCart, Star, Plus, Minus, Check, AlertCircle, Zap } from 'lucide-react';
+import { Heart, ShoppingCart, Star, Plus, Minus, Check, AlertCircle, Zap, Store } from 'lucide-react';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { showPrompt } = useLoginPrompt();
+  const { showToast } = useToast();
 
   const [product, setProduct] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [recentlyViewed, setRecentlyViewed] = useState([]);
+  
+  // Owning seller check
+  const isOwnerSeller = Boolean(product?.isOwnListing || (user && product?.sellerId && (product.sellerId._id || product.sellerId).toString() === user._id.toString()));
   
   // Gallery and cart quantity state
   const [activeImage, setActiveImage] = useState('');
@@ -100,7 +105,7 @@ const ProductDetail = () => {
   };
 
   const handleAddToCart = async () => {
-    if (!product || product.stock === 0) return;
+    if (isOwnerSeller || !product || product.stock === 0) return;
     setIsAdding(true);
     const res = await addToCart(product, quantity);
     setIsAdding(false);
@@ -108,14 +113,14 @@ const ProductDetail = () => {
       setJustAdded(true);
       setTimeout(() => setJustAdded(false), 2000);
     } else {
-      alert(res.message);
+      showToast(res.message, 'error');
     }
   };
 
   const handleBuyNow = () => {
-    if (!product || product.stock <= 0) return;
+    if (isOwnerSeller || !product || product.stock <= 0) return;
     if (quantity > product.stock) {
-      alert(`Only ${product.stock} items are in stock.`);
+      showToast(`Only ${product.stock} items are in stock.`, 'error');
       return;
     }
 
@@ -237,9 +242,17 @@ const ProductDetail = () => {
           {/* Right Panel: Detail Info & Checkout Controls */}
           <div className="flex flex-col justify-start py-2 space-y-6">
             <div className="space-y-2">
-              <span className="text-xs font-semibold text-indigo-400 uppercase tracking-widest">
-                {product.category?.name || 'Category'}
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-indigo-400 uppercase tracking-widest">
+                  {product.category?.name || 'Category'}
+                </span>
+                {product.sellerId && (
+                  <span className="text-xs bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                    <Store size={12} />
+                    Sold by {product.sellerId.businessName || product.sellerId.name}
+                  </span>
+                )}
+              </div>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-100 tracking-tight leading-tight">
                 {product.name}
               </h1>
@@ -287,84 +300,96 @@ const ProductDetail = () => {
             </div>
 
             {/* Cart & Buy Now section */}
-            <div className="flex flex-col sm:flex-row items-stretch gap-3 pt-4">
-              {/* Quantity Toggle — min 44px tall for touch */}
-              <div className={`flex items-center border border-slate-800 bg-slate-900/60 rounded-xl px-1 min-h-[44px] w-full sm:w-[120px] shrink-0 ${isOutOfStock ? 'opacity-50 select-none' : ''}`}>
-                <button
-                  type="button"
-                  disabled={isOutOfStock || quantity <= 1}
-                  onClick={() => handleQuantityChange('dec')}
-                  className="flex-1 flex items-center justify-center min-h-[44px] hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-100 transition-smooth disabled:text-slate-700"
-                >
-                  <Minus size={16} />
-                </button>
-                <span className="font-semibold text-slate-100 text-sm select-none px-1 text-center w-6">{isOutOfStock ? 0 : quantity}</span>
-                <button
-                  type="button"
-                  disabled={isOutOfStock || quantity >= product.stock}
-                  onClick={() => handleQuantityChange('inc')}
-                  className="flex-1 flex items-center justify-center min-h-[44px] hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-100 transition-smooth disabled:text-slate-700"
-                >
-                  <Plus size={16} />
-                </button>
+            {isOwnerSeller ? (
+              <div className="pt-4">
+                <div className="bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-4 flex items-center gap-3 text-indigo-300">
+                  <Store size={20} className="text-indigo-400 shrink-0" />
+                  <div>
+                    <p className="font-semibold text-sm">This is your listing</p>
+                    <p className="text-xs text-slate-400 mt-0.5">You are the seller of this product. Self-purchasing is disabled.</p>
+                  </div>
+                </div>
               </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row items-stretch gap-3 pt-4">
+                {/* Quantity Toggle — min 44px tall for touch */}
+                <div className={`flex items-center border border-slate-800 bg-slate-900/60 rounded-xl px-1 min-h-[44px] w-full sm:w-[120px] shrink-0 ${isOutOfStock ? 'opacity-50 select-none' : ''}`}>
+                  <button
+                    type="button"
+                    disabled={isOutOfStock || quantity <= 1}
+                    onClick={() => handleQuantityChange('dec')}
+                    className="flex-1 flex items-center justify-center min-h-[44px] hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-100 transition-smooth disabled:text-slate-700"
+                  >
+                    <Minus size={16} />
+                  </button>
+                  <span className="font-semibold text-slate-100 text-sm select-none px-1 text-center w-6">{isOutOfStock ? 0 : quantity}</span>
+                  <button
+                    type="button"
+                    disabled={isOutOfStock || quantity >= product.stock}
+                    onClick={() => handleQuantityChange('inc')}
+                    className="flex-1 flex items-center justify-center min-h-[44px] hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-100 transition-smooth disabled:text-slate-700"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
 
-              {/* Action Buttons: Add to Cart (Secondary Outline) & Buy Now (Primary Solid) */}
-              <div className="flex flex-1 flex-col sm:flex-row gap-3">
-                <button
-                  type="button"
-                  disabled={isOutOfStock || isAdding}
-                  onClick={handleAddToCart}
-                  className={`flex-1 min-h-[44px] px-4 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-smooth text-sm sm:text-base ${
-                    isOutOfStock
-                      ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800/50'
-                      : justAdded
-                        ? 'bg-emerald-600/20 border border-emerald-500 text-emerald-400'
-                        : 'border border-indigo-500/50 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300'
-                  }`}
-                >
-                  {isOutOfStock ? (
-                    <>
-                      <AlertCircle size={18} />
-                      <span>Out of Stock</span>
-                    </>
-                  ) : justAdded ? (
-                    <>
-                      <Check size={18} />
-                      <span>Added!</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingCart size={18} />
-                      <span>{isAdding ? 'Adding...' : 'Add to Cart'}</span>
-                    </>
-                  )}
-                </button>
+                {/* Action Buttons: Add to Cart (Secondary Outline) & Buy Now (Primary Solid) */}
+                <div className="flex flex-1 flex-col sm:flex-row gap-3">
+                  <button
+                    type="button"
+                    disabled={isOutOfStock || isAdding}
+                    onClick={handleAddToCart}
+                    className={`flex-1 min-h-[44px] px-4 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-smooth text-sm sm:text-base ${
+                      isOutOfStock
+                        ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800/50'
+                        : justAdded
+                          ? 'bg-emerald-600/20 border border-emerald-500 text-emerald-400'
+                          : 'border border-indigo-500/50 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300'
+                    }`}
+                  >
+                    {isOutOfStock ? (
+                      <>
+                        <AlertCircle size={18} />
+                        <span>Out of Stock</span>
+                      </>
+                    ) : justAdded ? (
+                      <>
+                        <Check size={18} />
+                        <span>Added!</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart size={18} />
+                        <span>{isAdding ? 'Adding...' : 'Add to Cart'}</span>
+                      </>
+                    )}
+                  </button>
 
-                <button
-                  type="button"
-                  disabled={isOutOfStock}
-                  onClick={handleBuyNow}
-                  className={`flex-1 min-h-[44px] px-4 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-smooth shadow-lg text-sm sm:text-base ${
-                    isOutOfStock
-                      ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800/50 shadow-none'
-                      : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
-                  }`}
-                >
-                  {isOutOfStock ? (
-                    <>
-                      <AlertCircle size={18} />
-                      <span>Out of Stock</span>
-                    </>
-                  ) : (
-                    <>
-                      <Zap size={18} className="fill-current" />
-                      <span>Buy Now</span>
-                    </>
-                  )}
-                </button>
+                  <button
+                    type="button"
+                    disabled={isOutOfStock}
+                    onClick={handleBuyNow}
+                    className={`flex-1 min-h-[44px] px-4 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-smooth shadow-lg text-sm sm:text-base ${
+                      isOutOfStock
+                        ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800/50 shadow-none'
+                        : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
+                    }`}
+                  >
+                    {isOutOfStock ? (
+                      <>
+                        <AlertCircle size={18} />
+                        <span>Out of Stock</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap size={18} className="fill-current" />
+                        <span>Buy Now</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -394,7 +419,11 @@ const ProductDetail = () => {
             </div>
 
             {/* Create review form */}
-            {isAuthenticated ? (
+            {isOwnerSeller ? (
+              <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl text-center space-y-2">
+                <p className="text-xs text-slate-400">You are the seller of this product. Self-reviews are not permitted.</p>
+              </div>
+            ) : isAuthenticated ? (
               <form onSubmit={handleReviewSubmit} className="bg-slate-900 border border-slate-850 p-6 rounded-2xl space-y-4">
                 <h3 className="font-bold text-slate-200 text-base">Write a Review</h3>
 
@@ -548,58 +577,64 @@ const ProductDetail = () => {
           <span className="text-xs text-slate-350 truncate font-semibold">{product.name}</span>
           <span className="text-sm font-extrabold text-slate-100">₹{product.price.toFixed(2)}</span>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Compact Quantity Toggle */}
-          {!isOutOfStock && (
-            <div className="flex items-center justify-between border border-slate-800 bg-slate-900/60 rounded-xl p-1 w-24">
-              <button
-                type="button"
-                disabled={quantity <= 1}
-                onClick={() => handleQuantityChange('dec')}
-                className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-100 disabled:text-slate-700"
-              >
-                <Minus size={12} />
-              </button>
-              <span className="text-xs font-semibold text-slate-200">{quantity}</span>
-              <button
-                type="button"
-                disabled={quantity >= product.stock}
-                onClick={() => handleQuantityChange('inc')}
-                className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-100 disabled:text-slate-700"
-              >
-                <Plus size={12} />
-              </button>
-            </div>
-          )}
-          
-          {/* Add to Cart button */}
-          <button
-            type="button"
-            disabled={isOutOfStock || isAdding}
-            onClick={handleAddToCart}
-            className={`py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-smooth ${
-              isOutOfStock
-                ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-750/50 shadow-none'
-                : justAdded 
-                  ? 'bg-emerald-600 text-white shadow-emerald-600/10'
-                  : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
-            }`}
-          >
-            {isOutOfStock ? (
-              'Out of Stock'
-            ) : justAdded ? (
-              <>
-                <Check size={14} />
-                Added
-              </>
-            ) : (
-              <>
-                <ShoppingCart size={14} />
-                {isAdding ? 'Adding...' : 'Add to Cart'}
-              </>
+        {isOwnerSeller ? (
+          <span className="text-xs font-semibold text-indigo-400 bg-indigo-950/60 border border-indigo-500/30 px-3 py-1.5 rounded-lg shrink-0">
+            This is your listing
+          </span>
+        ) : (
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Compact Quantity Toggle */}
+            {!isOutOfStock && (
+              <div className="flex items-center justify-between border border-slate-800 bg-slate-900/60 rounded-xl p-1 w-24">
+                <button
+                  type="button"
+                  disabled={quantity <= 1}
+                  onClick={() => handleQuantityChange('dec')}
+                  className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-100 disabled:text-slate-700"
+                >
+                  <Minus size={12} />
+                </button>
+                <span className="text-xs font-semibold text-slate-200">{quantity}</span>
+                <button
+                  type="button"
+                  disabled={quantity >= product.stock}
+                  onClick={() => handleQuantityChange('inc')}
+                  className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-100 disabled:text-slate-700"
+                >
+                  <Plus size={12} />
+                </button>
+              </div>
             )}
-          </button>
-        </div>
+            
+            {/* Add to Cart button */}
+            <button
+              type="button"
+              disabled={isOutOfStock || isAdding}
+              onClick={handleAddToCart}
+              className={`py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-smooth ${
+                isOutOfStock
+                  ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-750/50 shadow-none'
+                  : justAdded 
+                    ? 'bg-emerald-600 text-white shadow-emerald-600/10'
+                    : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
+              }`}
+            >
+              {isOutOfStock ? (
+                'Out of Stock'
+              ) : justAdded ? (
+                <>
+                  <Check size={14} />
+                  Added
+                </>
+              ) : (
+                <>
+                  <ShoppingCart size={14} />
+                  {isAdding ? 'Adding...' : 'Add to Cart'}
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -22,7 +22,9 @@ import {
   TrendingUp, 
   ArrowRight,
   ShieldCheck,
-  Package
+  Package,
+  Store,
+  PackageCheck
 } from 'lucide-react';
 
 const COLORS = ['#6D2932', '#561C24', '#e8a3ae', '#eab308', '#10b981', '#f97316'];
@@ -271,6 +273,31 @@ const AdminDashboard = () => {
                 className="flex items-center justify-between p-3.5 bg-slate-950/30 hover:bg-slate-950 border border-slate-850 rounded-xl transition-smooth group"
               >
                 <span>Review Customer Database</span>
+                <ArrowRight size={14} className="text-slate-550 group-hover:translate-x-0.5 group-hover:text-indigo-400 transition-smooth" />
+              </Link>
+              <Link
+                to="/admin/seller-applications"
+                className="flex items-center justify-between p-3.5 bg-slate-950/30 hover:bg-slate-950 border border-slate-850 rounded-xl transition-smooth group"
+              >
+                <div className="flex items-center gap-2">
+                  <Store size={13} className="text-indigo-400" />
+                  Seller Applications
+                  {data?.pendingSellerApplications > 0 && (
+                    <span className="bg-amber-500 text-slate-950 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full">
+                      {data.pendingSellerApplications}
+                    </span>
+                  )}
+                </div>
+                <ArrowRight size={14} className="text-slate-550 group-hover:translate-x-0.5 group-hover:text-indigo-400 transition-smooth" />
+              </Link>
+              <Link
+                to="/admin/seller-products"
+                className="flex items-center justify-between p-3.5 bg-slate-950/30 hover:bg-slate-950 border border-slate-850 rounded-xl transition-smooth group"
+              >
+                <div className="flex items-center gap-2">
+                  <PackageCheck size={13} className="text-indigo-400" />
+                  Seller Product Reviews
+                </div>
                 <ArrowRight size={14} className="text-slate-550 group-hover:translate-x-0.5 group-hover:text-indigo-400 transition-smooth" />
               </Link>
             </div>

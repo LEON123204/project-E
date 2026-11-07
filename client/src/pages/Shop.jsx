@@ -1,15 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { useToast } from '../context/ToastContext';
 import useDebounce from '../hooks/useDebounce';
 import { ProductCardSkeleton } from '../components/SkeletonLoader';
 import { Heart, ShoppingCart, Star, Filter, RotateCcw, ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 const Shop = () => {
+  const { user } = useAuth();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { showToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Mobile Filters sheet state (overlay/drawer on mobile, sidebar on lg+)
@@ -105,11 +109,13 @@ const Shop = () => {
   };
 
   const handleAddToCart = async (product) => {
+    const isOwnListing = Boolean(product.isOwnListing || (user && product.sellerId && (product.sellerId._id || product.sellerId).toString() === user._id.toString()));
+    if (isOwnListing) return;
     setAddingToCartId(product._id);
     const res = await addToCart(product, 1);
     setAddingToCartId(null);
     if (!res.success) {
-      alert(res.message);
+      showToast(res.message, 'error');
     }
   };
 
@@ -394,14 +400,20 @@ const Shop = () => {
 
                       <div className="flex items-center justify-between mt-2 sm:mt-4">
                         <span className="text-sm sm:text-base font-extrabold text-slate-100">₹{product.price.toFixed(2)}</span>
-                        <button
-                          disabled={product.stock === 0 || addingToCartId === product._id}
-                          onClick={() => handleAddToCart(product)}
-                          className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white p-2 sm:p-2.5 rounded-full transition-smooth shadow-lg shadow-indigo-600/10 disabled:shadow-none cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
-                        >
-                          <ShoppingCart size={14} className="sm:hidden" />
-                          <ShoppingCart size={16} className="hidden sm:block" />
-                        </button>
+                        {product.isOwnListing || (user && product.sellerId && (product.sellerId._id || product.sellerId).toString() === user._id.toString()) ? (
+                          <span className="text-[10px] font-semibold text-indigo-400 bg-indigo-950/60 border border-indigo-500/30 px-2 py-1 rounded-md">
+                            Your listing
+                          </span>
+                        ) : (
+                          <button
+                            disabled={product.stock === 0 || addingToCartId === product._id}
+                            onClick={() => handleAddToCart(product)}
+                            className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white p-2 sm:p-2.5 rounded-full transition-smooth shadow-lg shadow-indigo-600/10 disabled:shadow-none cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                          >
+                            <ShoppingCart size={14} className="sm:hidden" />
+                            <ShoppingCart size={16} className="hidden sm:block" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

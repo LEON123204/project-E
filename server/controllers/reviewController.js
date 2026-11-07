@@ -16,9 +16,15 @@ const createProductReview = async (req, res, next) => {
     }
 
     const product = await Product.findById(productId);
-    if (!product) {
+    if (!product || (product.status && product.status !== 'approved')) {
       res.status(404);
       throw new Error('Product not found');
+    }
+
+    // Sellers cannot review their own product
+    if (product.sellerId && req.user && product.sellerId.toString() === req.user._id.toString()) {
+      res.status(400);
+      throw new Error('You cannot review your own product');
     }
 
     // 1. Verify if user already reviewed this product

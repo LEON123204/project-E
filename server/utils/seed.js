@@ -1480,7 +1480,11 @@ const seedData = async () => {
       }
     ];
 
-    const seededProducts = await Product.insertMany(productsData);
+    const productsWithStatus = productsData.map(product => ({
+      ...product,
+      status: 'approved'
+    }));
+    const seededProducts = await Product.insertMany(productsWithStatus);
 
     console.log('Seeding reviews...');
     const reviewers = [customerUser, customerUser2, customerUser3, customerUser4];

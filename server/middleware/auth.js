@@ -41,6 +41,14 @@ const admin = (req, res, next) => {
   }
 };
 
+const seller = (req, res, next) => {
+  if (req.user && req.user.role === 'seller') {
+    next();
+  } else {
+    return res.status(403).json({ success: false, message: 'Forbidden, seller resource only' });
+  }
+};
+
 const optionalProtect = async (req, res, next) => {
   let token;
 
@@ -50,17 +58,19 @@ const optionalProtect = async (req, res, next) => {
   ) {
     try {
       token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      
-      // Select user without password
-      req.user = await User.findById(decoded.id).select('-password');
+      if (token) {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (decoded && decoded.id) {
+          req.user = await User.findById(decoded.id).select('-password');
+        }
+      }
     } catch (error) {
-      console.error('Optional token verification error:', error.message);
-      // Proceed without req.user for guests
+      // Proceed without req.user for guests (invalid, malformed, or expired token)
+      req.user = null;
     }
   }
 
   next();
 };
 
-module.exports = { protect, admin, optionalProtect };
+module.exports = { protect, admin, seller, optionalProtect };

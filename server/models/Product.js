@@ -44,6 +44,16 @@ const productSchema = new mongoose.Schema({
     default: 0,
     min: 0,
     max: 100
+  },
+  sellerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  status: {
+    type: String,
+    enum: ['approved', 'pending_review', 'rejected'],
+    default: 'approved' // Admin-created products are live immediately; seller-submitted ones start as 'pending_review'
   }
 }, {
   timestamps: true

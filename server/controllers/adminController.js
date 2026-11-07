@@ -18,8 +18,8 @@ const getDashboardStats = async (req, res, next) => {
     ]);
     const totalRevenue = revenueData.length > 0 ? revenueData[0].total : 0;
 
-    // Low stock items threshold: stock <= 5
-    const lowStockProducts = await Product.find({ stock: { $lte: 5 } })
+    // Low stock items threshold: stock <= 5 (only live approved products)
+    const lowStockProducts = await Product.find({ stock: { $lte: 5 }, status: { $in: ['approved', null] } })
       .populate('category', 'name')
       .select('name stock price');
 
@@ -95,8 +95,12 @@ const getDashboardStats = async (req, res, next) => {
       }
     ]);
 
+    // Pending seller applications count for dashboard badge
+    const pendingSellerApplications = await User.countDocuments({ sellerApplicationStatus: 'pending' });
+
     res.json({
       success: true,
+      pendingSellerApplications,
       stats: {
         totalOrders,
         totalCustomers: totalUsers,
@@ -132,7 +136,123 @@ const getCustomers = async (req, res, next) => {
   }
 };
 
+// @desc    Get all pending seller applications (Admin only)
+// @route   GET /api/v1/admin/seller-applications
+// @access  Private/Admin
+const getPendingSellerApplications = async (req, res, next) => {
+  try {
+    const { status = 'pending' } = req.query; // allow ?status=approved|rejected|all|pending
+    const validStatuses = ['pending', 'approved', 'rejected'];
+
+    let query;
+    if (status === 'all') {
+      query = { sellerApplicationStatus: { $in: validStatuses } };
+    } else if (validStatuses.includes(status)) {
+      query = { sellerApplicationStatus: status };
+    } else {
+      query = { sellerApplicationStatus: 'pending' };
+    }
+
+    const applications = await User.find(query)
+      .select('-password -refreshToken -addresses')
+      .sort({ updatedAt: -1 });
+
+    res.json({
+      success: true,
+      applications
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Approve a seller application (Admin only)
+// @route   PUT /api/v1/admin/seller-applications/:userId/approve
+// @access  Private/Admin
+const approveSellerApplication = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.userId);
+
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+
+    if (user.sellerApplicationStatus !== 'pending') {
+      res.status(400);
+      throw new Error(`Cannot approve — application status is "${user.sellerApplicationStatus}", not "pending"`);
+    }
+
+    if (user.role !== 'customer') {
+      res.status(400);
+      throw new Error(`Cannot approve — only customer accounts can be promoted to seller (current role is "${user.role}")`);
+    }
+
+    user.sellerApplicationStatus = 'approved';
+    user.role = 'seller';
+    await user.save();
+
+    res.json({
+      success: true,
+      message: `${user.name}'s seller application approved. Role updated to seller.`,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        sellerApplicationStatus: user.sellerApplicationStatus,
+        businessName: user.businessName
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Reject a seller application (Admin only)
+// @route   PUT /api/v1/admin/seller-applications/:userId/reject
+// @access  Private/Admin
+const rejectSellerApplication = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.userId);
+
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+
+    if (user.sellerApplicationStatus !== 'pending') {
+      res.status(400);
+      throw new Error(`Cannot reject — application status is "${user.sellerApplicationStatus}", not "pending"`);
+    }
+
+    // Rejection: status → rejected, role stays customer.
+    // No cooldown: user may re-apply immediately after rejection.
+    user.sellerApplicationStatus = 'rejected';
+    // role intentionally left as-is (customer)
+    await user.save();
+
+    res.json({
+      success: true,
+      message: `${user.name}'s seller application rejected. User may re-apply.`,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        sellerApplicationStatus: user.sellerApplicationStatus,
+        businessName: user.businessName
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getDashboardStats,
-  getCustomers
+  getCustomers,
+  getPendingSellerApplications,
+  approveSellerApplication,
+  rejectSellerApplication
 };

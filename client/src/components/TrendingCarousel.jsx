@@ -4,13 +4,17 @@ import useEmblaCarousel from "embla-carousel-react";
 import { WheelGesturesPlugin } from "embla-carousel-wheel-gestures";
 import { ChevronLeft, ChevronRight, Heart, ShoppingCart, Star, Sparkles } from "lucide-react";
 import api from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
+import { useToast } from "../context/ToastContext";
 
 const TrendingCarousel = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { showToast } = useToast();
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -178,11 +182,13 @@ const TrendingCarousel = () => {
     e.stopPropagation();
     e.preventDefault();
     if (isDragging.current) return;
+    const isOwnListing = Boolean(product.isOwnListing || (user && product.sellerId && (product.sellerId._id || product.sellerId).toString() === user._id.toString()));
+    if (isOwnListing) return;
     setAddingToCartId(product._id);
     const res = await addToCart(product, 1);
     setAddingToCartId(null);
     if (!res.success) {
-      alert(res.message);
+      showToast(res.message, 'error');
     }
   };
 
@@ -424,22 +430,28 @@ const TrendingCarousel = () => {
                           </span>
                         </div>
 
-                        <button
-                          disabled={product.stock === 0 || addingToCartId === product._id}
-                          onClick={(e) => handleAddToCart(e, product)}
-                          className={`flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-300 shadow-md cursor-pointer ${
-                            isCenter
-                              ? "px-4 py-2 text-xs sm:text-sm bg-gradient-to-r from-[#6D2932] via-[#561C24] to-[#6D2932] hover:brightness-125 text-white shadow-[#6D2932]/40"
-                              : "p-2.5 bg-slate-850 hover:bg-[#6D2932] text-slate-200 hover:text-white"
-                          }`}
-                        >
-                          <ShoppingCart size={16} />
-                          {isCenter && (
-                            <span className="hidden xs:inline">
-                              {addingToCartId === product._id ? "Adding..." : "Add to Cart"}
-                            </span>
-                          )}
-                        </button>
+                        {product.isOwnListing || (user && product.sellerId && (product.sellerId._id || product.sellerId).toString() === user._id.toString()) ? (
+                          <span className="text-xs font-semibold text-rose-300 bg-rose-950/60 border border-rose-500/30 px-3 py-1.5 rounded-full select-none">
+                            Your listing
+                          </span>
+                        ) : (
+                          <button
+                            disabled={product.stock === 0 || addingToCartId === product._id}
+                            onClick={(e) => handleAddToCart(e, product)}
+                            className={`flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-300 shadow-md cursor-pointer ${
+                              isCenter
+                                ? "px-4 py-2 text-xs sm:text-sm bg-gradient-to-r from-[#6D2932] via-[#561C24] to-[#6D2932] hover:brightness-125 text-white shadow-[#6D2932]/40"
+                                : "p-2.5 bg-slate-850 hover:bg-[#6D2932] text-slate-200 hover:text-white"
+                            }`}
+                          >
+                            <ShoppingCart size={16} />
+                            {isCenter && (
+                              <span className="hidden xs:inline">
+                                {addingToCartId === product._id ? "Adding..." : "Add to Cart"}
+                              </span>
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

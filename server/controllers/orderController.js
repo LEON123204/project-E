@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Cart = require('../models/Cart');
+const mongoose = require('mongoose');
 
 // Initialize Stripe conditionally
 let stripe;
@@ -20,7 +21,18 @@ const createOrder = async (req, res, next) => {
     const { items, shippingAddress, guestEmail, guestName, paymentMethod: rawPaymentMethod } = req.body;
     const paymentMethod = ['online', 'cod'].includes(rawPaymentMethod) ? rawPaymentMethod : 'online';
 
-    if (!items || items.length === 0) {
+    let orderItemsInput = items || req.body.orderItems;
+    if ((!orderItemsInput || orderItemsInput.length === 0) && req.user) {
+      const userCart = await Cart.findOne({ user: req.user._id });
+      if (userCart && userCart.items && userCart.items.length > 0) {
+        orderItemsInput = userCart.items.map(item => ({
+          product: item.product,
+          quantity: item.quantity
+        }));
+      }
+    }
+
+    if (!orderItemsInput || orderItemsInput.length === 0) {
       res.status(400);
       throw new Error('No order items provided');
     }
@@ -39,11 +51,30 @@ const createOrder = async (req, res, next) => {
     const orderItems = [];
     let subtotal = 0;
 
-    for (const item of items) {
+    for (const item of orderItemsInput) {
+      if (!item.product || !mongoose.Types.ObjectId.isValid(item.product)) {
+        res.status(400);
+        throw new Error(`Product not found: ${item.product}`);
+      }
+
       const product = await Product.findById(item.product);
       if (!product) {
-        res.status(404);
+        res.status(400);
         throw new Error(`Product not found: ${item.product}`);
+      }
+
+      if (product.status && product.status !== 'approved') {
+        res.status(400);
+        throw new Error(`Product is not available for purchase: ${product.name}`);
+      }
+
+      // Sellers cannot purchase their own product
+      if (product.sellerId && req.user && product.sellerId.toString() === req.user._id.toString()) {
+        res.status(400);
+        if (orderItemsInput.length > 1) {
+          throw new Error(`You cannot purchase your own product: ${product.name}`);
+        }
+        throw new Error('You cannot purchase your own product');
       }
 
       if (product.stock < item.quantity) {

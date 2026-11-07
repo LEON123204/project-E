@@ -97,7 +97,7 @@ function generateSuggestions(userMessage) {
 }
 
 const ChatWidget = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { showPrompt } = useLoginPrompt();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -112,6 +112,25 @@ const ChatWidget = () => {
   const [showTooltip, setShowTooltip] = useState(false);
   // atcStatus: keyed by message index, value: 'idle'|'loading'|'success'|'error', message
   const [atcStatus, setAtcStatus] = useState({});
+  const [ownProductIds, setOwnProductIds] = useState([]);
+
+  useEffect(() => {
+    if (isAuthenticated && user?.role === 'seller') {
+      fetch(`${API_BASE}/seller/products`, {
+        headers: getLocalAccessToken() ? { Authorization: `Bearer ${getLocalAccessToken()}` } : {},
+        credentials: 'include'
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.products && Array.isArray(data.products)) {
+            setOwnProductIds(data.products.map(p => p._id.toString()));
+          }
+        })
+        .catch(() => {});
+    } else {
+      setOwnProductIds([]);
+    }
+  }, [isAuthenticated, user]);
 
   const messagesEndRef = useRef(null);
   const abortControllerRef = useRef(null);
@@ -422,6 +441,9 @@ const ChatWidget = () => {
 
   // Add-to-cart call from Rex's inline button
   const handleAddToCartClick = async (productId, msgIndex) => {
+    if (ownProductIds.includes(productId.toString())) {
+      return;
+    }
     if (!isAuthenticated) {
       showPrompt({
         title: 'Sign in to add items to your cart',
@@ -590,6 +612,13 @@ const ChatWidget = () => {
 
                         {/* Add-to-Cart button — only when ATC tag present and stream finished */}
                         {message.atcProductId && !isStreaming && (() => {
+                          if (ownProductIds.includes(message.atcProductId.toString())) {
+                            return (
+                              <span className="text-xs font-semibold text-indigo-400 bg-indigo-950/60 border border-indigo-500/30 px-2.5 py-1 rounded-lg">
+                                Your listing
+                              </span>
+                            );
+                          }
                           const s = atcStatus[index];
                           if (s?.state === 'done') return null;
                           if (s?.state === 'success') return (

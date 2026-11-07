@@ -1,5 +1,6 @@
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
+const mongoose = require('mongoose');
 
 // Helper to get or create cart for user
 const getOrCreateCart = async (userId) => {
@@ -10,6 +11,30 @@ const getOrCreateCart = async (userId) => {
   return cart;
 };
 
+// Helper to format populated cart safely for API responses without modifying DB
+const formatCartResponse = (cart) => {
+  const cartObj = cart.toObject ? cart.toObject() : JSON.parse(JSON.stringify(cart));
+  const safeItems = [];
+
+  for (const item of (cartObj.items || [])) {
+    // If product was completely deleted from DB (null reference), omit to prevent client null crashes
+    if (!item.product) {
+      continue;
+    }
+
+    // Flag availability based on approval status
+    const isAvailable = (item.product.status === 'approved' || item.product.status == null);
+    item.isAvailable = isAvailable;
+    if (typeof item.product === 'object' && item.product !== null) {
+      item.product.isAvailable = isAvailable;
+    }
+    safeItems.push(item);
+  }
+
+  cartObj.items = safeItems;
+  return cartObj;
+};
+
 // @desc    Get current user's cart
 // @route   GET /api/v1/cart
 // @access  Private
@@ -17,15 +42,15 @@ const getCart = async (req, res, next) => {
   try {
     const cart = await getOrCreateCart(req.user._id);
     
-    // Populate product details
+    // Populate product details including status
     const populatedCart = await cart.populate({
       path: 'items.product',
-      select: 'name price images stock ratingsAvg'
+      select: 'name price images stock ratingsAvg status'
     });
 
     res.json({
       success: true,
-      cart: populatedCart
+      cart: formatCartResponse(populatedCart)
     });
   } catch (error) {
     next(error);
@@ -49,7 +74,8 @@ const addToCart = async (req, res, next) => {
 
         // Verify product exists
         const productExists = await Product.findById(prodId);
-        if (!productExists) continue;
+        if (!productExists || (productExists.status && productExists.status !== 'approved')) continue;
+        if (productExists.sellerId && req.user && productExists.sellerId.toString() === req.user._id.toString()) continue;
 
         const existingItemIndex = cart.items.findIndex(
           cartItem => cartItem.product.toString() === prodId.toString()
@@ -68,15 +94,26 @@ const addToCart = async (req, res, next) => {
       }
     } else {
       // Regular single item addition
-      if (!productId) {
+      if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
         res.status(400);
-        throw new Error('Product ID is required');
+        throw new Error('Valid Product ID is required');
       }
 
       const product = await Product.findById(productId);
       if (!product) {
-        res.status(404);
+        res.status(400);
         throw new Error('Product not found');
+      }
+
+      if (product.status && product.status !== 'approved') {
+        res.status(400);
+        throw new Error('Product is not available for purchase');
+      }
+
+      // Sellers cannot purchase their own product
+      if (product.sellerId && req.user && product.sellerId.toString() === req.user._id.toString()) {
+        res.status(400);
+        throw new Error('You cannot purchase your own product');
       }
 
       if (product.stock === 0) {
@@ -106,12 +143,12 @@ const addToCart = async (req, res, next) => {
     await cart.save();
     const populatedCart = await cart.populate({
       path: 'items.product',
-      select: 'name price images stock ratingsAvg'
+      select: 'name price images stock ratingsAvg status'
     });
 
     res.json({
       success: true,
-      cart: populatedCart
+      cart: formatCartResponse(populatedCart)
     });
   } catch (error) {
     next(error);
@@ -157,12 +194,12 @@ const updateCartItem = async (req, res, next) => {
 
     const populatedCart = await cart.populate({
       path: 'items.product',
-      select: 'name price images stock ratingsAvg'
+      select: 'name price images stock ratingsAvg status'
     });
 
     res.json({
       success: true,
-      cart: populatedCart
+      cart: formatCartResponse(populatedCart)
     });
   } catch (error) {
     next(error);
@@ -184,12 +221,12 @@ const removeFromCart = async (req, res, next) => {
     await cart.save();
     const populatedCart = await cart.populate({
       path: 'items.product',
-      select: 'name price images stock ratingsAvg'
+      select: 'name price images stock ratingsAvg status'
     });
 
     res.json({
       success: true,
-      cart: populatedCart
+      cart: formatCartResponse(populatedCart)
     });
   } catch (error) {
     next(error);

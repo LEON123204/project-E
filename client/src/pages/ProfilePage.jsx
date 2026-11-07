@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { 
@@ -12,7 +12,12 @@ import {
   Check, 
   Truck, 
   X,
-  CreditCard
+  CreditCard,
+  Store,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  ArrowRight
 } from 'lucide-react';
 
 const ProfilePage = () => {
@@ -207,6 +212,18 @@ const ProfilePage = () => {
             >
               <Settings size={18} />
               Account Settings
+            </button>
+            <button
+              onClick={() => handleTabChange('seller')}
+              className={`flex items-center gap-2.5 py-2.5 px-3.5 rounded-xl text-left cursor-pointer transition-smooth shrink-0 whitespace-nowrap ${
+                activeTab === 'seller' ? 'bg-amber-500 text-white font-semibold' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
+              }`}
+            >
+              <Store size={18} />
+              Seller Application
+              {user?.sellerApplicationStatus === 'pending' && (
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+              )}
             </button>
           </nav>
         </div>
@@ -542,6 +559,125 @@ const ProfilePage = () => {
                 </form>
               </div>
 
+            </div>
+          )}
+
+          {/* TAB 4: SELLER APPLICATION */}
+          {activeTab === 'seller' && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-bold text-slate-200 border-b border-slate-850 pb-4 flex items-center gap-2">
+                <Store size={20} className="text-amber-400" />
+                Seller Application & Status
+              </h2>
+
+              {/* Status Display Card */}
+              {user?.sellerApplicationStatus === 'pending' ? (
+                <div className="bg-amber-500/10 border border-amber-500/30 p-6 rounded-2xl space-y-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <Clock size={24} className="text-amber-400" />
+                      <div>
+                        <h3 className="font-bold text-slate-100 text-base">Application Pending Review</h3>
+                        <p className="text-xs text-amber-300">Your seller application has been submitted and is under review.</p>
+                      </div>
+                    </div>
+                    <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] uppercase font-extrabold px-3 py-1 rounded-full">
+                      Pending
+                    </span>
+                  </div>
+
+                  <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-850 space-y-2 text-xs">
+                    <div>
+                      <span className="text-slate-500 font-medium">Business Name: </span>
+                      <span className="text-slate-200 font-semibold">{user.businessName}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 font-medium">Contact Phone: </span>
+                      <span className="text-slate-200 font-semibold">{user.contactPhone}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 font-medium">Description: </span>
+                      <span className="text-slate-300 block mt-1 italic">{user.businessDescription}</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex justify-end">
+                    <Link
+                      to="/become-seller"
+                      className="bg-slate-800 hover:bg-slate-750 text-slate-200 text-xs font-semibold py-2 px-4 rounded-xl flex items-center gap-1.5 transition-smooth"
+                    >
+                      View Application Details <ArrowRight size={14} />
+                    </Link>
+                  </div>
+                </div>
+              ) : user?.sellerApplicationStatus === 'approved' || user?.role === 'seller' ? (
+                <div className="bg-emerald-500/10 border border-emerald-500/30 p-6 rounded-2xl space-y-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle2 size={24} className="text-emerald-400" />
+                      <div>
+                        <h3 className="font-bold text-slate-100 text-base">Approved Seller</h3>
+                        <p className="text-xs text-emerald-300">Your seller account is active.</p>
+                      </div>
+                    </div>
+                    <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] uppercase font-extrabold px-3 py-1 rounded-full">
+                      Approved
+                    </span>
+                  </div>
+
+                  <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-850 space-y-2 text-xs">
+                    <div>
+                      <span className="text-slate-500 font-medium">Business Name: </span>
+                      <span className="text-slate-200 font-semibold">{user.businessName}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 font-medium">Contact Phone: </span>
+                      <span className="text-slate-200 font-semibold">{user.contactPhone}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : user?.sellerApplicationStatus === 'rejected' ? (
+                <div className="bg-rose-500/10 border border-rose-500/30 p-6 rounded-2xl space-y-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <XCircle size={24} className="text-rose-400" />
+                      <div>
+                        <h3 className="font-bold text-slate-100 text-base">Application Rejected</h3>
+                        <p className="text-xs text-rose-300">Your previous seller application was not approved.</p>
+                      </div>
+                    </div>
+                    <span className="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] uppercase font-extrabold px-3 py-1 rounded-full">
+                      Rejected
+                    </span>
+                  </div>
+
+                  <div className="pt-2 flex justify-end">
+                    <Link
+                      to="/become-seller"
+                      className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 px-5 rounded-xl flex items-center gap-1.5 transition-smooth"
+                    >
+                      Update & Re-apply <ArrowRight size={14} />
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-slate-950/40 border border-slate-850 p-8 rounded-2xl text-center space-y-4">
+                  <Store size={40} className="mx-auto text-indigo-400" />
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-200">Become a Seller on Cartex</h3>
+                    <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
+                      Expand your retail business. Apply now to start selling products to thousands of online customers.
+                    </p>
+                  </div>
+                  <Link
+                    to="/become-seller"
+                    className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 px-6 rounded-xl transition-smooth shadow-lg shadow-indigo-600/20"
+                  >
+                    Apply Now
+                    <ArrowRight size={14} />
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 

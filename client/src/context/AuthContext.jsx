@@ -135,6 +135,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const applyForSeller = async (applicationData) => {
+    try {
+      const response = await api.post('/seller/apply', applicationData);
+      if (response.data.user) {
+        setUser(response.data.user);
+      } else {
+        const meRes = await api.get('/auth/me');
+        setUser(meRes.data.user);
+      }
+      return { success: true, message: response.data.message };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to submit seller application';
+      return { success: false, message };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -148,8 +164,11 @@ export const AuthProvider = ({ children }) => {
         addAddress,
         deleteAddress,
         setDefaultAddress,
+        applyForSeller,
         isAuthenticated: !!user,
-        isAdmin: user?.role === 'admin'
+        isAdmin: user?.role === 'admin',
+        isSeller: user?.role === 'seller',
+        sellerApplicationStatus: user?.sellerApplicationStatus || 'none'
       }}
     >
       {children}
