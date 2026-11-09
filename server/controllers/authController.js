@@ -75,7 +75,7 @@ const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+password');
     if (user && (await user.comparePassword(password))) {
       const accessToken = generateAccessToken(user);
       const refreshToken = generateRefreshToken(user);
@@ -236,7 +236,7 @@ const updateUserProfile = async (req, res, next) => {
 const changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user._id).select('+password');
 
     if (user && (await user.comparePassword(currentPassword))) {
       user.password = newPassword;
