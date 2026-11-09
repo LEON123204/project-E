@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { 
   Search, 
   Package, 
@@ -19,11 +20,12 @@ const OrderTracking = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const urlEmail = searchParams.get('email') || '';
 
   // Form states
   const [searchId, setSearchId] = useState(id || '');
-  const [searchEmail, setSearchEmail] = useState(urlEmail);
+  const [searchEmail, setSearchEmail] = useState(urlEmail || user?.email || '');
 
   // Tracking details state
   const [order, setOrder] = useState(null);
@@ -36,7 +38,7 @@ const OrderTracking = () => {
     setOrder(null);
     try {
       const res = await api.get(`/orders/guest/${orderId}`, {
-        params: { email: emailVal }
+        params: emailVal ? { email: emailVal } : {}
       });
       if (res.data.success) {
         setOrder(res.data.order);
@@ -48,20 +50,42 @@ const OrderTracking = () => {
     }
   };
 
+  // Prefill email when user logs in if not provided in URL
   useEffect(() => {
-    if (id && urlEmail) {
-      fetchOrder(id, urlEmail);
+    if (user?.email && !urlEmail && !searchEmail) {
+      setSearchEmail(user.email);
     }
-  }, [id, urlEmail]);
+  }, [user, urlEmail]);
+
+  // Keep searchId in sync with route params
+  useEffect(() => {
+    if (id) {
+      setSearchId(id);
+    }
+  }, [id]);
+
+  // Auto-run lookup when order ID is in URL
+  useEffect(() => {
+    if (id) {
+      const emailToUse = urlEmail || user?.email || searchEmail || '';
+      fetchOrder(id, emailToUse);
+    }
+  }, [id, urlEmail, user?.email]);
 
   const handleTrackSubmit = (e) => {
     e.preventDefault();
-    if (!searchId || !searchEmail) {
-      setError('Please provide both Order ID and Email address.');
+    if (!searchId.trim()) {
+      setError('Please provide an Order ID.');
+      return;
+    }
+    if (!user && !searchEmail.trim()) {
+      setError('Please provide an Email address.');
       return;
     }
     // Update URL to match search params
-    navigate(`/order-tracking/${searchId.trim()}?email=${encodeURIComponent(searchEmail.trim())}`);
+    const emailToUse = searchEmail.trim() || user?.email || '';
+    const query = emailToUse ? `?email=${encodeURIComponent(emailToUse)}` : '';
+    navigate(`/order-tracking/${searchId.trim()}${query}`);
   };
 
   // Helper to determine status classes for the visual tracker
@@ -114,13 +138,15 @@ const OrderTracking = () => {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] text-slate-400 uppercase font-semibold">Email Address</label>
+              <label className="text-[10px] text-slate-400 uppercase font-semibold">
+                Email Address {user && <span className="text-slate-500 font-normal lowercase">(optional for order owner)</span>}
+              </label>
               <input
                 type="email"
-                placeholder="john@example.com"
+                placeholder={user ? "optional for order owner" : "john@example.com"}
                 value={searchEmail}
                 onChange={(e) => setSearchEmail(e.target.value)}
-                required
+                required={!user}
                 className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-slate-100 outline-none transition-smooth"
               />
             </div>
@@ -269,11 +295,11 @@ const OrderTracking = () => {
                 <div className="text-xs space-y-2 text-slate-400 leading-relaxed">
                   <div className="flex justify-between">
                     <span className="text-slate-500">Receiver Name:</span>
-                    <span className="font-semibold text-slate-300">{order.guestName}</span>
+                    <span className="font-semibold text-slate-300">{order.guestName || order.user?.name || 'Customer'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-500">Tracking Email:</span>
-                    <span className="font-semibold text-slate-300">{order.guestEmail}</span>
+                    <span className="font-semibold text-slate-300">{order.guestEmail || order.user?.email || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between pt-1 border-t border-slate-850/50">
                     <span className="text-slate-500 shrink-0 mr-4">Address:</span>

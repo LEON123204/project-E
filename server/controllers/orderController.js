@@ -113,7 +113,7 @@ const createOrder = async (req, res, next) => {
           const paymentIntent = await stripe.paymentIntents.create({
             amount: Math.round(totalAmount * 100),
             currency: 'inr',
-            metadata: { 
+            metadata: {
               userId: req.user ? req.user._id.toString() : 'guest',
               guestEmail: req.user ? undefined : guestEmail
             }
@@ -252,7 +252,7 @@ const confirmPayment = async (req, res, next) => {
             { $inc: { stock: -item.quantity } },
             { new: true }
           );
-          
+
           if (!updatedProduct) {
             throw new Error(`Insufficient stock or product not found: ${item.name || 'Unknown Item'}`);
           }
@@ -265,11 +265,11 @@ const confirmPayment = async (req, res, next) => {
             $inc: { stock: rolledBack.quantity }
           });
         }
-        
+
         // Mark the order payment status as failed since the payment verification failed due to stock issues
         order.paymentStatus = 'failed';
         await order.save();
-        
+
         res.status(400);
         throw new Error(err.message || 'Payment confirmation failed due to insufficient stock.');
       }
@@ -436,28 +436,47 @@ const updateOrderStatus = async (req, res, next) => {
   }
 };
 
-// @desc    Get guest order by ID and Email (Public lookup)
+// @desc    Get order details for tracking (Guest, Owner, or Admin)
 // @route   GET /api/v1/orders/guest/:id
-// @access  Public
+// @access  Public (Optional Protect)
 const getGuestOrder = async (req, res, next) => {
   try {
     const { email } = req.query;
-    if (!email) {
-      res.status(400);
-      throw new Error('Email is required to track a guest order');
+
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      res.status(404);
+      throw new Error('Order not found');
     }
 
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate('user', 'name email');
 
     if (!order) {
       res.status(404);
       throw new Error('Order not found');
     }
 
-    // Verify it's a guest order and the email matches
-    if (!order.isGuest || !order.guestEmail || order.guestEmail.toLowerCase() !== email.toLowerCase()) {
-      res.status(403);
-      throw new Error('Not authorized to access this order or email mismatch');
+    // 1. Authorized if user is admin
+    const isAdmin = req.user && req.user.role === 'admin';
+
+    // 2. Authorized if logged-in user owns the order
+    const isOwner = req.user && order.user && (
+      order.user._id ? order.user._id.toString() : order.user.toString()
+    ) === req.user._id.toString();
+
+    if (isAdmin || isOwner) {
+      return res.json({
+        success: true,
+        order
+      });
+    }
+
+    // 3. Guest or non-owner: must supply matching order email (trimmed, case-insensitive)
+    const orderEmail = order.guestEmail || (order.user && order.user.email);
+    const providedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+
+    if (!providedEmail || !orderEmail || orderEmail.trim().toLowerCase() !== providedEmail) {
+      res.status(404);
+      throw new Error('Order not found');
     }
 
     res.json({

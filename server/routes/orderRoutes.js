@@ -16,7 +16,7 @@ const { protect, admin, optionalProtect } = require('../middleware/auth');
 router.post('/', optionalProtect, createOrder);
 router.post('/confirm-payment', optionalProtect, confirmPayment);
 router.get('/my-orders', protect, getMyOrders);
-router.get('/guest/:id', getGuestOrder);
+router.get('/guest/:id', optionalProtect, getGuestOrder);
 router.get('/:id', protect, getOrderById);
 
 // Admin-only Order Management routes

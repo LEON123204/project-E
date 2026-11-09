@@ -269,6 +269,13 @@ const ProfilePage = () => {
                         <span className={`text-[10px] uppercase font-bold py-1 px-3.5 rounded-full ${getStatusBadgeClass(order.orderStatus)}`}>
                           {order.orderStatus}
                         </span>
+                        <Link
+                          to={`/order-tracking/${order._id}`}
+                          className="bg-indigo-650 hover:bg-indigo-550 text-white font-bold py-1.5 px-3.5 rounded-xl text-xs transition-smooth cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Truck size={13} />
+                          Track Order
+                        </Link>
                         <button
                           onClick={() => setSelectedOrder(order)}
                           className="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-amber-400 hover:text-amber-300 font-bold py-1.5 px-4 rounded-xl text-xs transition-smooth cursor-pointer"
@@ -693,12 +700,21 @@ const ProfilePage = () => {
                 <h3 className="font-bold text-slate-200 text-sm sm:text-base">Order Details</h3>
                 <span className="text-[9px] sm:text-[10px] font-mono text-slate-500">ID: #{selectedOrder._id}</span>
               </div>
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="p-2 bg-slate-950 border border-slate-800 hover:bg-slate-850 rounded-lg text-slate-450 hover:text-slate-200 transition-smooth cursor-pointer"
-              >
-                <X size={18} />
-              </button>
+              <div className="flex items-center gap-2">
+                <Link
+                  to={`/order-tracking/${selectedOrder._id}`}
+                  className="bg-indigo-650 hover:bg-indigo-550 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition-smooth flex items-center gap-1.5"
+                >
+                  <Truck size={13} />
+                  <span>Track Order</span>
+                </Link>
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="p-2 bg-slate-950 border border-slate-800 hover:bg-slate-850 rounded-lg text-slate-450 hover:text-slate-200 transition-smooth cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
             {/* Modal Body */}
