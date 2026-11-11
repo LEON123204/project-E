@@ -2,6 +2,7 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Cart = require('../models/Cart');
 const mongoose = require('mongoose');
+const { splitOrderBySeller } = require('../utils/orderSplit');
 
 // Initialize Stripe conditionally
 let stripe;
@@ -86,7 +87,8 @@ const createOrder = async (req, res, next) => {
         product: product._id,
         name: product.name,
         quantity: item.quantity,
-        price: product.price // Save purchase-time price
+        price: product.price, // Save purchase-time price
+        sellerId: product.sellerId || null
       });
 
       subtotal += product.price * item.quantity;
@@ -101,6 +103,22 @@ const createOrder = async (req, res, next) => {
     const shippingCost = subtotal > 1000 ? 0 : 99.00;
     const estimatedTax = Math.round(subtotal * 0.08 * 100) / 100;
     const totalAmount = Math.max(0, subtotal - prepayDiscount + shippingCost + estimatedTax);
+
+    // Split order into subOrders grouped by seller
+    let subOrders;
+    try {
+      subOrders = splitOrderBySeller({
+        items: orderItems,
+        subtotal,
+        taxAmount: estimatedTax,
+        shippingAmount: shippingCost,
+        prepayDiscount,
+        totalAmount
+      });
+    } catch (splitError) {
+      res.status(400);
+      throw new Error(`Order split failed: ${splitError.message}`);
+    }
 
     let clientSecret = null;
     let paymentIntentId = null;
@@ -161,6 +179,7 @@ const createOrder = async (req, res, next) => {
     // Create the order in DB with 'pending' payment and order status
     const orderData = {
       items: orderItems,
+      subOrders,
       shippingAddress,
       paymentMethod,
       subtotal,
@@ -425,6 +444,11 @@ const updateOrderStatus = async (req, res, next) => {
 
 
     order.orderStatus = status;
+    if (order.subOrders && order.subOrders.length > 0) {
+      for (const sub of order.subOrders) {
+        sub.status = status;
+      }
+    }
     const updatedOrder = await order.save();
 
     res.json({
@@ -509,6 +533,14 @@ const markPaymentCollected = async (req, res, next) => {
     }
 
     order.paymentStatus = 'paid';
+    if (order.subOrders && order.subOrders.length > 0) {
+      const now = new Date();
+      for (const sub of order.subOrders) {
+        sub.codCollected = true;
+        sub.collectedBy = req.user._id;
+        sub.collectedAt = now;
+      }
+    }
     const updatedOrder = await order.save();
 
     res.json({
