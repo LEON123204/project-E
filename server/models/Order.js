@@ -18,7 +18,46 @@ const orderItemSchema = new mongoose.Schema({
   price: {
     type: Number,
     required: true // Price at time of purchase
+  },
+  sellerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
   }
+});
+
+const subOrderSchema = new mongoose.Schema({
+  sellerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  items: [orderItemSchema],
+  subtotal: {
+    type: Number,
+    required: true,
+    default: 0
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'shipped', 'delivered', 'cancelled'],
+    default: 'pending'
+  },
+  codCollected: {
+    type: Boolean,
+    default: false
+  },
+  collectedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  collectedAt: {
+    type: Date,
+    default: null
+  }
+}, {
+  timestamps: true
 });
 
 const orderSchema = new mongoose.Schema({
@@ -40,6 +79,7 @@ const orderSchema = new mongoose.Schema({
     required: function() { return this.isGuest; }
   },
   items: [orderItemSchema],
+  subOrders: [subOrderSchema],
   shippingAddress: {
     street: { type: String, required: true },
     city: { type: String, required: true },
@@ -84,6 +124,8 @@ const orderSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+orderSchema.index({ 'subOrders.sellerId': 1 });
 
 const Order = mongoose.model('Order', orderSchema);
 module.exports = Order;
