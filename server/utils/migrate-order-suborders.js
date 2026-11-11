@@ -23,43 +23,52 @@ const runMigration = async () => {
     await mongoose.connect(rawUri);
     console.log('MongoDB connected for sub-orders migration.\n');
 
-    // Query for orders that have no subOrders:
-    // Either subOrders does not exist, is null, or is an empty array
-    const query = {
+    const totalOrders = await Order.countDocuments({});
+
+    // 1. Orders missing subOrders entirely (or empty array)
+    const ordersWithoutSubOrders = await Order.find({
       $or: [
         { subOrders: { $exists: false } },
         { subOrders: null },
         { subOrders: { $size: 0 } }
       ]
-    };
+    });
 
-    const ordersToMigrate = await Order.find(query);
-    const totalOrders = await Order.countDocuments({});
-    const ordersMatched = ordersToMigrate.length;
+    // 2. Orders with exactly 1 subOrder whose amountDue is missing, null, or <= 0 (when totalAmount > 0)
+    const ordersNeedingAmountDue = await Order.find({
+      subOrders: { $size: 1 },
+      totalAmount: { $gt: 0 },
+      $or: [
+        { 'subOrders.0.amountDue': { $exists: false } },
+        { 'subOrders.0.amountDue': { $lte: 0 } }
+      ]
+    });
+
+    const ordersMatched = ordersWithoutSubOrders.length + ordersNeedingAmountDue.length;
     let ordersModified = 0;
     const ordersSkipped = totalOrders - ordersMatched;
 
     console.log(`--- Migration Scan ---`);
     console.log(`Total orders in DB: ${totalOrders}`);
+    console.log(`Orders missing subOrders: ${ordersWithoutSubOrders.length}`);
+    console.log(`Orders needing amountDue backfill: ${ordersNeedingAmountDue.length}`);
     console.log(`Orders matched: ${ordersMatched}`);
     console.log(`Orders skipped: ${ordersSkipped}`);
 
-    if (ordersMatched > 0) {
-      console.log(`\nMigrating ${ordersMatched} order(s)...`);
-      for (const order of ordersToMigrate) {
-        // Calculate subtotal from items
+    // Backfill missing subOrders
+    if (ordersWithoutSubOrders.length > 0) {
+      console.log(`\nCreating subOrders for ${ordersWithoutSubOrders.length} order(s)...`);
+      for (const order of ordersWithoutSubOrders) {
         const itemsTotal = (order.items || []).reduce(
           (sum, item) => sum + (Number(item.price) * Number(item.quantity)),
           0
         );
 
-        // Copy COD collected fields
         const isCodPaid = order.paymentMethod === 'cod' && order.paymentStatus === 'paid';
         const codCollected = order.codCollected !== undefined ? Boolean(order.codCollected) : isCodPaid;
         const collectedBy = order.collectedBy || null;
         const collectedAt = order.collectedAt || (isCodPaid ? (order.updatedAt || new Date()) : null);
 
-        // Format items with optional sellerId: null
         const subOrderItems = (order.items || []).map(item => ({
           product: item.product,
           name: item.name,
@@ -72,6 +81,7 @@ const runMigration = async () => {
           sellerId: null, // sold by Cartex
           items: subOrderItems,
           subtotal: itemsTotal,
+          amountDue: order.totalAmount !== undefined ? order.totalAmount : itemsTotal,
           status: order.orderStatus || 'pending',
           codCollected,
           collectedBy,
@@ -84,6 +94,23 @@ const runMigration = async () => {
             $set: {
               subOrders: [singleSubOrder],
               items: subOrderItems
+            }
+          }
+        );
+
+        ordersModified++;
+      }
+    }
+
+    // Backfill amountDue for existing single subOrders
+    if (ordersNeedingAmountDue.length > 0) {
+      console.log(`\nBackfilling amountDue for ${ordersNeedingAmountDue.length} order(s)...`);
+      for (const order of ordersNeedingAmountDue) {
+        await Order.updateOne(
+          { _id: order._id },
+          {
+            $set: {
+              'subOrders.0.amountDue': order.totalAmount
             }
           }
         );
@@ -110,4 +137,3 @@ const runMigration = async () => {
 };
 
 runMigration();
-

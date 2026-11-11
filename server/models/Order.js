@@ -38,6 +38,11 @@ const subOrderSchema = new mongoose.Schema({
     required: true,
     default: 0
   },
+  amountDue: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   status: {
     type: String,
     enum: ['pending', 'shipped', 'delivered', 'cancelled'],
