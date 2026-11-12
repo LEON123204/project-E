@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import {
@@ -249,14 +250,23 @@ const SellerDashboard = () => {
               New products require admin approval before they appear in the public store.
             </p>
           </div>
-          <button
-            id="seller-add-product-btn"
-            onClick={handleOpenAdd}
-            className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer shadow-lg shadow-indigo-600/25 shrink-0"
-          >
-            <Plus size={16} />
-            Add New Product
-          </button>
+          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+            <Link
+              to="/seller/orders"
+              className="w-full sm:w-auto bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-bold py-2.5 px-5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all duration-200"
+            >
+              <Package size={16} />
+              My Orders
+            </Link>
+            <button
+              id="seller-add-product-btn"
+              onClick={handleOpenAdd}
+              className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer shadow-lg shadow-indigo-600/25"
+            >
+              <Plus size={16} />
+              Add New Product
+            </button>
+          </div>
         </div>
 
         {/* ── Stats Row ── */}

@@ -14,7 +14,8 @@ import {
   X, 
   LayoutDashboard,
   ChevronDown,
-  Store
+  Store,
+  Package
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -137,14 +138,24 @@ const Navbar = () => {
                       </Link>
                     )}
                     {isSeller && (
-                      <Link
-                        to="/seller/dashboard"
-                        onClick={() => setProfileDropdownOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-emerald-400 hover:bg-slate-850 hover:text-emerald-300 transition-smooth"
-                      >
-                        <Store size={16} />
-                        Seller Dashboard
-                      </Link>
+                      <>
+                        <Link
+                          to="/seller/dashboard"
+                          onClick={() => setProfileDropdownOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-emerald-400 hover:bg-slate-850 hover:text-emerald-300 transition-smooth"
+                        >
+                          <Store size={16} />
+                          Seller Dashboard
+                        </Link>
+                        <Link
+                          to="/seller/orders"
+                          onClick={() => setProfileDropdownOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-emerald-400 hover:bg-slate-850 hover:text-emerald-300 transition-smooth"
+                        >
+                          <Package size={16} />
+                          Orders
+                        </Link>
+                      </>
                     )}
                     <Link
                       to="/profile"
@@ -275,13 +286,22 @@ const Navbar = () => {
               Wishlist {wishlist.length > 0 && <span className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">{wishlist.length}</span>}
             </Link>
             {isSeller && (
-            <Link
-              to="/seller/dashboard"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block text-slate-300 hover:text-indigo-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
-            >
-              Seller Dashboard
-            </Link>
+              <>
+                <Link
+                  to="/seller/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block text-slate-300 hover:text-indigo-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+                >
+                  Seller Dashboard
+                </Link>
+                <Link
+                  to="/seller/orders"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block text-slate-300 hover:text-indigo-400 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+                >
+                  Orders
+                </Link>
+              </>
             )}
             {!isSeller && !isAdmin && (
             <Link
@@ -307,13 +327,22 @@ const Navbar = () => {
                   </Link>
                 )}
                 {isSeller && (
-                  <Link
-                    to="/seller/dashboard"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block text-emerald-400 hover:text-emerald-300 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
-                  >
-                    Seller Dashboard
-                  </Link>
+                  <>
+                    <Link
+                      to="/seller/dashboard"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block text-emerald-400 hover:text-emerald-300 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+                    >
+                      Seller Dashboard
+                    </Link>
+                    <Link
+                      to="/seller/orders"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block text-emerald-400 hover:text-emerald-300 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+                    >
+                      Orders
+                    </Link>
+                  </>
                 )}
                 <Link
                   to="/profile"

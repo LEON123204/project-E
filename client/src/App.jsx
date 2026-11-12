@@ -41,6 +41,7 @@ import AdminSellerProducts from './pages/admin/AdminSellerProducts';
 
 // Seller Pages
 import SellerDashboard from './pages/seller/SellerDashboard';
+import SellerOrders from './pages/seller/SellerOrders';
 
 function App() {
   return (
@@ -156,6 +157,14 @@ function App() {
                     element={
                       <ProtectedRoute sellerOnly={true}>
                         <SellerDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/seller/orders"
+                    element={
+                      <ProtectedRoute sellerOnly={true}>
+                        <SellerOrders />
                       </ProtectedRoute>
                     }
                   />
