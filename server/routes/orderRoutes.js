@@ -8,7 +8,9 @@ const {
   getAllOrders,
   updateOrderStatus,
   getGuestOrder,
-  markPaymentCollected
+  markPaymentCollected,
+  adminUpdateSubOrderStatus,
+  adminCollectCash
 } = require('../controllers/orderController');
 const { protect, admin, optionalProtect } = require('../middleware/auth');
 
@@ -23,5 +25,7 @@ router.get('/:id', protect, getOrderById);
 router.get('/', protect, admin, getAllOrders);
 router.put('/:id/status', protect, admin, updateOrderStatus);
 router.put('/:id/collect-payment', protect, admin, markPaymentCollected);
+router.put('/:orderId/suborders/:subOrderId/status', protect, admin, adminUpdateSubOrderStatus);
+router.put('/:orderId/suborders/:subOrderId/collect-cash', protect, admin, adminCollectCash);
 
 module.exports = router;

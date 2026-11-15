@@ -3,6 +3,12 @@ const Product = require('../models/Product');
 const Cart = require('../models/Cart');
 const mongoose = require('mongoose');
 const { splitOrderBySeller } = require('../utils/orderSplit');
+const {
+  isValidAdminTransition,
+  deriveParentStatus,
+  deriveParentPaymentStatus,
+  stockWasDecremented
+} = require('../utils/subOrderState');
 
 // Initialize Stripe conditionally
 let stripe;
@@ -245,6 +251,12 @@ const confirmPayment = async (req, res, next) => {
       return res.json({ success: true, message: 'Order is already marked as paid', order });
     }
 
+    const allPartsCancelled = order.subOrders && order.subOrders.length > 0 && order.subOrders.every(s => s.status === 'cancelled');
+    if (order.orderStatus === 'cancelled' || allPartsCancelled) {
+      res.status(400);
+      throw new Error('Cannot confirm payment for a cancelled order');
+    }
+
     let isSuccess = false;
 
     if (isStripeConfigured()) {
@@ -403,52 +415,90 @@ const updateOrderStatus = async (req, res, next) => {
       throw new Error('Invalid order status');
     }
 
-    // Special logic: If order is paid, handle stock on cancellation/restoration
-    if (order.paymentStatus === 'paid') {
-      // If order is cancelled, return items back to stock
-      if (status === 'cancelled' && order.orderStatus !== 'cancelled') {
-        for (const item of order.items) {
-          await Product.findByIdAndUpdate(item.product, {
-            $inc: { stock: item.quantity }
-          });
-        }
-      }
-
-      // If status is restored from cancelled to pending/shipped, subtract stock again
-      if (order.orderStatus === 'cancelled' && status !== 'cancelled') {
-        const updatedProducts = [];
-        try {
+    // Legacy order without subOrders: preserve exact legacy behavior
+    if (!order.subOrders || order.subOrders.length === 0) {
+      if (order.paymentStatus === 'paid') {
+        if (status === 'cancelled' && order.orderStatus !== 'cancelled') {
           for (const item of order.items) {
-            const updatedProduct = await Product.findOneAndUpdate(
-              { _id: item.product, stock: { $gte: item.quantity } },
-              { $inc: { stock: -item.quantity } },
-              { new: true }
-            );
-            if (!updatedProduct) {
-              throw new Error(`Insufficient stock for product: ${item.name || 'item'}`);
-            }
-            updatedProducts.push({ product: item.product, quantity: item.quantity });
-          }
-        } catch (err) {
-          // Rollback
-          for (const rolledBack of updatedProducts) {
-            await Product.findByIdAndUpdate(rolledBack.product, {
-              $inc: { stock: rolledBack.quantity }
+            await Product.findByIdAndUpdate(item.product, {
+              $inc: { stock: item.quantity }
             });
           }
-          res.status(400);
-          throw new Error(err.message || 'Failed to restore order due to insufficient stock.');
+        }
+
+        if (order.orderStatus === 'cancelled' && status !== 'cancelled') {
+          const updatedProducts = [];
+          try {
+            for (const item of order.items) {
+              const updatedProduct = await Product.findOneAndUpdate(
+                { _id: item.product, stock: { $gte: item.quantity } },
+                { $inc: { stock: -item.quantity } },
+                { new: true }
+              );
+              if (!updatedProduct) {
+                throw new Error(`Insufficient stock for product: ${item.name || 'item'}`);
+              }
+              updatedProducts.push({ product: item.product, quantity: item.quantity });
+            }
+          } catch (err) {
+            for (const rolledBack of updatedProducts) {
+              await Product.findByIdAndUpdate(rolledBack.product, {
+                $inc: { stock: rolledBack.quantity }
+              });
+            }
+            res.status(400);
+            throw new Error(err.message || 'Failed to restore order due to insufficient stock.');
+          }
         }
       }
+
+      order.orderStatus = status;
+      const updatedOrder = await order.save();
+      return res.json({
+        success: true,
+        order: updatedOrder
+      });
     }
 
+    // Modern order with subOrders:
+    // Apply ONLY to subOrders that can legally make that move.
+    // Skip cancelled/delivered ones, never overwrite a seller's delivered part.
+    // Cancelling an order restores stock ONLY for subOrders that were not already cancelled (never twice).
+    const stockWasDecrementedFlag = stockWasDecremented(order);
+    const itemsToRestore = [];
 
-    order.orderStatus = status;
-    if (order.subOrders && order.subOrders.length > 0) {
-      for (const sub of order.subOrders) {
+    for (const sub of order.subOrders) {
+      if (sub.status === status) {
+        continue;
+      }
+      if (isValidAdminTransition(sub.status, status)) {
+        if (status === 'cancelled' && stockWasDecrementedFlag) {
+          for (const item of sub.items) {
+            itemsToRestore.push({ product: item.product, quantity: item.quantity });
+          }
+        }
         sub.status = status;
       }
     }
+
+    if (itemsToRestore.length > 0) {
+      await Product.bulkWrite(
+        itemsToRestore.map(item => ({
+          updateOne: {
+            filter: { _id: item.product },
+            update: { $inc: { stock: item.quantity } }
+          }
+        }))
+      );
+    }
+
+    // Re-derive parent orderStatus and paymentStatus
+    order.orderStatus = deriveParentStatus(order.subOrders);
+    const newPaymentStatus = deriveParentPaymentStatus(order, order.subOrders);
+    if (newPaymentStatus !== null) {
+      order.paymentStatus = newPaymentStatus;
+    }
+
     const updatedOrder = await order.save();
 
     res.json({
@@ -532,15 +582,25 @@ const markPaymentCollected = async (req, res, next) => {
       });
     }
 
-    order.paymentStatus = 'paid';
     if (order.subOrders && order.subOrders.length > 0) {
       const now = new Date();
       for (const sub of order.subOrders) {
-        sub.codCollected = true;
-        sub.collectedBy = req.user._id;
-        sub.collectedAt = now;
+        if (sub.status !== 'cancelled') {
+          sub.codCollected = true;
+          sub.collectedBy = req.user._id;
+          sub.collectedAt = now;
+        }
       }
+      const newPaymentStatus = deriveParentPaymentStatus(order, order.subOrders);
+      if (newPaymentStatus !== null) {
+        order.paymentStatus = newPaymentStatus;
+      } else {
+        order.paymentStatus = 'paid';
+      }
+    } else {
+      order.paymentStatus = 'paid';
     }
+
     const updatedOrder = await order.save();
 
     res.json({
@@ -548,6 +608,217 @@ const markPaymentCollected = async (req, res, next) => {
       message: 'Payment marked as collected successfully',
       order: updatedOrder
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Admin update subOrder status
+// @route   PUT /api/v1/orders/:orderId/suborders/:subOrderId/status
+// @access  Private/Admin
+const adminUpdateSubOrderStatus = async (req, res, next) => {
+  try {
+    const { orderId, subOrderId } = req.params;
+    const { status: newStatus } = req.body;
+
+    // 1. Validate ObjectIds
+    if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(subOrderId)) {
+      return res.status(404).json({ success: false, message: 'Order or sub-order not found' });
+    }
+
+    // 2. Validate status value
+    if (!['pending', 'shipped', 'delivered', 'cancelled'].includes(newStatus)) {
+      return res.status(400).json({ success: false, message: 'Invalid status value' });
+    }
+
+    // 3. Find order
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    // 4. Find subOrder
+    const subOrder = (order.subOrders || []).find(
+      s => s._id.toString() === subOrderId.toString()
+    );
+    if (!subOrder) {
+      return res.status(404).json({ success: false, message: 'SubOrder not found' });
+    }
+
+    // Do not allow part-level cancellation of an unpaid online order
+    if (newStatus === 'cancelled' && order.paymentMethod.toLowerCase() === 'online' && order.paymentStatus !== 'paid') {
+      return res.status(400).json({
+        success: false,
+        message: 'Order is awaiting payment; cancel the whole order from the admin order list'
+      });
+    }
+
+    const currentStatus = subOrder.status;
+
+    // 5. Same status -> 409
+    if (currentStatus === newStatus) {
+      return res.status(409).json({
+        success: false,
+        message: `SubOrder is already in status '${currentStatus}'`
+      });
+    }
+
+    // 6. Validate transition for admin
+    if (!isValidAdminTransition(currentStatus, newStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid transition: '${currentStatus}' -> '${newStatus}'`
+      });
+    }
+
+    // 7. Atomic update with precondition to prevent race conditions
+    const updated = await Order.findOneAndUpdate(
+      {
+        _id: orderId,
+        subOrders: {
+          $elemMatch: { _id: subOrderId, status: currentStatus }
+        }
+      },
+      {
+        $set: { 'subOrders.$[elem].status': newStatus }
+      },
+      {
+        arrayFilters: [{ 'elem._id': subOrderId, 'elem.status': currentStatus }],
+        new: true
+      }
+    ).populate('user', 'name email');
+
+    if (!updated) {
+      return res.status(409).json({
+        success: false,
+        message: 'Concurrent update conflict; please retry'
+      });
+    }
+
+    // 8. If cancelling: restore stock for items in THIS subOrder only (if stock was decremented)
+    if (newStatus === 'cancelled' && stockWasDecremented(order)) {
+      const cancelledSub = updated.subOrders.find(
+        s => s._id.toString() === subOrderId.toString()
+      );
+      if (cancelledSub && cancelledSub.items && cancelledSub.items.length > 0) {
+        await Product.bulkWrite(
+          cancelledSub.items.map(item => ({
+            updateOne: {
+              filter: { _id: item.product },
+              update: { $inc: { stock: item.quantity } }
+            }
+          }))
+        );
+      }
+    }
+
+    // 9. Re-derive and save parent status
+    const freshDoc = await Order.findById(orderId).populate('user', 'name email');
+    freshDoc.orderStatus = deriveParentStatus(freshDoc.subOrders);
+
+    const newPaymentStatus = deriveParentPaymentStatus(freshDoc, freshDoc.subOrders);
+    if (newPaymentStatus !== null) {
+      freshDoc.paymentStatus = newPaymentStatus;
+    }
+
+    await freshDoc.save();
+
+    return res.json({ success: true, order: freshDoc });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Admin marks subOrder COD cash as collected
+// @route   PUT /api/v1/orders/:orderId/suborders/:subOrderId/collect-cash
+// @access  Private/Admin
+const adminCollectCash = async (req, res, next) => {
+  try {
+    const { orderId, subOrderId } = req.params;
+
+    // 1. Validate ObjectIds
+    if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(subOrderId)) {
+      return res.status(404).json({ success: false, message: 'Order or sub-order not found' });
+    }
+
+    // 2. Find order
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    // 3. Check COD
+    if (order.paymentMethod.toLowerCase() !== 'cod') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cash collection only applies to COD orders'
+      });
+    }
+
+    // 4. Find subOrder
+    const subOrder = (order.subOrders || []).find(
+      s => s._id.toString() === subOrderId.toString()
+    );
+    if (!subOrder) {
+      return res.status(404).json({ success: false, message: 'SubOrder not found' });
+    }
+
+    // 5. subOrder status must be shipped or delivered
+    if (!['shipped', 'delivered'].includes(subOrder.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot collect cash: subOrder status is '${subOrder.status}' (must be shipped or delivered)`
+      });
+    }
+
+    // 6. Already collected -> 409
+    if (subOrder.codCollected === true) {
+      return res.status(409).json({
+        success: false,
+        message: 'Cash already collected for this subOrder'
+      });
+    }
+
+    // 7. Atomic update with precondition
+    const now = new Date();
+    const updated = await Order.findOneAndUpdate(
+      {
+        _id: orderId,
+        subOrders: {
+          $elemMatch: { _id: subOrderId, codCollected: false, status: { $in: ['shipped', 'delivered'] } }
+        }
+      },
+      {
+        $set: {
+          'subOrders.$[elem].codCollected': true,
+          'subOrders.$[elem].collectedBy': req.user._id,
+          'subOrders.$[elem].collectedAt': now
+        }
+      },
+      {
+        arrayFilters: [
+          { 'elem._id': subOrderId, 'elem.codCollected': false, 'elem.status': { $in: ['shipped', 'delivered'] } }
+        ],
+        new: true
+      }
+    ).populate('user', 'name email');
+
+    if (!updated) {
+      return res.status(409).json({
+        success: false,
+        message: 'Concurrent update conflict; please retry'
+      });
+    }
+
+    // 8. Re-derive parent paymentStatus
+    const newPaymentStatus = deriveParentPaymentStatus(updated, updated.subOrders);
+    if (newPaymentStatus !== null) {
+      updated.paymentStatus = newPaymentStatus;
+      await updated.save();
+    }
+
+    const freshDoc = await Order.findById(orderId).populate('user', 'name email');
+    return res.json({ success: true, order: freshDoc });
   } catch (error) {
     next(error);
   }
@@ -561,5 +832,7 @@ module.exports = {
   getAllOrders,
   updateOrderStatus,
   getGuestOrder,
-  markPaymentCollected
+  markPaymentCollected,
+  adminUpdateSubOrderStatus,
+  adminCollectCash
 };

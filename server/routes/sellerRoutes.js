@@ -9,7 +9,9 @@ const {
 } = require('../controllers/sellerProductController');
 const {
   sellerGetOrders,
-  sellerGetOrderById
+  sellerGetOrderById,
+  sellerUpdateSubOrderStatus,
+  sellerCollectCash
 } = require('../controllers/sellerOrderController');
 const { protect, seller } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -28,5 +30,7 @@ router.delete('/products/:id', protect, seller, sellerDeleteProduct);
 // Seller-only Order Management Endpoints
 router.get('/orders', protect, seller, sellerGetOrders);
 router.get('/orders/:orderId', protect, seller, sellerGetOrderById);
+router.put('/orders/:orderId/status', protect, seller, sellerUpdateSubOrderStatus);
+router.put('/orders/:orderId/collect-cash', protect, seller, sellerCollectCash);
 
 module.exports = router;
