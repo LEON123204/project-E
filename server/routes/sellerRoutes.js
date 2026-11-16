@@ -11,7 +11,8 @@ const {
   sellerGetOrders,
   sellerGetOrderById,
   sellerUpdateSubOrderStatus,
-  sellerCollectCash
+  sellerCollectCash,
+  sellerGetStats
 } = require('../controllers/sellerOrderController');
 const { protect, seller } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -19,6 +20,9 @@ const upload = require('../middleware/upload');
 // Private Seller Application Endpoints (any authenticated user can apply)
 router.post('/apply', protect, applyForSeller);
 router.get('/status', protect, getSellerStatus);
+
+// Seller-only Sales Stats Endpoint
+router.get('/stats', protect, seller, sellerGetStats);
 
 // Seller-only Product Management Endpoints
 // All routes below require: authenticated + role === 'seller'

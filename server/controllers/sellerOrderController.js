@@ -8,6 +8,10 @@ const {
   deriveParentPaymentStatus,
   stockWasDecremented
 } = require('../utils/subOrderState');
+const {
+  computeTotalsAndSeries,
+  computeCashToCollect
+} = require('../utils/sellerStats');
 
 /**
  * Helper to determine if an order is visible to sellers.
@@ -452,11 +456,163 @@ const sellerCollectCash = async (req, res, next) => {
   }
 };
 
+// @desc    Get sales stats for seller dashboard (Stage 6-1)
+// @route   GET /api/v1/seller/stats?range=7|30|90
+// @access  Private (Approved Seller only)
+const sellerGetStats = async (req, res, next) => {
+  try {
+    // 1. Validate seller role and approval
+    if (!req.user || req.user.role !== 'seller' || req.user.sellerApplicationStatus !== 'approved') {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden, approved seller resource only'
+      });
+    }
+
+    const sellerId = req.user._id;
+    const sellerObjectId = new mongoose.Types.ObjectId(sellerId);
+
+    // 2. Validate range parameter (7, 30, 90; default 30)
+    let range = 30;
+    if (req.query.range !== undefined && req.query.range !== '') {
+      const parsed = Number(req.query.range);
+      if (![7, 30, 90].includes(parsed)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid range parameter. Must be 7, 30, or 90.'
+        });
+      }
+      range = parsed;
+    }
+
+    // 3. UTC date window for range
+    const now = new Date();
+    const y = now.getUTCFullYear();
+    const m = now.getUTCMonth();
+    const d = now.getUTCDate();
+    const startUTC = new Date(Date.UTC(y, m, d - (range - 1), 0, 0, 0, 0));
+    const endUTC = new Date(Date.UTC(y, m, d, 23, 59, 59, 999));
+
+    // 4. Query range-scoped visible orders for THIS seller using subOrders.sellerId index
+    const rangeAgg = await Order.aggregate([
+      {
+        $match: {
+          'subOrders.sellerId': sellerObjectId,
+          $or: [
+            { paymentMethod: { $regex: /^cod$/i } },
+            { paymentStatus: 'paid' }
+          ],
+          createdAt: { $gte: startUTC, $lte: endUTC }
+        }
+      },
+      { $unwind: '$subOrders' },
+      {
+        $match: {
+          'subOrders.sellerId': sellerObjectId
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          createdAt: 1,
+          subOrder: '$subOrders'
+        }
+      }
+    ]);
+
+    // 5. Compute totals, dailySeries, and topProducts via pure helper
+    const { totals, dailySeries, topProducts } = computeTotalsAndSeries({
+      unwoundItems: rangeAgg,
+      range,
+      referenceDate: now
+    });
+
+    // 6. Query cashToCollect (ALL TIME, COD parts shipped or delivered, codCollected false)
+    const cashAgg = await Order.aggregate([
+      {
+        $match: {
+          'subOrders.sellerId': sellerObjectId,
+          paymentMethod: { $regex: /^cod$/i }
+        }
+      },
+      { $unwind: '$subOrders' },
+      {
+        $match: {
+          'subOrders.sellerId': sellerObjectId,
+          'subOrders.status': { $in: ['shipped', 'delivered'] },
+          $or: [
+            { 'subOrders.codCollected': false },
+            { 'subOrders.codCollected': { $exists: false } },
+            { 'subOrders.codCollected': null }
+          ]
+        }
+      },
+      {
+        $project: {
+          subtotal: '$subOrders.subtotal',
+          amountDue: '$subOrders.amountDue'
+        }
+      }
+    ]);
+
+    const cashToCollect = computeCashToCollect(cashAgg);
+
+    // 7. Query lowStock (approved products with stock <= 5, up to 10, all time)
+    const lowStockDocs = await Product.find({
+      sellerId: sellerObjectId,
+      status: 'approved',
+      stock: { $lte: 5 }
+    })
+      .sort({ stock: 1 })
+      .limit(10)
+      .select('_id name stock')
+      .lean();
+
+    const lowStock = lowStockDocs.map(p => ({
+      productId: p._id.toString(),
+      name: p.name,
+      stock: p.stock
+    }));
+
+    // 8. Query productStatusCounts (all time)
+    const productStatusAgg = await Product.aggregate([
+      { $match: { sellerId: sellerObjectId } },
+      { $group: { _id: '$status', count: { $sum: 1 } } }
+    ]);
+
+    const productStatusCounts = {
+      approved: 0,
+      pending_review: 0,
+      rejected: 0
+    };
+    for (const item of productStatusAgg) {
+      if (productStatusCounts.hasOwnProperty(item._id)) {
+        productStatusCounts[item._id] = item.count;
+      }
+    }
+
+    // 9. Return whitelist-only JSON response
+    return res.json({
+      success: true,
+      range,
+      totals,
+      cashToCollect,
+      dailySeries,
+      topProducts,
+      lowStock,
+      productStatusCounts
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   sellerGetOrders,
   sellerGetOrderById,
   formatSellerOrder,
   sellerUpdateSubOrderStatus,
-  sellerCollectCash
+  sellerCollectCash,
+  sellerGetStats
 };
 
