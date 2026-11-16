@@ -17,8 +17,10 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
-  ArrowRight
+  ArrowRight,
+  Package
 } from 'lucide-react';
+import ShipmentCards from '../components/ShipmentCards';
 
 const ProfilePage = () => {
   const { 
@@ -251,38 +253,72 @@ const ProfilePage = () => {
                   {orders.map((order) => (
                     <div
                       key={order._id}
-                      className="bg-slate-950/40 border border-slate-850 p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                      className="bg-slate-950/40 border border-slate-850 p-5 rounded-2xl flex flex-col space-y-3"
                     >
-                      <div className="space-y-1">
-                        <div className="text-xs font-semibold text-slate-400 font-mono">
-                          ID: #{order._id.substring(12).toUpperCase()}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <div className="text-xs font-semibold text-slate-400 font-mono">
+                            ID: #{order._id.substring(12).toUpperCase()}
+                          </div>
+                          <div className="text-xs text-slate-500">
+                            Placed: {new Date(order.createdAt).toLocaleDateString()}
+                          </div>
+                          <div className="text-sm font-bold text-slate-350 mt-1">
+                            Total: ₹{order.totalAmount.toFixed(2)}
+                          </div>
                         </div>
-                        <div className="text-xs text-slate-500">
-                          Placed: {new Date(order.createdAt).toLocaleDateString()}
-                        </div>
-                        <div className="text-sm font-bold text-slate-350 mt-1">
-                          Total: ₹{order.totalAmount.toFixed(2)}
+
+                        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+                          <span className={`text-[10px] uppercase font-bold py-1 px-3.5 rounded-full ${getStatusBadgeClass(order.orderStatus)}`}>
+                            {order.orderStatus === 'pending' ? 'Processing' :
+                             order.orderStatus === 'shipped' ? 'On the way' :
+                             order.orderStatus === 'delivered' ? 'Delivered' :
+                             order.orderStatus === 'cancelled' ? 'Cancelled' : order.orderStatus}
+                          </span>
+                          <Link
+                            to={`/order-tracking/${order._id}`}
+                            className="bg-indigo-650 hover:bg-indigo-550 text-white font-bold py-1.5 px-3.5 rounded-xl text-xs transition-smooth cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Truck size={13} />
+                            Track Order
+                          </Link>
+                          <button
+                            onClick={() => setSelectedOrder(order)}
+                            className="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-amber-400 hover:text-amber-300 font-bold py-1.5 px-4 rounded-xl text-xs transition-smooth cursor-pointer"
+                          >
+                            View Details
+                          </button>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <span className={`text-[10px] uppercase font-bold py-1 px-3.5 rounded-full ${getStatusBadgeClass(order.orderStatus)}`}>
-                          {order.orderStatus}
-                        </span>
-                        <Link
-                          to={`/order-tracking/${order._id}`}
-                          className="bg-indigo-650 hover:bg-indigo-550 text-white font-bold py-1.5 px-3.5 rounded-xl text-xs transition-smooth cursor-pointer flex items-center gap-1.5"
-                        >
-                          <Truck size={13} />
-                          Track Order
-                        </Link>
-                        <button
-                          onClick={() => setSelectedOrder(order)}
-                          className="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-amber-400 hover:text-amber-300 font-bold py-1.5 px-4 rounded-xl text-xs transition-smooth cursor-pointer"
-                        >
-                          View Details
-                        </button>
-                      </div>
+                      {/* Compact Line Per Shipment */}
+                      {order.shipments && order.shipments.length > 0 && (
+                        <div className="border-t border-slate-850/80 pt-2.5 space-y-1.5">
+                          {order.shipments.map((s, sIdx) => {
+                            const sellerName = s.isMarketplaceSeller ? (s.sellerName || 'Marketplace seller') : 'Cartex';
+                            const statusLabel = s.status === 'pending' ? 'Processing' :
+                              s.status === 'shipped' ? 'On the way' :
+                              s.status === 'delivered' ? 'Delivered' :
+                              s.status === 'cancelled' ? 'Cancelled' : (s.status || 'Pending');
+                            return (
+                              <div key={s.shipmentId || sIdx} className="flex items-center justify-between text-xs gap-3">
+                                <span className="text-slate-300 truncate font-medium flex items-center gap-1.5">
+                                  <Package size={13} className="text-amber-400 shrink-0" />
+                                  <span className="truncate">{sellerName}</span>
+                                  {s.isMarketplaceSeller && (
+                                    <span className="text-[9px] uppercase font-bold bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 px-1.5 py-0.2 rounded">
+                                      Seller
+                                    </span>
+                                  )}
+                                </span>
+                                <span className={`text-[9px] uppercase font-bold py-0.5 px-2 rounded-full shrink-0 ${getStatusBadgeClass(s.status)}`}>
+                                  {statusLabel}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -720,74 +756,22 @@ const ProfilePage = () => {
             {/* Modal Body */}
             <div className="p-4 sm:p-6 space-y-6 overflow-y-auto flex-grow">
               
-              {/* Order Tracker steps */}
-              {selectedOrder.orderStatus !== 'cancelled' ? (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-[8px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider px-1">
-                    <span>Order Placed</span>
-                    <span>Shipped Out</span>
-                    <span>Delivered</span>
-                  </div>
-                  {/* Visual Line */}
-                  <div className="relative flex items-center justify-between">
-                    <div className="absolute left-0 right-0 h-1 bg-slate-800 -z-10"></div>
-                    <div
-                      className="absolute left-0 h-1 bg-indigo-500 -z-10 transition-smooth"
-                      style={{
-                        width: selectedOrder.orderStatus === 'pending' ? '0%' : selectedOrder.orderStatus === 'shipped' ? '50%' : '100%'
-                      }}
-                    ></div>
-                    {steps.map((st, i) => (
-                      <div
-                        key={st}
-                        className={`h-5 w-5 rounded-full flex items-center justify-center border-2 transition-smooth ${
-                          getStepIndex(selectedOrder.orderStatus) >= i
-                            ? 'bg-amber-500 border-amber-500 text-white'
-                            : 'bg-slate-900 border-slate-880 text-slate-600'
-                        }`}
-                      >
-                        <Check size={10} className="stroke-[3]" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-rose-500/10 border border-rose-500/20 text-rose-455 p-4 rounded-xl text-center text-xs flex items-center justify-center gap-2">
-                  <AlertCircle size={16} />
-                  <span>This order has been cancelled and items returned to store stock.</span>
-                </div>
-              )}
-
-              {/* Items List */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Items Summary</h4>
-                <div className="border border-slate-850 rounded-xl overflow-hidden divide-y divide-slate-850">
-                  {selectedOrder.items.map((item) => (
-                    <div key={item._id} className="flex justify-between items-center p-3 sm:p-3.5 text-xs bg-slate-950/20">
-                      <div className="space-y-0.5 max-w-[70%]">
-                        <div className="font-semibold text-slate-200 truncate">{item.name}</div>
-                        <div className="text-slate-550 text-[11px]">
-                          Price: ₹{item.price.toFixed(2)} × {item.quantity}
-                        </div>
-                      </div>
-                      <div className="font-bold text-slate-100 text-right">
-                        ₹{(item.price * item.quantity).toFixed(2)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Shipping Address and status */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-slate-400 leading-relaxed bg-slate-950/10 border border-slate-850/50 p-4 rounded-xl">
+              {/* Overall Order Summary: Destination, Billing & Payment */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 text-xs text-slate-400 leading-relaxed bg-slate-950/40 border border-slate-850 p-4 sm:p-5 rounded-2xl">
                 <div>
                   <h4 className="font-bold text-slate-350 uppercase text-[10px] tracking-wider mb-2 flex items-center gap-1.5">
                     <Truck size={14} className="text-amber-400" />
                     Delivery Destination
                   </h4>
-                  <p>{selectedOrder.shippingAddress.street}</p>
-                  <p>{selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.zipCode}</p>
-                  <p>{selectedOrder.shippingAddress.country}</p>
+                  {selectedOrder.shippingAddress ? (
+                    <>
+                      <p className="text-slate-200 font-medium">{selectedOrder.shippingAddress.street}</p>
+                      <p>{selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.zipCode}</p>
+                      <p>{selectedOrder.shippingAddress.country}</p>
+                    </>
+                  ) : (
+                    <p className="text-slate-500 italic">No delivery address recorded</p>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <h4 className="font-bold text-slate-350 uppercase text-[10px] tracking-wider mb-2 flex items-center gap-1.5">
@@ -806,8 +790,17 @@ const ProfilePage = () => {
                       {selectedOrder.paymentStatus === 'paid' ? 'Paid' : 'Pending (Pay at delivery)'}
                     </span>
                   </p>
+                  <p>
+                    Order Status:{' '}
+                    <span className={`font-bold uppercase text-[10px] px-2 py-0.5 rounded-full inline-block mt-0.5 ${getStatusBadgeClass(selectedOrder.orderStatus)}`}>
+                      {selectedOrder.orderStatus === 'pending' ? 'Processing' :
+                       selectedOrder.orderStatus === 'shipped' ? 'On the way' :
+                       selectedOrder.orderStatus === 'delivered' ? 'Delivered' :
+                       selectedOrder.orderStatus === 'cancelled' ? 'Cancelled' : selectedOrder.orderStatus}
+                    </span>
+                  </p>
                   {selectedOrder.prepayDiscount > 0 && (
-                    <p className="text-emerald-400 text-[11px] font-medium">
+                    <p className="text-emerald-400 text-[11px] font-medium pt-0.5">
                       Prepay Discount Applied: -₹{selectedOrder.prepayDiscount.toFixed(2)}
                     </p>
                   )}
@@ -816,6 +809,85 @@ const ProfilePage = () => {
                   )}
                 </div>
               </div>
+
+              {/* Modern Per-Seller Shipments */}
+              {selectedOrder.shipments && selectedOrder.shipments.length > 0 && (
+                <div className="space-y-3 pt-1">
+                  <h4 className="text-xs font-bold text-slate-350 uppercase tracking-wider flex items-center gap-2">
+                    <Package size={15} className="text-amber-400" />
+                    Shipment Packages ({selectedOrder.shipments.length})
+                  </h4>
+                  <ShipmentCards
+                    shipments={selectedOrder.shipments}
+                    paymentMethod={selectedOrder.paymentMethod}
+                  />
+                </div>
+              )}
+
+              {/* Legacy Order Visual Tracker & Items (Rendered ONLY when order has no shipments) */}
+              {(!selectedOrder.shipments || selectedOrder.shipments.length === 0) && (
+                <>
+                  {/* Order Tracker steps */}
+                  {selectedOrder.orderStatus !== 'cancelled' ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-[8px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider px-1">
+                        <span>Order Placed</span>
+                        <span>Shipped Out</span>
+                        <span>Delivered</span>
+                      </div>
+                      {/* Visual Line */}
+                      <div className="relative flex items-center justify-between">
+                        <div className="absolute left-0 right-0 h-1 bg-slate-800 -z-10"></div>
+                        <div
+                          className="absolute left-0 h-1 bg-indigo-500 -z-10 transition-smooth"
+                          style={{
+                            width: selectedOrder.orderStatus === 'pending' ? '0%' : selectedOrder.orderStatus === 'shipped' ? '50%' : '100%'
+                          }}
+                        ></div>
+                        {steps.map((st, i) => (
+                          <div
+                            key={st}
+                            className={`h-5 w-5 rounded-full flex items-center justify-center border-2 transition-smooth ${
+                              getStepIndex(selectedOrder.orderStatus) >= i
+                                ? 'bg-amber-500 border-amber-500 text-white'
+                                : 'bg-slate-900 border-slate-880 text-slate-600'
+                            }`}
+                          >
+                            <Check size={10} className="stroke-[3]" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-rose-500/10 border border-rose-500/20 text-rose-455 p-4 rounded-xl text-center text-xs flex items-center justify-center gap-2">
+                      <AlertCircle size={16} />
+                      <span>This order has been cancelled and items returned to store stock.</span>
+                    </div>
+                  )}
+
+                  {/* Items List */}
+                  {selectedOrder.items && selectedOrder.items.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Items Summary</h4>
+                      <div className="border border-slate-850 rounded-xl overflow-hidden divide-y divide-slate-850">
+                        {selectedOrder.items.map((item, itmIdx) => (
+                          <div key={item._id || itmIdx} className="flex justify-between items-center p-3 sm:p-3.5 text-xs bg-slate-950/20">
+                            <div className="space-y-0.5 max-w-[70%]">
+                              <div className="font-semibold text-slate-200 truncate">{item.name}</div>
+                              <div className="text-slate-550 text-[11px]">
+                                Price: ₹{(item.price || 0).toFixed(2)} × {item.quantity || 1}
+                              </div>
+                            </div>
+                            <div className="font-bold text-slate-100 text-right">
+                              ₹{((item.price || 0) * (item.quantity || 1)).toFixed(2)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
 
             </div>
 

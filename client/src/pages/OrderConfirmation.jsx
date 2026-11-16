@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import CheckoutProgressIndicator from '../components/CheckoutProgressIndicator';
+import ShipmentCards from '../components/ShipmentCards';
 import { 
   CheckCircle, 
   Truck, 
@@ -128,7 +129,7 @@ const OrderConfirmation = () => {
   }, [order]);
 
   const handleAddToCart = async (product) => {
-    const isOwnListing = Boolean(product.isOwnListing || (user && product.sellerId && (product.sellerId._id || product.sellerId).toString() === user._id.toString()));
+    const isOwnListing = Boolean(product.isOwnListing);
     if (isOwnListing) return;
     const res = await addToCart(product, 1);
     if (res.success) {
@@ -318,6 +319,19 @@ const OrderConfirmation = () => {
           </div>
         </div>
 
+        {/* Per-Seller Shipment Cards */}
+        {order.shipments && order.shipments.length > 0 && (
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center gap-2 border-b border-slate-850 pb-3">
+              <Package size={18} className="text-amber-400" />
+              <h2 className="text-lg sm:text-xl font-extrabold text-slate-100 tracking-tight">
+                Shipment Tracking ({order.shipments.length} {order.shipments.length === 1 ? 'Package' : 'Packages'})
+              </h2>
+            </div>
+            <ShipmentCards shipments={order.shipments} paymentMethod={order.paymentMethod} />
+          </div>
+        )}
+
         {/* Secondary Section: You Might Also Like (Category-Based Recommendations) */}
         <div className="border-t border-slate-900 pt-8 sm:pt-12 space-y-6">
           <div className="flex items-center justify-between">
@@ -402,7 +416,7 @@ const OrderConfirmation = () => {
 
                     {/* Add to Cart Button */}
                     <div className="p-4 pt-0">
-                      {product.isOwnListing || (user && product.sellerId && (product.sellerId._id || product.sellerId).toString() === user._id.toString()) ? (
+                      {product.isOwnListing ? (
                         <span className="w-full py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center text-indigo-400 bg-indigo-950/60 border border-indigo-500/30">
                           Your listing
                         </span>
