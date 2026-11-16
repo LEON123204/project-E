@@ -207,7 +207,7 @@ const AdminOrders = () => {
             const status = sub.status || 'pending';
             const canMarkShipped = status === 'pending';
             const canMarkDelivered = status === 'shipped';
-            const canCancel = (status === 'pending' || status === 'shipped') && !isUnpaidOnline;
+            const canCancel = (status === 'pending' || status === 'shipped') && !isUnpaidOnline && !(isCod && sub.codCollected);
             const canCollectCash = isCod && (status === 'shipped' || status === 'delivered') && !sub.codCollected;
 
             const actionPrefix = `${order._id}_${sub._id}_`;

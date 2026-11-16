@@ -488,6 +488,10 @@ const updateOrderStatus = async (req, res, next) => {
       if (sub.status === status) {
         continue;
       }
+      // Skip parts whose cash was already collected (like delivered, cannot cancel)
+      if (status === 'cancelled' && sub.codCollected === true) {
+        continue;
+      }
       if (isValidAdminTransition(sub.status, status)) {
         if (status === 'cancelled' && stockWasDecrementedFlag) {
           for (const item of sub.items) {
@@ -668,6 +672,14 @@ const adminUpdateSubOrderStatus = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: 'Order is awaiting payment; cancel the whole order from the admin order list'
+      });
+    }
+
+    // Do not allow cancelling a COD sub-order whose cash was already collected
+    if (newStatus === 'cancelled' && subOrder.codCollected === true) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cash was already collected for this part; handle it manually'
       });
     }
 
