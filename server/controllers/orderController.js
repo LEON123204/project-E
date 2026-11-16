@@ -9,6 +9,13 @@ const {
   deriveParentPaymentStatus,
   stockWasDecremented
 } = require('../utils/subOrderState');
+const {
+  fetchSellerNameMap,
+  buildCustomerOrderView,
+  buildCustomerOrderViewSync,
+  buildAdminOrderView,
+  buildAdminOrderViewSync
+} = require('../utils/orderViews');
 
 // Initialize Stripe conditionally
 let stripe;
@@ -211,9 +218,10 @@ const createOrder = async (req, res, next) => {
       await Cart.findOneAndUpdate({ user: req.user._id }, { $set: { items: [] } });
     }
 
+    const orderView = await buildCustomerOrderView(order);
     res.status(201).json({
       success: true,
-      order,
+      order: orderView,
       clientSecret
     });
   } catch (error) {
@@ -248,7 +256,8 @@ const confirmPayment = async (req, res, next) => {
     }
 
     if (order.paymentStatus === 'paid') {
-      return res.json({ success: true, message: 'Order is already marked as paid', order });
+      const paidView = await buildCustomerOrderView(order);
+      return res.json({ success: true, message: 'Order is already marked as paid', order: paidView });
     }
 
     const allPartsCancelled = order.subOrders && order.subOrders.length > 0 && order.subOrders.every(s => s.status === 'cancelled');
@@ -312,10 +321,11 @@ const confirmPayment = async (req, res, next) => {
       console.log(`BODY: Thank you for your purchase of ₹${order.totalAmount.toFixed(2)}.`);
       console.log(`========================================\n`);
 
+      const orderView = await buildCustomerOrderView(order);
       res.json({
         success: true,
         message: 'Payment confirmed successfully',
-        order
+        order: orderView
       });
     } else {
       order.paymentStatus = 'failed';
@@ -336,9 +346,11 @@ const confirmPayment = async (req, res, next) => {
 const getMyOrders = async (req, res, next) => {
   try {
     const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const sellerMap = await fetchSellerNameMap(orders);
+    const formatted = orders.map(o => buildCustomerOrderViewSync(o, sellerMap));
     res.json({
       success: true,
-      orders
+      orders: formatted
     });
   } catch (error) {
     next(error);
@@ -370,10 +382,12 @@ const getOrderById = async (req, res, next) => {
       }
     }
 
-    res.json({
-      success: true,
-      order
-    });
+    if (req.user.role === 'admin') {
+      const view = await buildAdminOrderView(order);
+      return res.json({ success: true, order: view });
+    }
+    const view = await buildCustomerOrderView(order);
+    return res.json({ success: true, order: view });
   } catch (error) {
     next(error);
   }
@@ -388,9 +402,11 @@ const getAllOrders = async (req, res, next) => {
       .populate('user', 'name email')
       .sort({ createdAt: -1 });
 
+    const sellerMap = await fetchSellerNameMap(orders);
+    const formatted = orders.map(o => buildAdminOrderViewSync(o, sellerMap));
     res.json({
       success: true,
-      orders
+      orders: formatted
     });
   } catch (error) {
     next(error);
@@ -454,9 +470,10 @@ const updateOrderStatus = async (req, res, next) => {
 
       order.orderStatus = status;
       const updatedOrder = await order.save();
+      const view = await buildAdminOrderView(updatedOrder);
       return res.json({
         success: true,
-        order: updatedOrder
+        order: view
       });
     }
 
@@ -500,10 +517,11 @@ const updateOrderStatus = async (req, res, next) => {
     }
 
     const updatedOrder = await order.save();
+    const view = await buildAdminOrderView(updatedOrder);
 
     res.json({
       success: true,
-      order: updatedOrder
+      order: view
     });
   } catch (error) {
     next(error);
@@ -538,10 +556,10 @@ const getGuestOrder = async (req, res, next) => {
     ) === req.user._id.toString();
 
     if (isAdmin || isOwner) {
-      return res.json({
-        success: true,
-        order
-      });
+      const view = isAdmin
+        ? await buildAdminOrderView(order)
+        : await buildCustomerOrderView(order);
+      return res.json({ success: true, order: view });
     }
 
     // 3. Guest or non-owner: must supply matching order email (trimmed, case-insensitive)
@@ -553,10 +571,8 @@ const getGuestOrder = async (req, res, next) => {
       throw new Error('Order not found');
     }
 
-    res.json({
-      success: true,
-      order
-    });
+    const view = await buildCustomerOrderView(order);
+    return res.json({ success: true, order: view });
   } catch (error) {
     next(error);
   }
@@ -575,10 +591,11 @@ const markPaymentCollected = async (req, res, next) => {
     }
 
     if (order.paymentStatus === 'paid') {
+      const view = await buildAdminOrderView(order);
       return res.json({
         success: true,
         message: 'Payment is already marked as collected/paid',
-        order
+        order: view
       });
     }
 
@@ -602,11 +619,12 @@ const markPaymentCollected = async (req, res, next) => {
     }
 
     const updatedOrder = await order.save();
+    const view = await buildAdminOrderView(updatedOrder);
 
     res.json({
       success: true,
       message: 'Payment marked as collected successfully',
-      order: updatedOrder
+      order: view
     });
   } catch (error) {
     next(error);
@@ -723,7 +741,8 @@ const adminUpdateSubOrderStatus = async (req, res, next) => {
 
     await freshDoc.save();
 
-    return res.json({ success: true, order: freshDoc });
+    const adminView = await buildAdminOrderView(freshDoc);
+    return res.json({ success: true, order: adminView });
   } catch (error) {
     next(error);
   }
@@ -818,7 +837,8 @@ const adminCollectCash = async (req, res, next) => {
     }
 
     const freshDoc = await Order.findById(orderId).populate('user', 'name email');
-    return res.json({ success: true, order: freshDoc });
+    const adminView = await buildAdminOrderView(freshDoc);
+    return res.json({ success: true, order: adminView });
   } catch (error) {
     next(error);
   }
