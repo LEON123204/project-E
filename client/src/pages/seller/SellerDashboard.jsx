@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import SalesOverview from '../../components/seller/SalesOverview';
 import {
   Plus,
   Edit,
@@ -275,6 +276,9 @@ const SellerDashboard = () => {
           <StatCard icon={Clock}       label="Pending Review"   value={allStats.pending}  color="bg-amber-500/10 border border-amber-500/20 text-amber-400" />
           <StatCard icon={XCircle}     label="Rejected"         value={allStats.rejected} color="bg-rose-500/10 border border-rose-500/20 text-rose-400" />
         </div>
+
+        {/* ── Sales Overview Section (Stage 6-2) ── */}
+        <SalesOverview />
 
         {/* ── Notifications ── */}
         {success && (
