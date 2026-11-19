@@ -8,7 +8,8 @@ const {
   calculateHighlights,
   validateAiSummary,
   buildCacheKey,
-  SummaryCache
+  SummaryCache,
+  defaultSpendGuard
 } = require('../utils/compareHelpers');
 
 // In-memory cache for comparison summaries (TTL 10 min, max 200 items)
@@ -108,7 +109,7 @@ async function compareProducts(req, res, next) {
     const sameCategory = processedProducts.length > 0 &&
       processedProducts.every(p => p.category === processedProducts[0].category);
 
-    // 4. Cache lookup
+    // 4. Cache lookup (cache hits never consume LLM budget)
     const cacheKey = buildCacheKey(orderedRaw);
     const cachedEntry = summaryCache.get(cacheKey);
 
@@ -132,6 +133,22 @@ async function compareProducts(req, res, next) {
 
     const apiKey = process.env.LLM_API_KEY;
     if (apiKey && typeof apiKey === 'string' && apiKey.trim().length > 0) {
+      // Check process-wide spend guard before calling the LLM (cache hits bypass this)
+      const guardResult = defaultSpendGuard.acquire();
+      if (!guardResult.allowed) {
+        // Budget exhausted or concurrency cap – return full facts without AI summary
+        return res.json({
+          success: true,
+          products: processedProducts,
+          highlights,
+          sameCategory,
+          aiSummary: null,
+          aiStatus: 'unavailable',
+          cached: false,
+          generatedAt
+        });
+      }
+
       try {
         const factsForAi = processedProducts.map(p => ({
           id: p._id,
@@ -229,6 +246,8 @@ JSON SCHEMA:
         // Any failure (timeout, network, bad JSON, bad IDs) cleanly degrades to unavailable
         aiSummary = null;
         aiStatus = 'unavailable';
+      } finally {
+        defaultSpendGuard.release();
       }
     }
 
@@ -253,4 +272,3 @@ module.exports = {
   getLlmCallCount,
   resetLlmCallCount
 };
-

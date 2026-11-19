@@ -7,7 +7,8 @@ const {
   calculateHighlights,
   validateAiSummary,
   buildCacheKey,
-  SummaryCache
+  SummaryCache,
+  LlmSpendGuard
 } = require('./compareHelpers');
 
 console.log('=== ITEM 5: PURE HELPERS UNIT TESTS [MOCK DATA] ===\n');
@@ -240,4 +241,203 @@ console.log('[MOCK] Cache eviction verified: oldest entry k1 evicted when adding
 console.log('[MOCK] Cache metadata verified: original generatedAt preserved upon retrieval.');
 
 console.log('\nAll pure helper unit tests passed successfully! ✓');
+
+// ===========================================================================
+// 6. LlmSpendGuard unit tests [MOCK]
+// ===========================================================================
+console.log('\n=== ITEM 6: LlmSpendGuard UNIT TESTS [MOCK] ===\n');
+
+function makeClock(startMs = 0) {
+  let t = startMs;
+  return {
+    now() { return t; },
+    advance(ms) { t += ms; }
+  };
+}
+
+// --- 6.1 Under limit: acquire succeeds, counters increment ---
+console.log('--- 6.1 Under limit [MOCK] ---');
+{
+  const clk = makeClock(1000);
+  const g = new LlmSpendGuard(clk, { perMinute: 5, perHour: 100, maxInflight: 3 });
+  const r1 = g.acquire();
+  assert.equal(r1.allowed, true, '6.1 first acquire must be allowed');
+  assert.equal(g.minuteCount, 1, '6.1 minuteCount must be 1 after first acquire');
+  assert.equal(g.hourCount, 1, '6.1 hourCount must be 1 after first acquire');
+  assert.equal(g.inflight, 1, '6.1 inflight must be 1 after first acquire');
+  g.release();
+  assert.equal(g.inflight, 0, '6.1 inflight must be 0 after release');
+  console.log('[MOCK] 6.1 PASSED: under limit, counters correct, inflight decrements on release');
+}
+
+// --- 6.2 Exactly at per-minute limit: last call succeeds, next is blocked ---
+console.log('--- 6.2 At per-minute limit [MOCK] ---');
+{
+  const clk = makeClock(2000);
+  const g = new LlmSpendGuard(clk, { perMinute: 3, perHour: 100, maxInflight: 10 });
+  for (let i = 0; i < 3; i++) {
+    const r = g.acquire();
+    assert.equal(r.allowed, true, `6.2 call ${i + 1} must be allowed`);
+    g.release();
+  }
+  const blocked = g.acquire();
+  assert.equal(blocked.allowed, false, '6.2 4th call must be blocked');
+  assert.equal(blocked.reason, 'per-minute', '6.2 reason must be per-minute');
+  console.log('[MOCK] 6.2 PASSED: 3rd call OK, 4th blocked with reason=per-minute, reason:', blocked.reason);
+}
+
+// --- 6.3 Per-minute window rollover: advance 61s, acquire succeeds again ---
+console.log('--- 6.3 Per-minute window rollover [MOCK] ---');
+{
+  const clk = makeClock(3000);
+  const g = new LlmSpendGuard(clk, { perMinute: 2, perHour: 100, maxInflight: 10 });
+  g.acquire(); g.release();
+  g.acquire(); g.release();
+  assert.equal(g.acquire().allowed, false, '6.3 must be blocked at limit');
+  clk.advance(61_000); // advance 61s, timestamps now outside the 60s window
+  const after = g.acquire();
+  assert.equal(after.allowed, true, '6.3 must be allowed after window rollover');
+  g.release();
+  console.log('[MOCK] 6.3 PASSED: per-minute window rolled over at 61s');
+}
+
+// --- 6.4 Per-hour window rollover: advance 3601s, acquire succeeds ---
+console.log('--- 6.4 Per-hour window rollover [MOCK] ---');
+{
+  const clk = makeClock(0);
+  const g = new LlmSpendGuard(clk, { perMinute: 100, perHour: 2, maxInflight: 10 });
+  g.acquire(); g.release();
+  clk.advance(70_000); // move past per-minute window for 2nd call
+  g.acquire(); g.release();
+  clk.advance(70_000); // 2nd call also outside per-minute window now
+  assert.equal(g.acquire().allowed, false, '6.4 must be blocked (hourly limit hit)');
+  clk.advance(3_601_000); // advance past the hour
+  const after = g.acquire();
+  assert.equal(after.allowed, true, '6.4 must be allowed after hourly window rollover');
+  g.release();
+  console.log('[MOCK] 6.4 PASSED: per-hour window rolled over at 3601s');
+}
+
+// --- 6.5 Burst: more than perMinute simultaneous calls – excess blocked ---
+console.log('--- 6.5 Burst: excess blocked [MOCK] ---');
+{
+  const clk = makeClock(5000);
+  const g = new LlmSpendGuard(clk, { perMinute: 3, perHour: 100, maxInflight: 10 });
+  const results = [];
+  for (let i = 0; i < 5; i++) results.push(g.acquire());
+  const allowed = results.filter(r => r.allowed).length;
+  const blocked = results.filter(r => !r.allowed).length;
+  assert.equal(allowed, 3, '6.5 exactly 3 of 5 burst calls must be allowed');
+  assert.equal(blocked, 2, '6.5 exactly 2 of 5 burst calls must be blocked');
+  console.log(`[MOCK] 6.5 PASSED: burst of 5 -> ${allowed} allowed, ${blocked} blocked`);
+}
+
+// --- 6.6 Clock moving backwards: guard does not throw or corrupt state ---
+console.log('--- 6.6 Clock moving backwards [MOCK] ---');
+{
+  const clk = makeClock(100_000);
+  const g = new LlmSpendGuard(clk, { perMinute: 10, perHour: 100, maxInflight: 10 });
+  g.acquire(); g.release();
+  clk.advance(-200_000); // clock moves back (simulate clock skew)
+  let threw = false;
+  try {
+    const r = g.acquire();
+    // Should either succeed or fail gracefully – no throw
+    g.release();
+  } catch (e) {
+    threw = true;
+  }
+  assert.equal(threw, false, '6.6 guard must not throw when clock moves backwards');
+  console.log('[MOCK] 6.6 PASSED: no throw when clock moves backwards');
+}
+
+// --- 6.7 Concurrency: 3 acquires succeed, 4th blocked; release decrements ---
+console.log('--- 6.7 Concurrency cap [MOCK] ---');
+{
+  const clk = makeClock(7000);
+  const g = new LlmSpendGuard(clk, { perMinute: 100, perHour: 1000, maxInflight: 3 });
+  const r1 = g.acquire();
+  const r2 = g.acquire();
+  const r3 = g.acquire();
+  assert.equal(r1.allowed, true, '6.7 slot 1 must be allowed');
+  assert.equal(r2.allowed, true, '6.7 slot 2 must be allowed');
+  assert.equal(r3.allowed, true, '6.7 slot 3 must be allowed');
+  assert.equal(g.inflight, 3, '6.7 inflight must be 3');
+  const r4 = g.acquire();
+  assert.equal(r4.allowed, false, '6.7 4th acquire must be blocked');
+  assert.equal(r4.reason, 'concurrency', '6.7 reason must be concurrency');
+  g.release();
+  assert.equal(g.inflight, 2, '6.7 inflight must be 2 after one release');
+  const r5 = g.acquire();
+  assert.equal(r5.allowed, true, '6.7 5th acquire must succeed after a slot freed');
+  console.log('[MOCK] 6.7 PASSED: concurrency cap 3, 4th blocked, slot freed allows next');
+}
+
+// --- 6.8 Concurrency release after success: inflight goes 1 -> 0 ---
+console.log('--- 6.8 Release after success [MOCK] ---');
+{
+  const clk = makeClock(8000);
+  const g = new LlmSpendGuard(clk, { perMinute: 10, perHour: 100, maxInflight: 3 });
+  g.acquire();
+  assert.equal(g.inflight, 1, '6.8 inflight must be 1 after acquire');
+  g.release();
+  assert.equal(g.inflight, 0, '6.8 inflight must be 0 after release (success path)');
+  console.log('[MOCK] 6.8 PASSED: inflight 1->0 after release (success path)');
+}
+
+// --- 6.9 Release after error/timeout: inflight never leaks ---
+console.log('--- 6.9 Release after error (no leak) [MOCK] ---');
+{
+  const clk = makeClock(9000);
+  const g = new LlmSpendGuard(clk, { perMinute: 10, perHour: 100, maxInflight: 3 });
+  const r = g.acquire();
+  assert.equal(r.allowed, true, '6.9 acquire must be allowed');
+  assert.equal(g.inflight, 1, '6.9 inflight must be 1');
+  // Simulate error path – release still called in finally
+  try {
+    throw new Error('simulated LLM timeout');
+  } catch {
+    // intentionally caught
+  } finally {
+    g.release();
+  }
+  assert.equal(g.inflight, 0, '6.9 inflight must be 0 after release in finally (error path)');
+  console.log('[MOCK] 6.9 PASSED: inflight 1->0 after release in finally (error path)');
+}
+
+// --- 6.10 _logExhausted throttle: exhausted log appears at most once per 60s ---
+console.log('--- 6.10 Log throttle [MOCK] ---');
+{
+  const clk = makeClock(10_000);
+  // perHour=1 so the hour window stays full even after the minute window clears
+  const g = new LlmSpendGuard(clk, { perMinute: 100, perHour: 1, maxInflight: 10 });
+  const logLines = [];
+  const origWrite = process.stderr.write.bind(process.stderr);
+  process.stderr.write = (chunk, ...rest) => {
+    if (typeof chunk === 'string' && chunk.includes('budget exhausted')) logLines.push(chunk);
+    return origWrite(chunk, ...rest);
+  };
+
+  // Fill the hourly slot
+  const r0 = g.acquire();
+  assert.equal(r0.allowed, true, '6.10 first acquire must succeed');
+  g.release();
+
+  // Now blocked (hourly limit) – first log
+  g.acquire(); // blocked -> logs once
+  g.acquire(); // blocked -> NOT logged (< 60s elapsed)
+  g.acquire(); // blocked -> NOT logged
+  assert.equal(logLines.length, 1, '6.10 must log budget-exhausted exactly once in first 60s');
+
+  // Advance 61s wall-clock but hourly slot is still full (hour window = 3600s, only 61s passed)
+  clk.advance(61_000);
+  g.acquire(); // still blocked (hour window still has the entry) -> logs again
+  assert.equal(logLines.length, 2, '6.10 must log again after 61s has elapsed');
+
+  process.stderr.write = origWrite; // restore
+  console.log('[MOCK] 6.10 PASSED: exhausted log throttled to once per 60s, got', logLines.length, 'logs (expected 2)');
+}
+
+console.log('\nAll LlmSpendGuard unit tests passed! ✓');
+console.log('\n=== ALL TESTS PASSED ✓ ===');
 

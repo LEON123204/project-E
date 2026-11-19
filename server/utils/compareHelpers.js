@@ -312,6 +312,129 @@ class SummaryCache {
   }
 }
 
+// ---------------------------------------------------------------------------
+// LLM Spend Guard (process-wide, IP-agnostic)
+// ---------------------------------------------------------------------------
+
+/**
+ * Default limits – overridable via env vars for tests ONLY.
+ * COMPARE_LLM_PER_MIN  : max uncached LLM calls per rolling 60-second window (default 20)
+ * COMPARE_LLM_PER_HOUR : max uncached LLM calls per rolling 60-minute window (default 300)
+ * COMPARE_LLM_MAX_INFLIGHT : max simultaneous in-flight LLM calls (default 3)
+ */
+const DEFAULT_PER_MIN = 20;
+const DEFAULT_PER_HOUR = 300;
+const DEFAULT_MAX_INFLIGHT = 3;
+
+/**
+ * Process-wide guard for comparison LLM calls.
+ * Accepts an injectable clock object { now() } for deterministic tests.
+ *
+ * Rules:
+ *  - Cache hits NEVER consume budget (enforced in compareController).
+ *  - acquire() returns true if a call is permitted (and reserves a slot).
+ *  - release(success?) must be called after every acquire() – on success, error, or timeout.
+ *  - When budget is exhausted: does not call LLM, returns unavailable, logs at most once per minute.
+ *  - Concurrency cap: at most maxInflight simultaneous in-flight calls.
+ */
+class LlmSpendGuard {
+  /**
+   * @param {{ now: () => number }} [clock] – injectable clock, defaults to Date
+   * @param {object} [opts]
+   * @param {number} [opts.perMinute]
+   * @param {number} [opts.perHour]
+   * @param {number} [opts.maxInflight]
+   */
+  constructor(clock, opts = {}) {
+    this._clock = clock || { now: () => Date.now() };
+    this._perMinute = opts.perMinute !== undefined ? opts.perMinute : DEFAULT_PER_MIN;
+    this._perHour = opts.perHour !== undefined ? opts.perHour : DEFAULT_PER_HOUR;
+    this._maxInflight = opts.maxInflight !== undefined ? opts.maxInflight : DEFAULT_MAX_INFLIGHT;
+
+    // Rolling-window timestamps of completed (started) calls
+    this._minuteTs = []; // timestamps within the last 60 s
+    this._hourTs = [];   // timestamps within the last 3600 s
+
+    // Current in-flight count
+    this._inflight = 0;
+
+    // Throttle for the "budget exhausted" log line: at most once per 60 s wall-clock
+    this._lastExhaustedLog = -Infinity;
+  }
+
+  /** @returns {{ allowed: boolean, reason: string }} */
+  acquire() {
+    const now = this._clock.now();
+    const minAgo = now - 60_000;
+    const hourAgo = now - 3_600_000;
+
+    // Evict expired timestamps
+    this._minuteTs = this._minuteTs.filter(t => t > minAgo);
+    this._hourTs = this._hourTs.filter(t => t > hourAgo);
+
+    if (this._inflight >= this._maxInflight) {
+      return { allowed: false, reason: 'concurrency' };
+    }
+
+    if (this._minuteTs.length >= this._perMinute) {
+      this._logExhausted(now);
+      return { allowed: false, reason: 'per-minute' };
+    }
+
+    if (this._hourTs.length >= this._perHour) {
+      this._logExhausted(now);
+      return { allowed: false, reason: 'per-hour' };
+    }
+
+    // Reserve slot
+    this._minuteTs.push(now);
+    this._hourTs.push(now);
+    this._inflight++;
+    return { allowed: true, reason: 'ok' };
+  }
+
+  /** Must be called after every acquire() that returned allowed:true */
+  release() {
+    if (this._inflight > 0) this._inflight--;
+  }
+
+  _logExhausted(now) {
+    if (now - this._lastExhaustedLog >= 60_000) {
+      this._lastExhaustedLog = now;
+      // Single-line log, no keys / addresses / product data
+      process.stderr.write('compare: LLM budget exhausted\n');
+    }
+  }
+
+  // ---- inspection helpers (for tests) ----
+  get inflight() { return this._inflight; }
+  get minuteCount() {
+    const now = this._clock.now();
+    return this._minuteTs.filter(t => t > now - 60_000).length;
+  }
+  get hourCount() {
+    const now = this._clock.now();
+    return this._hourTs.filter(t => t > now - 3_600_000).length;
+  }
+}
+
+// Singleton guard used by compareController – limits read from env at construction time.
+// Tests create their own instances with injected clocks and overridden limits.
+function createDefaultGuard() {
+  const perMinute = process.env.COMPARE_LLM_PER_MIN
+    ? parseInt(process.env.COMPARE_LLM_PER_MIN, 10)
+    : DEFAULT_PER_MIN;
+  const perHour = process.env.COMPARE_LLM_PER_HOUR
+    ? parseInt(process.env.COMPARE_LLM_PER_HOUR, 10)
+    : DEFAULT_PER_HOUR;
+  const maxInflight = process.env.COMPARE_LLM_MAX_INFLIGHT
+    ? parseInt(process.env.COMPARE_LLM_MAX_INFLIGHT, 10)
+    : DEFAULT_MAX_INFLIGHT;
+  return new LlmSpendGuard(null, { perMinute, perHour, maxInflight });
+}
+
+const defaultSpendGuard = createDefaultGuard();
+
 module.exports = {
   calculateFinalPrice,
   truncateExcerpt,
@@ -320,6 +443,8 @@ module.exports = {
   calculateHighlights,
   validateAiSummary,
   buildCacheKey,
-  SummaryCache
+  SummaryCache,
+  LlmSpendGuard,
+  defaultSpendGuard
 };
 
