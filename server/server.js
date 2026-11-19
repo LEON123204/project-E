@@ -16,6 +16,9 @@ connectDB();
 
 const app = express();
 
+// Trust reverse proxy (e.g. Render) to correctly identify client IP from X-Forwarded-For
+app.set('trust proxy', 1);
+
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -55,6 +58,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const sellerRoutes = require('./routes/sellerRoutes');
+const compareRoutes = require('./routes/compareRoutes');
 
 // Mount Routes
 app.use('/api/v1/auth', authRoutes);
@@ -66,6 +70,7 @@ app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/chat', chatRoutes);
 app.use('/api/v1/seller', sellerRoutes);
+app.use('/api/v1/compare', compareRoutes);
 
 // Root Endpoint for checking API health
 app.get('/api/v1', (req, res) => {
@@ -94,3 +99,5 @@ process.on('unhandledRejection', (err, promise) => {
   // Close server & exit process
   server.close(() => process.exit(1));
 });
+
+module.exports = app;
