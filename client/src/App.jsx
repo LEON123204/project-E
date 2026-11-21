@@ -1,11 +1,12 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 
 // Context Providers
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { ToastProvider } from './context/ToastContext';
+import { CompareProvider, useCompare } from './context/CompareContext';
 
 // Components
 import Navbar from './components/Navbar';
@@ -13,6 +14,8 @@ import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import ChatWidget from './components/ChatWidget';
 import ScrollToTop from './components/ScrollToTop';
+import CompareTray from './components/CompareTray';
+import { shouldShowTray } from './utils/compareSelection';
 import { LoginPromptProvider } from './context/LoginPromptContext';
 import LoginPromptModal from './components/LoginPromptModal';
 
@@ -29,6 +32,7 @@ import Register from './pages/Register';
 import OrderTracking from './pages/OrderTracking';
 import OrderConfirmation from './pages/OrderConfirmation';
 import BecomeSeller from './pages/BecomeSeller';
+import ComparePage from './pages/ComparePage';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -43,6 +47,19 @@ import AdminSellerProducts from './pages/admin/AdminSellerProducts';
 import SellerDashboard from './pages/seller/SellerDashboard';
 import SellerOrders from './pages/seller/SellerOrders';
 
+// Main content wrapper that adds bottom padding when CompareTray is visible
+const MainContent = ({ children }) => {
+  const { count } = useCompare();
+  const location = useLocation();
+  const isTrayVisible = shouldShowTray(location.pathname, count);
+
+  return (
+    <main className={`flex-grow ${isTrayVisible ? 'pb-24 sm:pb-28' : ''}`}>
+      {children}
+    </main>
+  );
+};
+
 function App() {
   return (
     <Router>
@@ -52,21 +69,23 @@ function App() {
           <LoginPromptProvider>
             <CartProvider>
               <WishlistProvider>
-              <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
-                {/* Top Navigation */}
-                <Navbar />
+                <CompareProvider>
+                  <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
+                    {/* Top Navigation */}
+                    <Navbar />
 
-                {/* Global Login Prompt Modal */}
-                <LoginPromptModal />
+                    {/* Global Login Prompt Modal */}
+                    <LoginPromptModal />
 
-              {/* Main Content Area */}
-              <main className="flex-grow">
-                <Routes>
-                  {/* Public routes */}
-                  <Route path="/" element={<Home />} />
-                  <Route path="/shop" element={<Shop />} />
-                  <Route path="/product/:id" element={<ProductDetail />} />
-                  <Route path="/cart" element={<CartPage />} />
+                    {/* Main Content Area */}
+                    <MainContent>
+                      <Routes>
+                        {/* Public routes */}
+                        <Route path="/" element={<Home />} />
+                        <Route path="/shop" element={<Shop />} />
+                        <Route path="/product/:id" element={<ProductDetail />} />
+                        <Route path="/compare" element={<ComparePage />} />
+                        <Route path="/cart" element={<CartPage />} />
                   <Route path="/wishlist" element={<WishlistPage />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
@@ -169,7 +188,10 @@ function App() {
                     }
                   />
                 </Routes>
-              </main>
+              </MainContent>
+
+              {/* Product Comparison Tray */}
+              <CompareTray />
 
               {/* Bottom Navigation */}
               <Footer />
@@ -177,6 +199,7 @@ function App() {
               {/* Floating AI Chat Assistant */}
               <ChatWidget />
               </div>
+              </CompareProvider>
               </WishlistProvider>
             </CartProvider>
           </LoginPromptProvider>

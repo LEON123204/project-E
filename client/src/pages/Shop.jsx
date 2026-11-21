@@ -5,15 +5,17 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useToast } from '../context/ToastContext';
+import { useCompare } from '../context/CompareContext';
 import useDebounce from '../hooks/useDebounce';
 import { ProductCardSkeleton } from '../components/SkeletonLoader';
-import { Heart, ShoppingCart, Star, Filter, RotateCcw, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Heart, ShoppingCart, Star, Filter, RotateCcw, ChevronLeft, ChevronRight, X, ArrowLeftRight, Check } from 'lucide-react';
 
 const Shop = () => {
   const { user } = useAuth();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { showToast } = useToast();
+  const { toggle: toggleCompare, has: isInCompare } = useCompare();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Mobile Filters sheet state (overlay/drawer on mobile, sidebar on lg+)
@@ -358,6 +360,36 @@ const Shop = () => {
                           className="w-full h-full object-cover group-hover:scale-105 transition-smooth duration-500"
                         />
                       </Link>
+
+                      {/* Compare toggle button (aria-pressed, checked state, 40px tap target) */}
+                      <button
+                        type="button"
+                        aria-pressed={isInCompare(product._id)}
+                        aria-label={isInCompare(product._id) ? `Remove ${product.name} from comparison` : `Add ${product.name} to comparison`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleCompare(product);
+                        }}
+                        className={`absolute top-2 left-2 sm:top-3 sm:left-3 z-10 min-w-[40px] min-h-[40px] p-2 rounded-xl flex items-center justify-center gap-1 transition-all shadow-md cursor-pointer ${
+                          isInCompare(product._id)
+                            ? 'bg-[#6D2932] text-white border border-[#e8a3ae]/40 ring-1 ring-[#e8a3ae]/30'
+                            : 'bg-slate-950/80 hover:bg-slate-900 text-slate-300 hover:text-white border border-slate-800'
+                        }`}
+                      >
+                        {isInCompare(product._id) ? (
+                          <>
+                            <Check size={14} className="text-[#e8a3ae]" />
+                            <span className="hidden xs:inline text-[10px] font-bold">Comparing</span>
+                          </>
+                        ) : (
+                          <>
+                            <ArrowLeftRight size={14} />
+                            <span className="hidden xs:inline text-[10px] font-bold">Compare</span>
+                          </>
+                        )}
+                      </button>
+
                       <button
                         onClick={() => toggleWishlist(product._id)}
                         className="absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 rounded-full bg-slate-950/80 border border-slate-800 hover:bg-slate-900 text-slate-300 hover:text-red-400 transition-smooth"

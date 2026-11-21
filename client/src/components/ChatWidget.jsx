@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, Send } from 'lucide-react';
 import { getLocalAccessToken } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useLoginPrompt } from '../context/LoginPromptContext';
+import { useCompare } from '../context/CompareContext';
+import { shouldShowTray } from '../utils/compareSelection';
 
 // Base API URL — reads from Vite env (falls back to relative path handled by dev proxy)
 const API_BASE = import.meta.env.VITE_API_URL || '/api/v1';
@@ -99,6 +101,9 @@ function generateSuggestions(userMessage) {
 const ChatWidget = () => {
   const { isAuthenticated, user } = useAuth();
   const { showPrompt } = useLoginPrompt();
+  const { count: compareCount } = useCompare();
+  const location = useLocation();
+  const isTrayVisible = shouldShowTray(location?.pathname, compareCount);
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -491,7 +496,7 @@ const ChatWidget = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-6 right-6 z-40 select-none"
+            className={`fixed ${isTrayVisible ? 'bottom-20 md:bottom-24' : 'bottom-6'} right-6 z-40 select-none transition-all duration-300`}
           >
             <motion.div
               animate={{ y: [0, -6, 0] }}

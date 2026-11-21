@@ -6,8 +6,9 @@ import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useLoginPrompt } from '../context/LoginPromptContext';
 import { useToast } from '../context/ToastContext';
+import { useCompare } from '../context/CompareContext';
 import { ProductDetailSkeleton } from '../components/SkeletonLoader';
-import { Heart, ShoppingCart, Star, Plus, Minus, Check, AlertCircle, Zap, Store } from 'lucide-react';
+import { Heart, ShoppingCart, Star, Plus, Minus, Check, AlertCircle, Zap, Store, ArrowLeftRight } from 'lucide-react';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -17,6 +18,7 @@ const ProductDetail = () => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { showPrompt } = useLoginPrompt();
   const { showToast } = useToast();
+  const { toggle: toggleCompare, has: isInCompare } = useCompare();
 
   const [product, setProduct] = useState(null);
   const [reviews, setReviews] = useState([]);
@@ -301,7 +303,7 @@ const ProductDetail = () => {
 
             {/* Cart & Buy Now section */}
             {isOwnerSeller ? (
-              <div className="pt-4">
+              <div className="pt-4 space-y-3">
                 <div className="bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-4 flex items-center gap-3 text-indigo-300">
                   <Store size={20} className="text-indigo-400 shrink-0" />
                   <div>
@@ -309,81 +311,135 @@ const ProductDetail = () => {
                     <p className="text-xs text-slate-400 mt-0.5">You are the seller of this product. Self-purchasing is disabled.</p>
                   </div>
                 </div>
+
+                {/* Compare Toggle for owner */}
+                <button
+                  type="button"
+                  aria-pressed={isInCompare(product._id)}
+                  aria-label={isInCompare(product._id) ? `Remove ${product.name} from comparison` : `Add ${product.name} to comparison`}
+                  onClick={() => toggleCompare(product)}
+                  className={`min-h-[44px] min-w-[44px] px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 border transition-all text-sm cursor-pointer shadow-sm ${
+                    isInCompare(product._id)
+                      ? 'bg-[#6D2932] text-white border-[#e8a3ae]/40 ring-1 ring-[#e8a3ae]/30'
+                      : 'border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 hover:text-white'
+                  }`}
+                >
+                  {isInCompare(product._id) ? (
+                    <>
+                      <Check size={16} className="text-[#e8a3ae]" />
+                      <span>In Comparison</span>
+                    </>
+                  ) : (
+                    <>
+                      <ArrowLeftRight size={16} />
+                      <span>Compare Product</span>
+                    </>
+                  )}
+                </button>
               </div>
             ) : (
-              <div className="flex flex-col sm:flex-row items-stretch gap-3 pt-4">
-                {/* Quantity Toggle — min 44px tall for touch */}
-                <div className={`flex items-center border border-slate-800 bg-slate-900/60 rounded-xl px-1 min-h-[44px] w-full sm:w-[120px] shrink-0 ${isOutOfStock ? 'opacity-50 select-none' : ''}`}>
-                  <button
-                    type="button"
-                    disabled={isOutOfStock || quantity <= 1}
-                    onClick={() => handleQuantityChange('dec')}
-                    className="flex-1 flex items-center justify-center min-h-[44px] hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-100 transition-smooth disabled:text-slate-700"
-                  >
-                    <Minus size={16} />
-                  </button>
-                  <span className="font-semibold text-slate-100 text-sm select-none px-1 text-center w-6">{isOutOfStock ? 0 : quantity}</span>
-                  <button
-                    type="button"
-                    disabled={isOutOfStock || quantity >= product.stock}
-                    onClick={() => handleQuantityChange('inc')}
-                    className="flex-1 flex items-center justify-center min-h-[44px] hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-100 transition-smooth disabled:text-slate-700"
-                  >
-                    <Plus size={16} />
-                  </button>
+              <div className="space-y-3 pt-4">
+                <div className="flex flex-col sm:flex-row items-stretch gap-3">
+                  {/* Quantity Toggle — min 44px tall for touch */}
+                  <div className={`flex items-center border border-slate-800 bg-slate-900/60 rounded-xl px-1 min-h-[44px] w-full sm:w-[120px] shrink-0 ${isOutOfStock ? 'opacity-50 select-none' : ''}`}>
+                    <button
+                      type="button"
+                      disabled={isOutOfStock || quantity <= 1}
+                      onClick={() => handleQuantityChange('dec')}
+                      className="flex-1 flex items-center justify-center min-h-[44px] hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-100 transition-smooth disabled:text-slate-700"
+                    >
+                      <Minus size={16} />
+                    </button>
+                    <span className="font-semibold text-slate-100 text-sm select-none px-1 text-center w-6">{isOutOfStock ? 0 : quantity}</span>
+                    <button
+                      type="button"
+                      disabled={isOutOfStock || quantity >= product.stock}
+                      onClick={() => handleQuantityChange('inc')}
+                      className="flex-1 flex items-center justify-center min-h-[44px] hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-100 transition-smooth disabled:text-slate-700"
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
+
+                  {/* Action Buttons: Add to Cart (Secondary Outline) & Buy Now (Primary Solid) */}
+                  <div className="flex flex-1 flex-col sm:flex-row gap-3">
+                    <button
+                      type="button"
+                      disabled={isOutOfStock || isAdding}
+                      onClick={handleAddToCart}
+                      className={`flex-1 min-h-[44px] px-4 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-smooth text-sm sm:text-base ${
+                        isOutOfStock
+                          ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800/50'
+                          : justAdded
+                            ? 'bg-emerald-600/20 border border-emerald-500 text-emerald-400'
+                            : 'border border-indigo-500/50 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300'
+                      }`}
+                    >
+                      {isOutOfStock ? (
+                        <>
+                          <AlertCircle size={18} />
+                          <span>Out of Stock</span>
+                        </>
+                      ) : justAdded ? (
+                        <>
+                          <Check size={18} />
+                          <span>Added!</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingCart size={18} />
+                          <span>{isAdding ? 'Adding...' : 'Add to Cart'}</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={isOutOfStock}
+                      onClick={handleBuyNow}
+                      className={`flex-1 min-h-[44px] px-4 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-smooth shadow-lg text-sm sm:text-base ${
+                        isOutOfStock
+                          ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800/50 shadow-none'
+                          : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
+                      }`}
+                    >
+                      {isOutOfStock ? (
+                        <>
+                          <AlertCircle size={18} />
+                          <span>Out of Stock</span>
+                        </>
+                      ) : (
+                        <>
+                          <Zap size={18} className="fill-current" />
+                          <span>Buy Now</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
-                {/* Action Buttons: Add to Cart (Secondary Outline) & Buy Now (Primary Solid) */}
-                <div className="flex flex-1 flex-col sm:flex-row gap-3">
+                {/* Compare Toggle next to cart controls */}
+                <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    disabled={isOutOfStock || isAdding}
-                    onClick={handleAddToCart}
-                    className={`flex-1 min-h-[44px] px-4 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-smooth text-sm sm:text-base ${
-                      isOutOfStock
-                        ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800/50'
-                        : justAdded
-                          ? 'bg-emerald-600/20 border border-emerald-500 text-emerald-400'
-                          : 'border border-indigo-500/50 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300'
+                    aria-pressed={isInCompare(product._id)}
+                    aria-label={isInCompare(product._id) ? `Remove ${product.name} from comparison` : `Add ${product.name} to comparison`}
+                    onClick={() => toggleCompare(product)}
+                    className={`min-h-[40px] px-4 py-2 rounded-xl font-bold flex items-center justify-center gap-2 border transition-all text-xs sm:text-sm cursor-pointer shadow-sm ${
+                      isInCompare(product._id)
+                        ? 'bg-[#6D2932] text-white border-[#e8a3ae]/40 ring-1 ring-[#e8a3ae]/30'
+                        : 'border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 hover:text-white'
                     }`}
                   >
-                    {isOutOfStock ? (
+                    {isInCompare(product._id) ? (
                       <>
-                        <AlertCircle size={18} />
-                        <span>Out of Stock</span>
-                      </>
-                    ) : justAdded ? (
-                      <>
-                        <Check size={18} />
-                        <span>Added!</span>
+                        <Check size={16} className="text-[#e8a3ae]" />
+                        <span>In Comparison</span>
                       </>
                     ) : (
                       <>
-                        <ShoppingCart size={18} />
-                        <span>{isAdding ? 'Adding...' : 'Add to Cart'}</span>
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={isOutOfStock}
-                    onClick={handleBuyNow}
-                    className={`flex-1 min-h-[44px] px-4 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-smooth shadow-lg text-sm sm:text-base ${
-                      isOutOfStock
-                        ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800/50 shadow-none'
-                        : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
-                    }`}
-                  >
-                    {isOutOfStock ? (
-                      <>
-                        <AlertCircle size={18} />
-                        <span>Out of Stock</span>
-                      </>
-                    ) : (
-                      <>
-                        <Zap size={18} className="fill-current" />
-                        <span>Buy Now</span>
+                        <ArrowLeftRight size={16} />
+                        <span>Compare Product</span>
                       </>
                     )}
                   </button>
