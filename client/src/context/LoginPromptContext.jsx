@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 
-const LoginPromptContext = createContext(null);
+export const LoginPromptContext = createContext(null);
 
 export const LoginPromptProvider = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);

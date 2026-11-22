@@ -5,23 +5,15 @@
  */
 
 /**
- * Calculates real final price after discount using paise-safe integer math.
+ * Calculates charged store price. Under Case A, the store charges product.price
+ * directly across all checkout and order flows (discountPercent is a marketing badge).
  * @param {number} price In rupees
- * @param {number} discountPercent 0-100
- * @returns {number} Final price in rupees (max 2 decimals)
+ * @param {number} [discountPercent] Ignored in Case A charged price
+ * @returns {number} Charged price in rupees (max 2 decimals)
  */
 function calculateFinalPrice(price, discountPercent) {
   const p = Math.max(0, Number(price) || 0);
-  const d = Math.max(0, Math.min(100, Number(discountPercent) || 0));
-
-  if (d <= 0) return p;
-  if (d >= 100) return 0;
-
-  const pricePaise = Math.round(p * 100);
-  const discountPaise = Math.round(pricePaise * (d / 100));
-  const finalPaise = Math.max(0, pricePaise - discountPaise);
-
-  return Number((finalPaise / 100).toFixed(2));
+  return Number(p.toFixed(2));
 }
 
 /**
@@ -256,7 +248,7 @@ function validateAiSummary(rawOutput, expectedProductIds) {
 function buildCacheKey(products) {
   if (!Array.isArray(products)) return '';
   const sorted = [...products].sort((a, b) => String(a._id).localeCompare(String(b._id)));
-  return sorted.map(p => {
+  const baseKey = sorted.map(p => {
     const id = String(p._id);
     const updated = p.updatedAt ? new Date(p.updatedAt).getTime() : 0;
     const price = Number(p.price) || 0;
@@ -265,6 +257,7 @@ function buildCacheKey(products) {
     const reviewsCount = Number(p.reviewsCount) || 0;
     return `${id}:${updated}:${price}:${stock}:${ratingsAvg}:${reviewsCount}`;
   }).join('|');
+  return `v2|${baseKey}`;
 }
 
 /**

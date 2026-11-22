@@ -69,79 +69,89 @@ const CartPage = () => {
             
             {/* Left Panel: Items List */}
             <div className="lg:col-span-2 space-y-4">
-              {cartItems.map((item) => (
-                <div
-                  key={item.product?._id}
-                  className="bg-slate-900/50 hover:bg-slate-900 border border-slate-900 hover:border-slate-850 p-4 sm:p-6 rounded-2xl flex flex-col gap-4 transition-smooth"
-                >
-                  {/* Thumbnail & Info */}
-                  <div className="flex items-center gap-4 w-full sm:w-auto">
-                    <div className="w-20 h-20 bg-slate-950 rounded-xl overflow-hidden shrink-0 border border-slate-850">
-                      <img
-                        src={item.product?.images[0] || 'https://via.placeholder.com/100?text=No+Image'}
-                        alt={item.product?.name}
-                        className="w-full h-full object-cover"
-                      />
+              {cartItems.map((item, index) => {
+                const prod = item?.product || {};
+                const prodId = prod._id || `cart-item-${index}`;
+                const prodName = prod.name || 'Product';
+                const prodPrice = Number(prod.price) || 0;
+                const prodStock = Number.isFinite(Number(prod.stock)) ? Number(prod.stock) : 99;
+                const itemQty = Number(item?.quantity) || 1;
+                const itemImage = (Array.isArray(prod.images) && prod.images[0]) || prod.image || 'https://via.placeholder.com/100?text=No+Image';
+
+                return (
+                  <div
+                    key={prodId}
+                    className="bg-slate-900/50 hover:bg-slate-900 border border-slate-900 hover:border-slate-850 p-4 sm:p-6 rounded-2xl flex flex-col gap-4 transition-smooth"
+                  >
+                    {/* Thumbnail & Info */}
+                    <div className="flex items-center gap-4 w-full sm:w-auto">
+                      <div className="w-20 h-20 bg-slate-950 rounded-xl overflow-hidden shrink-0 border border-slate-850">
+                        <img
+                          src={itemImage}
+                          alt={prodName}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Link
+                          to={prod._id ? `/product/${prod._id}` : '#'}
+                          className="font-bold text-slate-200 hover:text-indigo-400 transition-smooth text-sm sm:text-base line-clamp-1"
+                        >
+                          {prodName}
+                        </Link>
+                        <div className="text-xs text-slate-500 font-medium">
+                          Unit Price: ₹{prodPrice.toFixed(2)}
+                        </div>
+                        <div className="text-xs font-semibold">
+                          {prodStock === 0 ? (
+                            <span className="text-rose-450">Out of Stock</span>
+                          ) : itemQty > prodStock ? (
+                            <span className="text-amber-450">Insufficient Stock (Only {prodStock} available)</span>
+                          ) : (
+                            <span className="text-emerald-400">In Stock (Limit {prodStock})</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <Link
-                        to={`/product/${item.product?._id}`}
-                        className="font-bold text-slate-200 hover:text-indigo-400 transition-smooth text-sm sm:text-base line-clamp-1"
+
+                    {/* Actions & Pricing — always in a row, wraps if needed */}
+                    <div className="flex items-center justify-between gap-3 w-full border-t border-slate-900/70 pt-3 sm:pt-0 sm:border-none sm:w-auto sm:justify-end">
+                      
+                      {/* Quantity controls — 44px tall touch targets */}
+                      <div className="flex items-center border border-slate-800 bg-slate-950 rounded-lg min-h-[44px] px-1">
+                        <button
+                          onClick={() => handleQtyChange(prodId, itemQty, prodStock, 'dec')}
+                          disabled={itemQty <= 1}
+                          className="flex items-center justify-center min-w-[36px] min-h-[44px] hover:bg-slate-800 rounded text-slate-400 hover:text-slate-100 disabled:text-slate-700 transition-smooth"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span className="text-xs font-semibold text-slate-200 w-6 text-center select-none">{itemQty}</span>
+                        <button
+                          onClick={() => handleQtyChange(prodId, itemQty, prodStock, 'inc')}
+                          disabled={itemQty >= prodStock}
+                          className="flex items-center justify-center min-w-[36px] min-h-[44px] hover:bg-slate-800 rounded text-slate-400 hover:text-slate-100 disabled:text-slate-700 transition-smooth"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+
+                      {/* Subtotal price for item */}
+                      <div className="text-sm font-extrabold text-slate-100 text-right flex-1">
+                        ₹{(prodPrice * itemQty).toFixed(2)}
+                      </div>
+
+                      {/* Trash remove item */}
+                      <button
+                        onClick={() => removeFromCart(prodId)}
+                        className="p-2.5 bg-slate-950 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-500/20 text-slate-400 hover:text-rose-400 rounded-xl transition-smooth cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
                       >
-                        {item.product?.name}
-                      </Link>
-                      <div className="text-xs text-slate-500 font-medium">
-                        Unit Price: ₹{item.product?.price?.toFixed(2)}
-                      </div>
-                      <div className="text-xs font-semibold">
-                        {item.product?.stock === 0 ? (
-                          <span className="text-rose-450">Out of Stock</span>
-                        ) : item.quantity > item.product?.stock ? (
-                          <span className="text-amber-450">Insufficient Stock (Only {item.product.stock} available)</span>
-                        ) : (
-                          <span className="text-emerald-400">In Stock (Limit {item.product.stock})</span>
-                        )}
-                      </div>
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </div>
-
-                  {/* Actions & Pricing — always in a row, wraps if needed */}
-                  <div className="flex items-center justify-between gap-3 w-full border-t border-slate-900/70 pt-3 sm:pt-0 sm:border-none sm:w-auto sm:justify-end">
-                    
-                    {/* Quantity controls — 44px tall touch targets */}
-                    <div className="flex items-center border border-slate-800 bg-slate-950 rounded-lg min-h-[44px] px-1">
-                      <button
-                        onClick={() => handleQtyChange(item.product?._id, item.quantity, item.product?.stock, 'dec')}
-                        disabled={item.quantity <= 1}
-                        className="flex items-center justify-center min-w-[36px] min-h-[44px] hover:bg-slate-800 rounded text-slate-400 hover:text-slate-100 disabled:text-slate-700 transition-smooth"
-                      >
-                        <Minus size={14} />
-                      </button>
-                      <span className="text-xs font-semibold text-slate-200 w-6 text-center select-none">{item.quantity}</span>
-                      <button
-                        onClick={() => handleQtyChange(item.product?._id, item.quantity, item.product?.stock, 'inc')}
-                        disabled={item.quantity >= item.product?.stock}
-                        className="flex items-center justify-center min-w-[36px] min-h-[44px] hover:bg-slate-800 rounded text-slate-400 hover:text-slate-100 disabled:text-slate-700 transition-smooth"
-                      >
-                        <Plus size={14} />
-                      </button>
-                    </div>
-
-                    {/* Subtotal price for item */}
-                    <div className="text-sm font-extrabold text-slate-100 text-right flex-1">
-                      ₹{((item.product?.price || 0) * item.quantity).toFixed(2)}
-                    </div>
-
-                    {/* Trash remove item */}
-                    <button
-                      onClick={() => removeFromCart(item.product?._id)}
-                      className="p-2.5 bg-slate-950 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-500/20 text-slate-400 hover:text-rose-400 rounded-xl transition-smooth cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Right Panel: Order Summary */}

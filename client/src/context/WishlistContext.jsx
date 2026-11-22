@@ -4,7 +4,7 @@ import { useLoginPrompt } from './LoginPromptContext';
 import { useLocation } from 'react-router-dom';
 import api from '../services/api';
 
-const WishlistContext = createContext(null);
+export const WishlistContext = createContext(null);
 
 export const WishlistProvider = ({ children }) => {
   const { isAuthenticated } = useAuth();

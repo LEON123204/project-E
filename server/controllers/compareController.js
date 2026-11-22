@@ -156,7 +156,7 @@ async function compareProducts(req, res, next) {
           category: p.category,
           price: p.price,
           discountPercent: p.discountPercent,
-          finalPrice: p.finalPrice,
+          finalPrice: p.price,
           stock: p.stock,
           inStock: p.inStock,
           ratingsAvg: p.ratingsAvg,
@@ -185,7 +185,7 @@ CRITICAL SECURITY AND ACCURACY RULES:
 3. COMPARATIVE AND NUMERIC CLAIM RULES:
    - Never state that a product has more, fewer, higher, lower, most, least, cheapest, or best of anything unless it exactly matches the provided highlights or a direct comparison of the numbers given.
    - When a highlight is null (which indicates a tie or not enough data), do NOT claim a winner for that metric.
-   - Quote numbers only as they appear in the data.
+   - Quote numbers only as they appear in the data. The price listed in the data is the charged price; do not compute, state, or invent any discounted price.
    - Do not use the words "best", "worst", "safest", or "dangerous" anywhere in your output. Even in the "bestFor" field, describe the ideal audience or use case (e.g. "Suitable for..." or "Great for...") without declaring the product itself "the best".
    - Mention only facts present in the data. Never invent features, specifications, or attributes not present in the data.
    - If sameCategory is false, acknowledge in the overview that the products belong to different categories and clarify their distinct purposes.

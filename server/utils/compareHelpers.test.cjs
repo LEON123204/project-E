@@ -13,24 +13,23 @@ const {
 
 console.log('=== ITEM 5: PURE HELPERS UNIT TESTS [MOCK DATA] ===\n');
 
-// 1. finalPrice math
+// 1. finalPrice math (Under Case A: charged store price = price, discountPercent is marketing display)
 console.log('--- 1. finalPrice Math [MOCK] ---');
 const fp1 = calculateFinalPrice(1999, 10);
-assert.equal(fp1, 1799.1);
-console.log('[MOCK] 1999 with 10% discount ->', fp1, '(expected 1799.1)');
+assert.equal(fp1, 1999);
+console.log('[MOCK] 1999 with 10% discount ->', fp1, '(expected 1999 - charged price)');
 
 const fp2 = calculateFinalPrice(2499, 0);
 assert.equal(fp2, 2499);
 console.log('[MOCK] 2499 with 0% discount ->', fp2, '(expected 2499)');
 
 const fp3 = calculateFinalPrice(100, 100);
-assert.equal(fp3, 0);
-console.log('[MOCK] 100 with 100% discount ->', fp3, '(expected 0)');
+assert.equal(fp3, 100);
+console.log('[MOCK] 100 with 100% discount ->', fp3, '(expected 100 - charged price)');
 
 const fp4 = calculateFinalPrice(1234.56, 15);
-// 123456 paise * 0.15 = 18518.4 -> 18518 paise discount -> 104938 paise -> 1049.38
-assert.equal(fp4, 1049.38);
-console.log('[MOCK] 1234.56 with 15% discount ->', fp4, '(expected 1049.38)');
+assert.equal(fp4, 1234.56);
+console.log('[MOCK] 1234.56 with 15% discount ->', fp4, '(expected 1234.56)');
 
 // 2. excerpt truncation
 console.log('\n--- 2. excerpt Truncation [MOCK] ---');
@@ -97,6 +96,19 @@ const hD = calculateHighlights(prodsD);
 assert.equal(hD.highestRatedId, null);
 assert.equal(hD.mostReviewedId, null);
 console.log('[MOCK] Case 3d (No reviews -> highestRatedId null, mostReviewedId null):', JSON.stringify(hD));
+
+// Case 3e: Inverted pair (list price vs discounted price)
+// P1: price 1899, discount 10% (discounted would be 1709.10)
+// P2: price 1999, discount 15% (discounted would be 1699.15)
+// Under Case A, cheapestId follows charged price (1899 < 1999 -> P1), while bestDiscountId follows discount (15% > 10% -> P2)
+const prodsE = [
+  { _id: 'p_backpack', finalPrice: 1899, price: 1899, discountPercent: 10, ratingsAvg: 4.5, reviewsCount: 5, stock: 10 },
+  { _id: 'p_jacket', finalPrice: 1999, price: 1999, discountPercent: 15, ratingsAvg: 4.5, reviewsCount: 5, stock: 10 }
+];
+const hE = calculateHighlights(prodsE);
+assert.equal(hE.cheapestId, 'p_backpack', 'cheapestId must be p_backpack (charged price 1899 < 1999)');
+assert.equal(hE.bestDiscountId, 'p_jacket', 'bestDiscountId must be p_jacket (discount 15% > 10%)');
+console.log('[MOCK] Case 3e (Inverted pair): cheapestId=', hE.cheapestId, 'bestDiscountId=', hE.bestDiscountId);
 
 // 4. validateAiSummary
 console.log('\n--- 4. validateAiSummary [MOCK] ---');
@@ -215,10 +227,11 @@ const cacheProds = [
   { _id: 'p1', updatedAt: '2026-11-01T00:00:00.000Z', price: 100, stock: 10, ratingsAvg: 4.0, reviewsCount: 2 }
 ];
 const key1 = buildCacheKey(cacheProds);
+assert.ok(key1.startsWith('v2|'), 'Cache key must start with v2| prefix');
 // Should sort p1 before p2 regardless of input array order
 const key2 = buildCacheKey([cacheProds[1], cacheProds[0]]);
 assert.equal(key1, key2);
-console.log('[MOCK] Cache key deterministic regardless of order:', key1);
+console.log('[MOCK] Cache key deterministic regardless of order with v2 prefix:', key1);
 
 // Eviction test (max 3 items for test)
 const testCache = new SummaryCache(3, 60000);

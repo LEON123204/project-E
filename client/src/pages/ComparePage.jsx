@@ -20,24 +20,20 @@ import { useCompare } from '../context/CompareContext';
 import { parseCompareIds } from '../utils/compareSelection';
 
 /**
- * Currency formatter for Indian Rupees (en-IN).
- * Shows 2 decimal places only when the value has decimals.
+ * Currency formatter for Indian Rupees.
+ * Returns consistent 2-decimal rupee string matching store conventions (e.g. ₹3499.00).
  * @param {number} num
  * @returns {string}
  */
 export function formatRupees(num) {
   const val = Number(num) || 0;
-  const hasDecimals = val % 1 !== 0;
-  return '₹' + val.toLocaleString('en-IN', {
-    minimumFractionDigits: hasDecimals ? 2 : 0,
-    maximumFractionDigits: 2
-  });
+  return `₹${val.toFixed(2)}`;
 }
 
 const ComparePage = ({ initialData = null, initialLoading = false, initialError = null }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth() || {};
+  const { user, isAuthenticated } = useAuth() || {};
   const { addToCart } = useCart() || {};
   const { showToast } = useToast() || {};
   const { items: selectedItems = [], remove: removeFromContext, clear: clearSelection } = useCompare() || {};
@@ -47,6 +43,22 @@ const ComparePage = ({ initialData = null, initialLoading = false, initialError 
   const [error, setError] = useState(initialError);
   const [retryCooldown, setRetryCooldown] = useState(0);
   const [addingId, setAddingId] = useState(null);
+  const [ownProductIds, setOwnProductIds] = useState([]);
+
+  // Fetch logged-in seller's own product IDs once to hide Add-to-Cart
+  useEffect(() => {
+    if (isAuthenticated && user?.role === 'seller') {
+      api.get('/seller/products')
+        .then((res) => {
+          if (res.data?.products && Array.isArray(res.data.products)) {
+            setOwnProductIds(res.data.products.map((p) => p._id.toString()));
+          }
+        })
+        .catch(() => {});
+    } else {
+      setOwnProductIds([]);
+    }
+  }, [isAuthenticated, user]);
 
   const requestCounter = useRef(0);
   const cooldownTimerRef = useRef(null);
@@ -185,16 +197,39 @@ const ComparePage = ({ initialData = null, initialLoading = false, initialError 
 
   // Add to cart handler
   const handleAddToCart = async (product) => {
-    if (product.stock === 0) return;
+    if (!product || product.stock === 0) return;
+    const isOwnListing = Boolean(
+      product.isOwnListing ||
+      (user && product.sellerId && String(product.sellerId._id || product.sellerId) === String(user._id)) ||
+      ownProductIds.includes(String(product._id))
+    );
+    if (isOwnListing) return;
+
     setAddingId(product._id);
     try {
-      await addToCart(product._id, 1);
-      if (showToast) {
-        showToast(`Added ${product.name} to cart`, 'success');
+      // Use the SAME path and argument shape as the Shop page
+      const cartProduct = {
+        _id: product._id,
+        name: product.name,
+        price: product.price,
+        images: product.images || (product.image ? [product.image] : []),
+        stock: product.stock,
+        isOwnListing,
+        sellerId: product.sellerId
+      };
+      const res = await addToCart(cartProduct, 1);
+      if (res && res.success) {
+        if (showToast) {
+          showToast(`Added ${product.name} to cart`, 'success');
+        }
+      } else {
+        if (showToast) {
+          showToast(res?.message || 'Failed to add to cart', 'error');
+        }
       }
     } catch (err) {
       if (showToast) {
-        showToast(err.response?.data?.message || 'Failed to add to cart', 'error');
+        showToast(err.response?.data?.message || err.message || 'Failed to add to cart', 'error');
       }
     } finally {
       setAddingId(null);
@@ -489,40 +524,13 @@ const ComparePage = ({ initialData = null, initialLoading = false, initialError 
                 ))}
               </tr>
 
-              {/* Row 6: Original Price & Discount */}
-              <tr className="border-b border-slate-800/80">
-                <th
-                  scope="row"
-                  className="sticky left-0 bg-slate-900 z-20 p-3 sm:p-4 text-xs font-bold text-slate-300 border-r border-slate-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]"
-                >
-                  Original Price
-                </th>
-                {products.map((prod) => (
-                  <td
-                    key={prod._id}
-                    className="p-3 sm:p-4 min-w-[150px] sm:min-w-[200px] border-r border-slate-800/60 last:border-r-0 text-xs sm:text-sm"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className={prod.discountPercent > 0 ? 'line-through text-slate-500' : 'text-slate-200 font-semibold'}>
-                        {formatRupees(prod.price)}
-                      </span>
-                      {prod.discountPercent > 0 && (
-                        <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 rounded">
-                          {prod.discountPercent}% off
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                ))}
-              </tr>
-
-              {/* Row 7: Final Price (Highlight: Lowest price & Best discount) */}
+              {/* Row 6: Price (Charged price with optional discount label & highlights) */}
               <tr className="border-b border-slate-800/80 bg-slate-900/30">
                 <th
                   scope="row"
                   className="sticky left-0 bg-slate-900 z-20 p-3 sm:p-4 text-xs font-bold text-slate-300 border-r border-slate-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]"
                 >
-                  Final Price
+                  Price
                 </th>
                 {products.map((prod) => {
                   const isCheapest = highlights?.cheapestId === prod._id;
@@ -535,9 +543,16 @@ const ComparePage = ({ initialData = null, initialLoading = false, initialError 
                       }`}
                     >
                       <div className="space-y-1.5">
-                        <span className="text-base sm:text-lg font-black text-slate-100 block">
-                          {formatRupees(prod.finalPrice)}
-                        </span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-base sm:text-lg font-black text-slate-100">
+                            {formatRupees(prod.price)}
+                          </span>
+                          {prod.discountPercent > 0 && (
+                            <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 rounded">
+                              {prod.discountPercent}% off
+                            </span>
+                          )}
+                        </div>
                         <div className="flex flex-wrap gap-1">
                           {isCheapest && (
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 flex items-center gap-1">
@@ -676,7 +691,11 @@ const ComparePage = ({ initialData = null, initialLoading = false, initialError 
                   Actions
                 </th>
                 {products.map((prod) => {
-                  const isOwner = prod.isOwnListing || (user && prod.sellerId && String(prod.sellerId._id || prod.sellerId) === String(user._id));
+                  const isOwner = Boolean(
+                    prod.isOwnListing ||
+                    (user && prod.sellerId && String(prod.sellerId._id || prod.sellerId) === String(user._id)) ||
+                    ownProductIds.includes(String(prod._id))
+                  );
                   return (
                     <td
                       key={prod._id}
@@ -689,7 +708,11 @@ const ComparePage = ({ initialData = null, initialLoading = false, initialError 
                         >
                           View product
                         </Link>
-                        {!isOwner && (
+                        {isOwner ? (
+                          <span className="w-full py-2 px-3 rounded-xl bg-indigo-950/60 border border-indigo-500/30 text-indigo-400 text-xs font-semibold flex items-center justify-center">
+                            Your listing
+                          </span>
+                        ) : (
                           <button
                             type="button"
                             disabled={prod.stock === 0 || addingId === prod._id}

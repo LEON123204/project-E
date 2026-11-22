@@ -15,6 +15,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ChatWidget from './components/ChatWidget';
 import ScrollToTop from './components/ScrollToTop';
 import CompareTray from './components/CompareTray';
+import ErrorBoundary from './components/ErrorBoundary';
 import { shouldShowTray } from './utils/compareSelection';
 import { LoginPromptProvider } from './context/LoginPromptContext';
 import LoginPromptModal from './components/LoginPromptModal';
@@ -47,7 +48,7 @@ import AdminSellerProducts from './pages/admin/AdminSellerProducts';
 import SellerDashboard from './pages/seller/SellerDashboard';
 import SellerOrders from './pages/seller/SellerOrders';
 
-// Main content wrapper that adds bottom padding when CompareTray is visible
+// Main content wrapper that adds bottom padding when CompareTray is visible and resets ErrorBoundary on navigation
 const MainContent = ({ children }) => {
   const { count } = useCompare();
   const location = useLocation();
@@ -55,7 +56,9 @@ const MainContent = ({ children }) => {
 
   return (
     <main className={`flex-grow ${isTrayVisible ? 'pb-24 sm:pb-28' : ''}`}>
-      {children}
+      <ErrorBoundary key={location.pathname} resetKey={location.pathname}>
+        {children}
+      </ErrorBoundary>
     </main>
   );
 };
@@ -80,7 +83,7 @@ function App() {
                     {/* Main Content Area */}
                     <MainContent>
                       <Routes>
-                        {/* Public routes */}
+                          {/* Public routes */}
                         <Route path="/" element={<Home />} />
                         <Route path="/shop" element={<Shop />} />
                         <Route path="/product/:id" element={<ProductDetail />} />
@@ -188,7 +191,7 @@ function App() {
                     }
                   />
                 </Routes>
-              </MainContent>
+            </MainContent>
 
               {/* Product Comparison Tray */}
               <CompareTray />

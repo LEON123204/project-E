@@ -1,8 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import api from '../services/api';
+import {
+  isValid24HexId,
+  sanitizeCartItem,
+  sanitizeCartItems,
+  parseGuestCart
+} from '../utils/cartSanitize';
 
-const CartContext = createContext(null);
+export const CartContext = createContext(null);
 
 export const CartProvider = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
@@ -17,7 +23,7 @@ export const CartProvider = ({ children }) => {
         try {
           // If transitioning from guest to logged in, merge local storage cart
           const localCartStr = localStorage.getItem('guest_cart');
-          const localCart = localCartStr ? JSON.parse(localCartStr) : [];
+          const localCart = parseGuestCart(localCartStr);
 
           if (localCart.length > 0) {
             const response = await api.post('/cart', { guestItems: localCart });
@@ -31,9 +37,14 @@ export const CartProvider = ({ children }) => {
           console.error('Failed to sync database cart:', error.message);
         }
       } else {
-        // Load guest cart from local storage
+        // Load guest cart from local storage safely
         const localCartStr = localStorage.getItem('guest_cart');
-        setCartItems(localCartStr ? JSON.parse(localCartStr) : []);
+        const sanitized = parseGuestCart(localCartStr);
+        setCartItems(sanitized);
+        // Self-heal storage if it held malformed JSON or invalid items
+        if (localCartStr) {
+          localStorage.setItem('guest_cart', JSON.stringify(sanitized));
+        }
       }
       setLoading(false);
     };
@@ -45,11 +56,21 @@ export const CartProvider = ({ children }) => {
   // Save guest cart changes to localStorage
   useEffect(() => {
     if (!isAuthenticated && !loading) {
-      localStorage.setItem('guest_cart', JSON.stringify(cartItems));
+      const sanitized = sanitizeCartItems(cartItems);
+      localStorage.setItem('guest_cart', JSON.stringify(sanitized));
     }
   }, [cartItems, isAuthenticated, loading]);
 
   const addToCart = async (product, quantity = 1) => {
+    if (!product || typeof product !== 'object') {
+      return { success: false, message: 'Invalid product' };
+    }
+
+    const prodId = product._id || product.id;
+    if (!isValid24HexId(prodId)) {
+      return { success: false, message: 'Valid Product ID is required' };
+    }
+
     // If the logged-in user is the owning seller, reject immediately and never call the API
     const sellerId = product.sellerId?._id || product.sellerId;
     if (product.isOwnListing || (user && sellerId && sellerId.toString() === user._id.toString())) {
@@ -59,44 +80,43 @@ export const CartProvider = ({ children }) => {
     if (isAuthenticated) {
       try {
         const response = await api.post('/cart', {
-          productId: product._id,
+          productId: prodId,
           quantity
         });
         setCartItems(response.data.cart.items);
         return { success: true };
       } catch (error) {
-        const message = error.response?.data?.message || 'Failed to add to database cart';
+        const message = error.response?.data?.message || error.message || 'Failed to add to database cart';
         return { success: false, message };
       }
     } else {
       // Local storage cart addition
+      const sanitized = sanitizeCartItem({ product, quantity });
+      if (!sanitized) {
+        return { success: false, message: 'Invalid product data' };
+      }
+
+      if (sanitized.product.stock === 0) {
+        return { success: false, message: 'Item is out of stock' };
+      }
+
       const existingItemIndex = cartItems.findIndex(
-        item => item.product._id === product._id
+        item => item.product?._id === sanitized.product._id
       );
 
       let updatedItems = [...cartItems];
       if (existingItemIndex > -1) {
-        const newQty = updatedItems[existingItemIndex].quantity + quantity;
-        if (newQty > product.stock) {
-          return { success: false, message: `Only ${product.stock} items are in stock.` };
+        const currentQty = updatedItems[existingItemIndex].quantity;
+        const newQty = currentQty + sanitized.quantity;
+        if (newQty > sanitized.product.stock) {
+          return { success: false, message: `Only ${sanitized.product.stock} items are in stock.` };
         }
         updatedItems[existingItemIndex].quantity = newQty;
       } else {
-        if (product.stock === 0) {
-          return { success: false, message: 'Item is out of stock' };
-        }
-        updatedItems.push({
-          product: {
-            _id: product._id,
-            name: product.name,
-            price: product.price,
-            images: product.images,
-            stock: product.stock
-          },
-          quantity: Math.min(quantity, product.stock)
-        });
+        updatedItems.push(sanitized);
       }
-      setCartItems(updatedItems);
+      const finalItems = sanitizeCartItems(updatedItems);
+      setCartItems(finalItems);
       return { success: true };
     }
   };
@@ -110,21 +130,22 @@ export const CartProvider = ({ children }) => {
         setCartItems(response.data.cart.items);
         return { success: true };
       } catch (error) {
-        const message = error.response?.data?.message || 'Failed to update quantity';
+        const message = error.response?.data?.message || error.message || 'Failed to update quantity';
         return { success: false, message };
       }
     } else {
       // Local cart update
       const updatedItems = cartItems.map(item => {
-        if (item.product._id === productId) {
-          if (quantity > item.product.stock) {
+        if (item.product?._id === productId) {
+          const maxStock = item.product?.stock ?? 99;
+          if (quantity > maxStock) {
             return item; // Don't change if stock exceeded
           }
           return { ...item, quantity };
         }
         return item;
       });
-      setCartItems(updatedItems);
+      setCartItems(sanitizeCartItems(updatedItems));
       return { success: true };
     }
   };
@@ -136,13 +157,13 @@ export const CartProvider = ({ children }) => {
         setCartItems(response.data.cart.items);
         return { success: true };
       } catch (error) {
-        const message = error.response?.data?.message || 'Failed to remove from cart';
+        const message = error.response?.data?.message || error.message || 'Failed to remove from cart';
         return { success: false, message };
       }
     } else {
       // Local cart remove
-      const updatedItems = cartItems.filter(item => item.product._id !== productId);
-      setCartItems(updatedItems);
+      const updatedItems = cartItems.filter(item => item.product?._id !== productId);
+      setCartItems(sanitizeCartItems(updatedItems));
       return { success: true };
     }
   };
@@ -154,8 +175,8 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-  const cartTotal = cartItems.reduce((acc, item) => acc + (item.product?.price || 0) * item.quantity, 0);
+  const cartCount = cartItems.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0);
+  const cartTotal = cartItems.reduce((acc, item) => acc + (Number(item.product?.price) || 0) * (Number(item.quantity) || 0), 0);
 
   return (
     <CartContext.Provider
