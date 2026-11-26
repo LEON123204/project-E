@@ -31,4 +31,21 @@ router.get('/seller-products', adminGetSellerProducts);
 router.put('/seller-products/:id/approve', adminApproveSellerProduct);
 router.put('/seller-products/:id/reject', adminRejectSellerProduct);
 
+// Platform Commission Settings
+const { getCommissionSettings, updateCommissionSettings } = require('../controllers/platformSettingsController');
+router.get('/settings/commission', getCommissionSettings);
+router.put('/settings/commission', updateCommissionSettings);
+
+// Admin Commission Statements
+const {
+  getAdminMonths,
+  getAdminCommissions,
+  closeAdminMonth,
+  settleStatement
+} = require('../controllers/statementController');
+router.get('/commissions/months', getAdminMonths);
+router.get('/commissions', getAdminCommissions);
+router.post('/commissions/:month/close', closeAdminMonth);
+router.put('/commissions/statements/:statementId/settle', settleStatement);
+
 module.exports = router;

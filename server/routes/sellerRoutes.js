@@ -37,4 +37,13 @@ router.get('/orders/:orderId', protect, seller, sellerGetOrderById);
 router.put('/orders/:orderId/status', protect, seller, sellerUpdateSubOrderStatus);
 router.put('/orders/:orderId/collect-cash', protect, seller, sellerCollectCash);
 
+// Platform Commission Rate (read-only for sellers)
+const { getSellerCommissionRate } = require('../controllers/platformSettingsController');
+router.get('/commission-rate', protect, seller, getSellerCommissionRate);
+
+// Seller Commission Statements & Earnings
+const { getSellerMonths, getSellerEarnings } = require('../controllers/statementController');
+router.get('/earnings/months', protect, seller, getSellerMonths);
+router.get('/earnings', protect, seller, getSellerEarnings);
+
 module.exports = router;
