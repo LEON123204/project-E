@@ -60,6 +60,21 @@ const subOrderSchema = new mongoose.Schema({
   collectedAt: {
     type: Date,
     default: null
+  },
+  commissionRate: {
+    type: Number,
+    min: 0,
+    max: 50,
+    default: null
+  },
+  commissionAmount: {
+    type: Number,
+    min: 0,
+    default: null
+  },
+  deliveredAt: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true

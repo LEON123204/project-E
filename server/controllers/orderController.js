@@ -1,8 +1,10 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Cart = require('../models/Cart');
+const PlatformSettings = require('../models/PlatformSettings');
 const mongoose = require('mongoose');
 const { splitOrderBySeller } = require('../utils/orderSplit');
+const { applyCommissionToSubOrders } = require('../utils/commission');
 const {
   isValidAdminTransition,
   deriveParentStatus,
@@ -131,6 +133,15 @@ const createOrder = async (req, res, next) => {
     } catch (splitError) {
       res.status(400);
       throw new Error(`Order split failed: ${splitError.message}`);
+    }
+
+    // Apply platform commission to subOrders
+    try {
+      const settings = await PlatformSettings.getSettings();
+      subOrders = applyCommissionToSubOrders(subOrders, settings.commissionRatePercent);
+    } catch (err) {
+      console.log('commission: settings unavailable, using default');
+      subOrders = applyCommissionToSubOrders(subOrders, 10);
     }
 
     let clientSecret = null;
@@ -499,6 +510,9 @@ const updateOrderStatus = async (req, res, next) => {
           }
         }
         sub.status = status;
+        if (status === 'delivered' && !sub.deliveredAt) {
+          sub.deliveredAt = new Date();
+        }
       }
     }
 
@@ -702,6 +716,10 @@ const adminUpdateSubOrderStatus = async (req, res, next) => {
     }
 
     // 7. Atomic update with precondition to prevent race conditions
+    const setFields = { 'subOrders.$[elem].status': newStatus };
+    if (newStatus === 'delivered') {
+      setFields['subOrders.$[elem].deliveredAt'] = new Date();
+    }
     const updated = await Order.findOneAndUpdate(
       {
         _id: orderId,
@@ -710,7 +728,7 @@ const adminUpdateSubOrderStatus = async (req, res, next) => {
         }
       },
       {
-        $set: { 'subOrders.$[elem].status': newStatus }
+        $set: setFields
       },
       {
         arrayFilters: [{ 'elem._id': subOrderId, 'elem.status': currentStatus }],

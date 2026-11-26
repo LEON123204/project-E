@@ -297,6 +297,10 @@ const sellerUpdateSubOrderStatus = async (req, res, next) => {
     }
 
     // 7. Atomic update with precondition to prevent race conditions
+    const setFields = { 'subOrders.$[elem].status': newStatus };
+    if (newStatus === 'delivered') {
+      setFields['subOrders.$[elem].deliveredAt'] = new Date();
+    }
     const updated = await Order.findOneAndUpdate(
       {
         _id: orderId,
@@ -305,7 +309,7 @@ const sellerUpdateSubOrderStatus = async (req, res, next) => {
         }
       },
       {
-        $set: { 'subOrders.$[elem].status': newStatus }
+        $set: setFields
       },
       {
         arrayFilters: [{ 'elem.sellerId': sellerId, 'elem.status': currentStatus }],
