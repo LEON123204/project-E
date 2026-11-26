@@ -24,7 +24,8 @@ import {
   ShieldCheck,
   Package,
   Store,
-  PackageCheck
+  PackageCheck,
+  Percent
 } from 'lucide-react';
 
 const COLORS = ['#6D2932', '#561C24', '#e8a3ae', '#eab308', '#10b981', '#f97316'];
@@ -88,6 +89,13 @@ const AdminDashboard = () => {
             <p className="text-slate-500 text-sm mt-1">Real-time inventory and financial performance diagnostics.</p>
           </div>
           <div className="flex gap-2">
+            <Link
+              to="/admin/commissions"
+              className="bg-slate-900 border border-slate-800 hover:bg-slate-850 hover:text-indigo-400 py-1.5 px-4 rounded-xl text-xs font-semibold transition-smooth flex items-center gap-1.5"
+            >
+              <Percent size={14} />
+              Commissions
+            </Link>
             <Link
               to="/admin/products"
               className="bg-slate-900 border border-slate-800 hover:bg-slate-850 hover:text-indigo-400 py-1.5 px-4 rounded-xl text-xs font-semibold transition-smooth"

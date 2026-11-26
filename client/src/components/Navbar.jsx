@@ -15,7 +15,8 @@ import {
   LayoutDashboard,
   ChevronDown,
   Store,
-  Package
+  Package,
+  DollarSign
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -154,6 +155,14 @@ const Navbar = () => {
                         >
                           <Package size={16} />
                           Orders
+                        </Link>
+                        <Link
+                          to="/seller/earnings"
+                          onClick={() => setProfileDropdownOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-emerald-400 hover:bg-slate-850 hover:text-emerald-300 transition-smooth"
+                        >
+                          <DollarSign size={16} />
+                          Earnings
                         </Link>
                       </>
                     )}
@@ -341,6 +350,13 @@ const Navbar = () => {
                       className="block text-emerald-400 hover:text-emerald-300 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
                     >
                       Orders
+                    </Link>
+                    <Link
+                      to="/seller/earnings"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block text-emerald-400 hover:text-emerald-300 hover:bg-slate-900/60 text-base font-medium py-3 px-2 rounded-xl transition-smooth"
+                    >
+                      Earnings
                     </Link>
                   </>
                 )}

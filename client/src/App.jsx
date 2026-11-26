@@ -43,10 +43,12 @@ import AdminOrders from './pages/admin/AdminOrders';
 import AdminCustomers from './pages/admin/AdminCustomers';
 import AdminSellerApplications from './pages/admin/AdminSellerApplications';
 import AdminSellerProducts from './pages/admin/AdminSellerProducts';
+import AdminCommissions from './pages/admin/AdminCommissions';
 
 // Seller Pages
 import SellerDashboard from './pages/seller/SellerDashboard';
 import SellerOrders from './pages/seller/SellerOrders';
+import SellerEarnings from './pages/seller/SellerEarnings';
 
 // Main content wrapper that adds bottom padding when CompareTray is visible and resets ErrorBoundary on navigation
 const MainContent = ({ children }) => {
@@ -172,6 +174,14 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+                  <Route
+                    path="/admin/commissions"
+                    element={
+                      <ProtectedRoute adminOnly={true}>
+                        <AdminCommissions />
+                      </ProtectedRoute>
+                    }
+                  />
 
                   {/* Seller Protected routes */}
                   <Route
@@ -187,6 +197,14 @@ function App() {
                     element={
                       <ProtectedRoute sellerOnly={true}>
                         <SellerOrders />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/seller/earnings"
+                    element={
+                      <ProtectedRoute sellerOnly={true}>
+                        <SellerEarnings />
                       </ProtectedRoute>
                     }
                   />
